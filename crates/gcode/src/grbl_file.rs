@@ -155,6 +155,17 @@ impl GrblFile {
         self.list.clear();
     }
 
+    /// Dispose and drop commands at index >= `len` (re-apply of an appended import).
+    ///
+    /// `len`: number of leading commands to keep; no-op when the list is not longer.
+    pub fn truncate_list(&mut self, len: usize) {
+        // dispose only the tail
+        for c in self.list.iter_mut().skip(len) {
+            c.dispose();
+        }
+        self.list.truncate(len);
+    }
+
     /// C# `CheckInUse(showMessageBox)`. The message box is the caller's job (`Strings.AlreadyLoading`).
     ///
     /// Returns true when a load runs or the file is in use.

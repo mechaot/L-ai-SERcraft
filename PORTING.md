@@ -3624,25 +3624,25 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class SvgToGCodeForm` | DONE | app/src/forms/svg_import.rs |
-| `field LaserOptions` | DONE | app/src/forms/svg_import.rs |
-| `field FilterOptions` | DONE | app/src/forms/svg_import.rs |
-| `method ColorFilterToItem` | DONE | app/src/forms/svg_import.rs |
-| `class ComboboxItem` | DONE | app/src/forms/svg_import.rs |
-| `property Text` | DONE | app/src/forms/svg_import.rs |
-| `property Value` | DONE | app/src/forms/svg_import.rs |
-| `ctor ComboboxItem` | DONE | app/src/forms/svg_import.rs |
-| `method ToString` | DONE | app/src/forms/svg_import.rs |
-| `method CreateAndShowDialog` | DONE | app/src/forms/svg_import.rs |
-| `ctor SvgToGCodeForm` | DONE | app/src/forms/svg_import.rs |
-| `method AssignMinMaxLimit` | DONE | app/src/forms/svg_import.rs |
-| `method ShowDialogForm` | DONE | app/src/forms/svg_import.rs |
-| `method RefreshPerc` | DONE | app/src/forms/svg_import.rs |
-| `method BtnOnOffInfo_Click` | DONE | app/src/forms/svg_import.rs |
-| `method BtnModulationInfo_Click` | DONE | app/src/forms/svg_import.rs |
-| `method CBLaserON_SelectedIndexChanged` | DONE | app/src/forms/svg_import.rs |
-| `method BtnPSHelper_Click` | DONE | app/src/forms/svg_import.rs |
-| `method BtnColorFilter_Click` | DONE | app/src/forms/svg_import.rs |
+| `class SvgToGCodeForm` | DONE | app/src/forms/params_dock.rs |
+| `field LaserOptions` | DONE | app/src/forms/params_dock.rs |
+| `field FilterOptions` | DONE | app/src/forms/params_dock.rs |
+| `method ColorFilterToItem` | DONE | app/src/forms/params_dock.rs |
+| `class ComboboxItem` | DONE | app/src/forms/params_dock.rs |
+| `property Text` | DONE | app/src/forms/params_dock.rs |
+| `property Value` | DONE | app/src/forms/params_dock.rs |
+| `ctor ComboboxItem` | DONE | app/src/forms/params_dock.rs |
+| `method ToString` | DONE | app/src/forms/params_dock.rs |
+| `method CreateAndShowDialog` | DONE | app/src/forms/params_dock.rs |
+| `ctor SvgToGCodeForm` | DONE | app/src/forms/params_dock.rs |
+| `method AssignMinMaxLimit` | DONE | app/src/forms/params_dock.rs |
+| `method ShowDialogForm` | DONE | app/src/forms/params_dock.rs |
+| `method RefreshPerc` | DONE | app/src/forms/params_dock.rs |
+| `method BtnOnOffInfo_Click` | DONE | app/src/forms/params_dock.rs |
+| `method BtnModulationInfo_Click` | DONE | app/src/forms/params_dock.rs |
+| `method CBLaserON_SelectedIndexChanged` | DONE | app/src/forms/params_dock.rs |
+| `method BtnPSHelper_Click` | DONE | app/src/forms/params_dock.rs |
+| `method BtnColorFilter_Click` | DONE | app/src/forms/params_dock.rs |
 
 ## `SvgConverter/GCodeFromSVG.cs` (WP-E)
 

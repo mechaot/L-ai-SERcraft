@@ -89,7 +89,7 @@ RasterImport dialog (app/forms/raster) ──► lg_services::ImageProcessor
                                                      GrblFile::load_image_potrace (vectorize → lg-potrace
                                                         trace → lg-clipper fill → biarc G-code)
                                                      GrblFile::load_image_centerline (autotrace → lg-svg2gcode)
-SVG file ──► SvgImport dialog ──► GrblFile::load_imported_svg ──► lg-svg2gcode
+SVG file ──► ParamsDock (right dock, Apply) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
 ```
 
 ### 3.5 Persistence

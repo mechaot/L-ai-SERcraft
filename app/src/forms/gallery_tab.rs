@@ -13,7 +13,6 @@ use super::license::LicenseForm;
 use super::new_version::NewVersionForm;
 use super::save_options::SaveOptionForm;
 use super::splash::SplashScreen;
-use super::svg_import::SvgImport;
 use super::svg_mode::SvgModeForm;
 
 /// Accuracy test SVG shipped in `resources/generator` (dev gallery runs from the workspace).
@@ -22,7 +21,6 @@ const DEMO_SVG: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../resources/genera
 /// State of the "Forms" tab.
 pub struct FormsTab {
     file: SharedFile,
-    svg: Option<SvgImport>,
     svg_mode: Option<SvgModeForm>,
     cutting: Option<CuttingTest>,
     power: Option<PowerVsSpeedForm>,
@@ -37,13 +35,12 @@ pub struct FormsTab {
 }
 
 /// Form names in screenshot order.
-const SHOT_NAMES: [&str; 10] = ["svg_import", "svg_mode", "cutting_test", "power_vs_speed", "shake_test", "save_options", "license", "legal_disclaimer", "splash", "new_version"];
+const SHOT_NAMES: [&str; 9] = ["svg_mode", "cutting_test", "power_vs_speed", "shake_test", "save_options", "license", "legal_disclaimer", "splash", "new_version"];
 
 impl Default for FormsTab {
     fn default() -> Self {
         FormsTab {
             file: Arc::new(RwLock::new(lg_gcode::GrblFile::new())),
-            svg: None,
             svg_mode: None,
             cutting: None,
             power: None,
@@ -71,9 +68,6 @@ impl FormsTab {
     pub fn ui(&mut self, ui: &mut Ui) {
         ui.label(format!("Throwaway program: {} commands", self.count()));
         ui.horizontal_wrapped(|ui| {
-            if ui.button("SVG import").clicked() {
-                self.svg = Some(SvgImport::open(self.file.clone(), DEMO_SVG, false));
-            }
             if ui.button("SVG mode (unused)").clicked() {
                 self.svg_mode = Some(SvgModeForm::new(DEMO_SVG));
             }
@@ -114,15 +108,14 @@ impl FormsTab {
     fn open_by_index(&mut self, i: usize) {
         let f = self.file.clone();
         match i {
-            0 => self.svg = Some(SvgImport::open(f, DEMO_SVG, false)),
-            1 => self.svg_mode = Some(SvgModeForm::new(DEMO_SVG)),
-            2 => self.cutting = Some(CuttingTest::new(f)),
-            3 => self.power = Some(PowerVsSpeedForm::new(f)),
-            4 => self.shake = Some(ShakeTest::new(f)),
-            5 => self.save = Some(SaveOptionForm::new()),
-            6 => self.license = Some(LicenseForm::new()),
-            7 => self.legal = Some(LegalDisclaimer::new()),
-            8 => self.splash = Some(SplashScreen::new()),
+            0 => self.svg_mode = Some(SvgModeForm::new(DEMO_SVG)),
+            1 => self.cutting = Some(CuttingTest::new(f)),
+            2 => self.power = Some(PowerVsSpeedForm::new(f)),
+            3 => self.shake = Some(ShakeTest::new(f)),
+            4 => self.save = Some(SaveOptionForm::new()),
+            5 => self.license = Some(LicenseForm::new()),
+            6 => self.legal = Some(LegalDisclaimer::new()),
+            7 => self.splash = Some(SplashScreen::new()),
             _ => self.new_version = Some(NewVersionForm::new("7.14.1", "7.15.0", true, "https://github.com/arkypita/LaserGRBL/releases", "")),
         }
     }
@@ -135,7 +128,6 @@ impl FormsTab {
         match s.step(ctx) {
             ShotStep::Open(i) => self.open_by_index(i),
             ShotStep::CloseAll => {
-                self.svg = None;
                 self.svg_mode = None;
                 self.cutting = None;
                 self.power = None;
@@ -156,14 +148,6 @@ impl FormsTab {
     /// `ctx`: egui context.
     pub fn dialogs(&mut self, ctx: &egui::Context) {
         self.debug_shots(ctx);
-        if let Some(f) = &mut self.svg {
-            if let Some(o) = f.show(ctx) {
-                self.log.push(format!("SVG import: accepted={} load_started={} usage={}", o.accepted, o.load.is_some(), o.usage_svg_file));
-                self.svg = None;
-            } else if f.take_ps_helper_request() {
-                self.log.push("SVG import: material DB requested (host dialog not part of this tab)".into());
-            }
-        }
         if let Some(f) = &mut self.svg_mode {
             if let Some(o) = f.show(ctx) {
                 self.log.push(format!("SVG mode: {o:?}"));
@@ -250,6 +234,7 @@ mod tests {
         for k in ["$this.Text", "BtnCancel.Text", "BtnUpdate.Text", "BtnWebsite.Text", "TxtCurrentV.Text", "TxtHeader.Text", "TxtNewV.Text"] {
             keys.push(format!("AutoUpdate.NewVersionForm.{k}"));
         }
+        keys.extend(["Title", "Material", "MaterialNone", "Modified", "EditMaterials", "Apply", "NoSource", "Generating", "Passes", "ApplyFailed"].map(|k| format!("ParamsDock.{k}")));
         keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "Strings.BoxAutoUpdateResult", "LicenseForm.richTextBox1.Text", "LicenseForm.richTextBox2.Text"].map(String::from));
         let missing: Vec<&String> = keys.iter().filter(|k| tr(k) == k.as_str()).collect();
         assert!(missing.is_empty(), "missing keys: {missing:?}");
@@ -259,7 +244,7 @@ mod tests {
     #[test]
     fn icon_keys_exist() {
         let i = icons::Icons::new(false);
-        for k in ["mdi-close", "mdi-close-box", "mdi-checkbox-marked", "mdi-information-slab-box", "mdi-content-save", "mdi-heart"] {
+        for k in ["mdi-close", "mdi-close-box", "mdi-checkbox-marked", "mdi-information-slab-box", "mdi-content-save", "mdi-heart", "mdi-database"] {
             assert!(i.contains(k), "{k}");
         }
     }
@@ -269,7 +254,6 @@ mod tests {
     fn all_forms_render() {
         let ctx = egui::Context::default();
         let mut tab = FormsTab::default();
-        tab.svg = Some(SvgImport::open(tab.file.clone(), DEMO_SVG, false));
         tab.svg_mode = Some(SvgModeForm::new(DEMO_SVG));
         tab.cutting = Some(CuttingTest::new(tab.file.clone()));
         tab.power = Some(PowerVsSpeedForm::new(tab.file.clone()));

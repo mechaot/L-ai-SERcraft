@@ -10,7 +10,7 @@ pub mod license;
 pub mod new_version;
 pub mod save_options;
 pub mod splash;
-pub mod svg_import;
+pub mod params_dock;
 pub mod svg_mode;
 // WP-U2b
 pub mod preview_form;

@@ -125,3 +125,19 @@ fn loading_flag_via_spawn() {
     assert!(f.read().unwrap().count() > 0);
     assert!(!f.read().unwrap().check_in_use());
 }
+
+#[test]
+fn truncate_list_keeps_head_only() {
+    let mut f = GrblFile::new();
+    for l in ["G0 X1", "G1 X2", "G1 X3"] {
+        f.commands_mut().push(GrblCommand::new(l));
+    }
+    f.truncate_list(1);
+    assert_eq!(f.count(), 1);
+    assert_eq!(f.get(0).map(|c| c.command()), Some("G0 X1"));
+    // longer than list: no-op
+    f.truncate_list(5);
+    assert_eq!(f.count(), 1);
+    f.truncate_list(0);
+    assert_eq!(f.count(), 0);
+}

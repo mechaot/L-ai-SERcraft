@@ -25,7 +25,6 @@ use crate::forms::material::MaterialEditor;
 use crate::forms::raster::{RasterImport, RasterOutcome};
 use crate::forms::save_options::{SaveOptionForm, SaveOptionOutcome};
 use crate::forms::splash::SplashScreen;
-use crate::forms::svg_import::{SvgImport, SvgOutcome};
 
 /// What to do once the safety countdown said go (order of `SafetyCountdown.CanGo` in C#).
 #[derive(Debug, Clone, PartialEq)]
@@ -51,7 +50,6 @@ pub enum Overlay {
     SaveOptions(SaveOptionForm),
     License(LicenseForm),
     Raster(Box<RasterImport>),
-    Svg(Box<SvgImport>),
     CuttingTest(Box<CuttingTest>),
     PowerVsSpeed(Box<PowerVsSpeedForm>),
     ShakeTest(Box<ShakeTest>),
@@ -78,7 +76,6 @@ pub enum OverlayResult {
     Hotkeys(HotkeyOutcome),
     SaveOptions(SaveOptionOutcome),
     Raster(RasterOutcome),
-    Svg,
     Resume(ResumeOutcome),
     RunFromPosition(RunFromPositionOutcome),
     Safety(SafetyOutcome, AfterSafety),
@@ -107,7 +104,6 @@ impl Overlay {
             Overlay::SaveOptions(f) => f.show(ctx).map(R::SaveOptions),
             Overlay::License(f) => f.show(ctx).map(|_| R::Closed),
             Overlay::Raster(f) => f.show(ctx).map(R::Raster),
-            Overlay::Svg(f) => f.show(ctx).map(|_: SvgOutcome| R::Svg),
             Overlay::CuttingTest(f) => f.show(ctx).map(|_| R::Closed),
             Overlay::PowerVsSpeed(f) => f.show(ctx).map(|_| R::Closed),
             Overlay::ShakeTest(f) => f.show(ctx).map(|_| R::Closed),

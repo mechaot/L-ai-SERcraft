@@ -30,6 +30,7 @@ use crate::forms::dialogs::safety_countdown::{SafetyCountdown, SafetyOutcome};
 use crate::forms::dialogs::settings_form::{SettingsForm, SettingsOutcome};
 use crate::forms::dialogs::{discovery_form::DiscoveryForm, discovery_form::DiscoveryOutcome, grbl_config::GrblConfig};
 use crate::forms::generators::cutting_test::CuttingTest;
+use crate::forms::params_dock::{ParamsAction, ParamsDock};
 use crate::forms::generators::power_vs_speed::PowerVsSpeedForm;
 use crate::forms::generators::shake_test::ShakeTest;
 use crate::forms::legal_disclaimer::{LegalDisclaimer, LegalOutcome};
@@ -45,7 +46,6 @@ use crate::forms::preview_form::PreviewForm;
 use crate::forms::raster::RasterImport;
 use crate::forms::save_options::{SaveOptionForm, SaveOptionOutcome, SaveOptions};
 use crate::forms::splash::SplashScreen;
-use crate::forms::svg_import::SvgImport;
 use crate::ui::dialog::{filters, DialogResult, FileDialogOptions, MessageBox, MessageBoxButtons, MessageBoxHost, MessageBoxIcon, PendingFile};
 use crate::ui::{tr, Theme};
 
@@ -124,6 +124,10 @@ pub struct MainForm {
     connect: ConnectLogForm,
     jog: JogForm,
     preview: PreviewForm,
+    /// "Parameters" dock (right panel).
+    params: ParamsDock,
+    /// Run was requested while the dock still had to generate G-code.
+    run_after_apply: bool,
     emulator: std::sync::Arc<EmulatorWindow>,
     overlays: VecDeque<Overlay>,
     msgs: MessageBoxHost<MsgTag>,
@@ -143,6 +147,7 @@ pub struct MainForm {
     want_close: bool,
     restart_on_exit: bool,
     left_width: f32,
+    params_width: f32,
     geometry: Option<(egui::Vec2, egui::Pos2, i32)>,
     title_set: bool,
     visible_checked: bool,
@@ -164,6 +169,7 @@ impl MainForm {
             overlays.push_back(Overlay::Legal(LegalDisclaimer::new()));
         }
         let left_width: f32 = settings::get("MainForm Splitter Position", 260.0f32);
+        let params_width: f32 = settings::get("MainForm Params Width", 260.0f32);
         MainForm {
             state,
             menu: MenuState::default(),
@@ -171,6 +177,8 @@ impl MainForm {
             connect: ConnectLogForm::new(),
             jog: JogForm::new(),
             preview: PreviewForm::new(),
+            params: ParamsDock::new(),
+            run_after_apply: false,
             emulator: EmulatorWindow::install(),
             overlays,
             msgs: MessageBoxHost::default(),
@@ -189,6 +197,7 @@ impl MainForm {
             want_close: false,
             restart_on_exit: false,
             left_width,
+            params_width,
             geometry: None,
             title_set: false,
             visible_checked: false,
@@ -215,6 +224,7 @@ impl MainForm {
             self.started = true;
         }
         self.pump_events();
+        self.poll_params();
         self.poll_connect();
         self.poll_file(&ctx);
         if self.started && self.state.take_sincro_run() {
@@ -253,13 +263,37 @@ impl MainForm {
             self.left_width = w;
             settings::set("MainForm Splitter Position", w.round() as i32);
         }
+        // Parameters dock: input is blocked while a modal is open
+        let mut params_actions = Vec::new();
+        let dock = egui::Panel::right("main-params")
+            .frame(Frame::new().fill(th.form_back_color).inner_margin(Margin::same(3)))
+            .resizable(true)
+            .default_size(self.params_width)
+            .size_range(200.0..=500.0)
+            .show(ui, |ui| {
+                ui.add_enabled_ui(!modal_open, |ui| {
+                    params_actions = self.params.show(ui, &self.state.core);
+                });
+            });
+        // dock resized: persist "MainForm Params Width"
+        let pw = dock.response.rect.width();
+        if (pw - self.params_width).abs() > 0.5 {
+            self.params_width = pw;
+            settings::set("MainForm Params Width", pw.round() as i32);
+        }
         let mut preview_actions = Vec::new();
         egui::CentralPanel::default().frame(Frame::new().fill(th.form_back_color)).show(ui, |ui| {
             preview_actions = self.preview.show(ui, &self.state.core, &mut self.state.custom_buttons, &self.state.hotkeys);
         });
         let _ = preview_actions;
+        for a in params_actions {
+            match a {
+                ParamsAction::OpenMaterialEditor => self.overlays.push_back(Overlay::Material(MaterialEditor::new(default_db()))),
+            }
+        }
 
         self.emulator.show(&ctx);
+        self.params.show_dialogs(&ctx);
         self.show_dialogs(&ctx);
         if self.started && !modal_open {
             self.hotkeys(&ctx);
@@ -527,8 +561,13 @@ impl MainForm {
             return;
         }
         let Some(front) = self.overlays.front_mut() else { return };
+        let is_material = matches!(front, Overlay::Material(_));
         if let Some(res) = front.show(ctx) {
             self.overlays.pop_front();
+            // material DB may have changed
+            if is_material {
+                self.params.refresh_materials();
+            }
             self.overlay_closed(res);
         }
     }
@@ -587,7 +626,6 @@ impl MainForm {
                     c.passthrough += o.usage.passthrough;
                 });
             }
-            OverlayResult::Svg => {}
             OverlayResult::Resume(ResumeOutcome::Ok { position, homing, wco }) => {
                 let next = if position == 0 { AfterSafety::ResumeFromStart { homing } } else { AfterSafety::Continue { position, homing, setwco: wco } };
                 if position >= 0 {
@@ -744,18 +782,25 @@ impl MainForm {
     /// `path`: file to open. `append`: keep the current program.
     fn open_path(&mut self, path: &Path, append: bool) {
         let outcome = self.state.core.open_file(path, append);
-        self.open_outcome(outcome, append);
+        self.open_outcome(outcome, append, false);
     }
 
     /// Act on what `open_file` decided.
-    fn open_outcome(&mut self, outcome: OpenFileOutcome, append: bool) {
+    ///
+    /// `outcome`: result of `open_file`. `append`: keep the current program. `from_project`: settings were
+    /// just restored from a `.lps` entry (the dock reloads its values from them).
+    fn open_outcome(&mut self, outcome: OpenFileOutcome, append: bool, from_project: bool) {
         let file = self.state.core.loaded_file();
+        // every real file replaces the SVG the dock works on
+        if !matches!(outcome, OpenFileOutcome::Busy | OpenFileOutcome::Unsupported | OpenFileOutcome::Svg(_)) {
+            self.params.clear_source();
+        }
         match outcome {
             OpenFileOutcome::Raster(p) => match RasterImport::open(file, &p, append) {
                 Ok(r) => self.overlays.push_back(Overlay::Raster(Box::new(r))),
                 Err(e) => lg_base::logger::log_exception("RasterImport", &e),
             },
-            OpenFileOutcome::Svg(p) => self.overlays.push_back(Overlay::Svg(Box::new(SvgImport::open(file, &p.to_string_lossy(), append)))),
+            OpenFileOutcome::Svg(p) => self.params.load_svg(file, &p.to_string_lossy(), append, from_project),
             OpenFileOutcome::Project(p) => match project::load_project(&p.to_string_lossy()) {
                 Ok(items) => self.project = Some(ProjectQueue { items, index: 0, temp: None }),
                 Err(e) => lg_base::logger::log_exception("OpenFile", &e),
@@ -767,7 +812,8 @@ impl MainForm {
 
     /// Project loop: restore settings of the next entry once the previous dialog has closed.
     fn pump_project(&mut self) {
-        if !self.overlays.is_empty() || self.msgs.is_open() {
+        // SVG generation is async: next entry would hit "busy"
+        if !self.overlays.is_empty() || self.msgs.is_open() || self.params.job_running() || !self.state.core.can_load_new_file() {
             return;
         }
         let Some(mut q) = self.project.take() else { return };
@@ -793,7 +839,7 @@ impl MainForm {
                 let append = q.index > 0;
                 let outcome = self.state.core.open_file(&img, append);
                 q.temp = Some(img);
-                self.open_outcome(outcome, append);
+                self.open_outcome(outcome, append, true);
             }
         }
         q.index += 1;
@@ -805,6 +851,17 @@ impl MainForm {
     /// `RunProgram(parent)`: resume question first, then the countdown (C# order).
     fn request_run(&mut self) {
         let core = self.state.core.clone();
+        // dock edits not applied yet: generate first, run when done
+        if self.params.needs_apply() && core.is_connected() {
+            if self.params.is_dirty_idle() {
+                if core.can_load_new_file() && self.params.apply() {
+                    self.run_after_apply = true;
+                }
+            } else {
+                self.run_after_apply = true;
+            }
+            return;
+        }
         if !core.can_send_file() {
             return;
         }
@@ -814,6 +871,15 @@ impl MainForm {
             }
         } else {
             self.countdown_then(AfterSafety::Run);
+        }
+    }
+
+    /// Check the dock's generation worker; start the deferred run when it succeeded.
+    fn poll_params(&mut self) {
+        if let Some(ok) = self.params.poll() {
+            if std::mem::take(&mut self.run_after_apply) && ok {
+                self.request_run();
+            }
         }
     }
 
@@ -889,7 +955,7 @@ impl MainForm {
             MenuAction::ReopenFile => {
                 project::clear_settings();
                 if let Some(o) = core.reopen_file() {
-                    self.open_outcome(o, false);
+                    self.open_outcome(o, false, false);
                 }
             }
             MenuAction::SaveProgram => self.pending_save = Some(SaveOptions { header: false, footer: false, between: false, cycles: 1, use_lf_line_endings: false }),
@@ -1024,7 +1090,7 @@ impl MainForm {
                 Actions::OpenFile => self.open_file_dialog(ctx, false),
                 Actions::ReopenLastFile => {
                     if let Some(o) = core.reopen_file() {
-                        self.open_outcome(o, false);
+                        self.open_outcome(o, false, false);
                     }
                 }
                 Actions::SaveFile => self.pending_save = Some(SaveOptions { header: false, footer: false, between: false, cycles: 1, use_lf_line_endings: false }),
