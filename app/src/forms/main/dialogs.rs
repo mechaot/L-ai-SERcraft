@@ -57,7 +57,7 @@ pub enum Overlay {
     RunFromPosition(RunFromPositionForm),
     Safety(SafetyCountdown, AfterSafety),
     LaserSelector(LaserSelector),
-    LaserUsage(LaserUsage),
+    LaserUsage(Box<LaserUsage>),
     Issue(IssueDetectorForm),
     Flash(FlashGrbl),
     Discovery(DiscoveryForm),

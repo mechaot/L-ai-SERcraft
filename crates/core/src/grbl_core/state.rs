@@ -15,7 +15,7 @@ use super::Shared;
 use crate::com::ComWrapper;
 use crate::usage_stats::UsageCounters;
 use crate::util::{get_timespan_setting, substring, substring_from};
-use crate::{laser_life, usage_stats};
+use crate::laser_life;
 use lg_base::logger;
 use lg_base::logger::com as comlog;
 use lg_base::sound::{play_sound, EventId};
@@ -367,7 +367,6 @@ impl CoreState {
         // negative numbers are issues caused by the user: not reported
         if issue.value() > 0 {
             self.emit(CoreEvent::IssueDetected(issue));
-            lg_base::telegram::notify_event(&format!("<b>Job Issue</b>\n{issue}"), &usage_stats::get_id().unwrap_or_default());
             play_sound(EventId::Fatal);
         }
     }
@@ -1465,10 +1464,10 @@ impl CoreState {
     /// `OnProgramEnd()`.
     fn on_program_end(&mut self) {
         let file_count = self.sh.file.try_read().map(|f| f.count()).unwrap_or(0);
-        let (looping, error_count, program_time, global_minutes) = {
+        let (looping, error_count, program_time) = {
             let mut tp = self.sh.tp();
             let ended = tp.job_end(self.loop_count == Decimal::ONE);
-            (ended && self.loop_count > Decimal::ONE && self.machine_status != MacStatus::Check, tp.error_count(), tp.total_job_time(), tp.total_global_job_time())
+            (ended && self.loop_count > Decimal::ONE && self.machine_status != MacStatus::Check, tp.error_count(), tp.total_job_time())
         };
         let ts = |t: TimeSpan| time_span_to_string(t, TimePrecision::Second, TimePrecision::Second, ",", true);
         let summary = format!("[{} lines, {} errors, {}]", file_count, error_count, ts(program_time));
@@ -1487,14 +1486,6 @@ impl CoreState {
             self.on_job_end();
 
             play_sound(EventId::Success);
-
-            let threshold: i32 = lg_base::settings::get("TelegramNotification.Threshold", 1);
-            if global_minutes.total_minutes() >= threshold as f64 {
-                lg_base::telegram::notify_event(
-                    &format!("<b>Job Executed</b>\n{} lines, {} errors\nTime: {}", file_count, error_count, ts(global_minutes)),
-                    &usage_stats::get_id().unwrap_or_default(),
-                );
-            }
 
             self.force_status_idle();
         }

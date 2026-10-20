@@ -16,7 +16,7 @@ use std::sync::Arc;
 use crate::forms::form_util::{load_texture, native_image};
 use super::common::{ModalEvent, button, modal, open_link, setting_row, trf};
 use crate::ui::dialog::{DialogResult, FileDialogOptions, MessageBox, MessageBoxButtons, PendingFile};
-use crate::ui::widgets::{NumericUpDown, flat_combo, grbl_group_box};
+use crate::ui::widgets::{flat_combo, grbl_group_box};
 use crate::ui::{icons, tr, tr_plain};
 
 /// Sound events in the order of the form rows.
@@ -56,9 +56,6 @@ pub struct SettingsData {
     pub passes: String,
     pub footer: String,
     pub sounds: [SoundSetting; 5],
-    pub telegram_enabled: bool,
-    pub telegram_code: String,
-    pub telegram_threshold: i32,
     pub smart_bezier: bool,
     pub disable_safety_cd: bool,
     pub quiet_safety_cd: bool,
@@ -140,9 +137,6 @@ impl SettingsData {
             passes: to_editor_text(&settings::get("GCode.CustomPasses", GCODE_STD_PASSES.to_string())),
             footer: to_editor_text(&settings::get("GCode.CustomFooter", GCODE_STD_FOOTER.to_string())),
             sounds,
-            telegram_enabled: settings::get("TelegramNotification.Enabled", false),
-            telegram_code: settings::get("TelegramNotification.Code", String::new()),
-            telegram_threshold: settings::get("TelegramNotification.Threshold", 1),
             smart_bezier: settings::get("Vector.UseSmartBezier", true),
             disable_safety_cd: settings::get("DisableSafetyCountdown", false),
             quiet_safety_cd: settings::get("QuietSafetyCountdown", false),
@@ -193,10 +187,6 @@ impl SettingsData {
             settings::set(&format!("{key}.Enabled"), s.enabled);
         }
 
-        settings::set("TelegramNotification.Enabled", self.telegram_enabled);
-        settings::set("TelegramNotification.Threshold", self.telegram_threshold);
-        // NOTE: C# encrypts with DPAPI; the port stores plain text (see lg_base::telegram)
-        settings::set("TelegramNotification.Code", self.telegram_code.as_str());
 
         settings::set("Raster Hi-Res", self.hi_res);
         settings::set("Vector.UseSmartBezier", self.smart_bezier);
@@ -204,11 +194,6 @@ impl SettingsData {
         settings::set("QuietSafetyCountdown", self.quiet_safety_cd);
         settings::set("LegacyIcons", self.legacy_icons);
         settings::set_configured_graphic_mode(self.graphic_mode);
-    }
-
-    /// `EnableTest`: the Telegram "Test" button needs a 10 char code and the notification flag.
-    pub fn telegram_test_enabled(&self) -> bool {
-        self.telegram_code.trim().chars().count() == 10 && self.telegram_enabled
     }
 }
 
@@ -648,52 +633,6 @@ impl SettingsForm {
             });
             ui.add_space(4.0);
         }
-        // Telegram block
-        let d = &mut self.data;
-        let mut test = false;
-        let mut info = false;
-        ui.horizontal_top(|ui| {
-            ui.checkbox(&mut d.telegram_enabled, "");
-            ui.allocate_ui(Vec2::new(380.0, 0.0), |ui| {
-                ui.set_width(380.0);
-                // 3x3 table: title [info] / code [edit] [Test] / "don't notify" [] [numeric min]
-                egui::Grid::new("telegram-grid").num_columns(3).spacing([6.0, 4.0]).show(ui, |ui| {
-                    ui.label(crate::ui::fonts::bold(t("label31")).size(15.0));
-                    ui.label("");
-                    info = super::common::info_button(ui, "");
-                    ui.end_row();
-                    ui.label(crate::ui::fonts::bold(t("label33")));
-                    ui.add_sized([159.0, 20.0], TextEdit::singleline(&mut d.telegram_code).char_limit(32));
-                    if super::common::button_en(ui, d.telegram_test_enabled(), &t("BtnTestNotification"), None, Vec2::new(90.0, 23.0)) {
-                        test = true;
-                    }
-                    ui.end_row();
-                    ui.label(crate::ui::fonts::bold(t("label44")));
-                    ui.label("");
-                    ui.horizontal(|ui| {
-                        let mut v = d.telegram_threshold as f64;
-                        if ui.add(NumericUpDown::new(&mut v).range(0.0, 60.0).width(54.0).id(egui::Id::unique("telegram-threshold"))).changed() {
-                            d.telegram_threshold = v as i32;
-                        }
-                        ui.label(t("label45"));
-                    });
-                    ui.end_row();
-                });
-            });
-            let w = ui.available_width();
-            ui.allocate_ui(Vec2::new(w, 0.0), |ui| {
-                ui.set_width(w);
-                ui.add(egui::Label::new(t("label42")).wrap());
-            });
-        });
-        if info {
-            open_link("https://lasergrbl.com/telegram/");
-        }
-        if test {
-            let guid = lasergrbl_core::usage_stats::get_id().unwrap_or_default();
-            lg_base::telegram::notify_event_code(&self.data.telegram_code, "If you receive this message, all is fine!", &guid);
-            self.info = Some(MessageBox::new(tr("Strings.BoxTelegramSettingText"), tr("Strings.BoxTelegramSettingTitle")).icon(crate::ui::dialog::MessageBoxIcon::Information));
-        }
         if let Some(i) = pick {
             // SoundBrowserDialog.Filter = "Waveform Audio File|*.wav"
             let filter = trf("SettingsForm.SoundBrowserDialog.Filter", "Waveform Audio File|*.wav");
@@ -731,7 +670,6 @@ mod tests {
         assert_eq!(d.threading_mode, ThreadingMode::UltraFast);
         assert!(!d.hard_reset && !d.unidirectional && !d.disable_g0_skip && !d.continuous_jog && !d.legacy_icons);
         assert_eq!((d.on_min, d.on_sec, d.off_min, d.off_sec), (10, 0, 1, 0));
-        assert_eq!(d.telegram_threshold, 1);
         assert_eq!(d.header, GCODE_STD_HEADER);
         assert_eq!(d.sounds[0].file, "Sound\\Success.wav");
         assert!(d.sounds.iter().all(|s| s.enabled));
@@ -756,9 +694,6 @@ mod tests {
         d.header = "G21\nM8 ".into();
         d.sounds[2].file = "/tmp/x.wav".into();
         d.sounds[2].enabled = false;
-        d.telegram_code = "0123456789".into();
-        d.telegram_enabled = true;
-        d.telegram_threshold = 7;
         d.graphic_mode = GraphicMode::Dib;
         d.save();
         let r = SettingsData::load();
@@ -770,8 +705,6 @@ mod tests {
         assert_eq!((r.on_min, r.on_sec, r.off_min, r.off_sec), (3, 30, 0, 10));
         assert_eq!(r.header, "G21\nM8");
         assert_eq!(r.sounds[2], SoundSetting { enabled: false, file: "/tmp/x.wav".into() });
-        assert_eq!(r.telegram_threshold, 7);
-        assert!(r.telegram_test_enabled());
         assert_eq!(r.graphic_mode, GraphicMode::Dib);
         // raw keys exactly as C#
         assert!(settings::get("Do not show Issue Detector", false));
@@ -797,10 +730,6 @@ mod tests {
         assert_eq!(cooling_span(2, 1), TimeSpan::from_seconds(121.0));
         assert_eq!(file_name_of("Sound\\success.wav"), "success.wav");
         assert_eq!(file_name_of("/a/b/c.wav"), "c.wav");
-        let mut d = SettingsData::load();
-        d.telegram_enabled = true;
-        d.telegram_code = " 123456789 ".into();
-        assert!(!d.telegram_test_enabled());
     }
 
     #[test]

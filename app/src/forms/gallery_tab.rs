@@ -10,7 +10,6 @@ use super::generators::power_vs_speed::PowerVsSpeedForm;
 use super::generators::shake_test::ShakeTest;
 use super::legal_disclaimer::LegalDisclaimer;
 use super::license::LicenseForm;
-use super::new_version::NewVersionForm;
 use super::save_options::SaveOptionForm;
 use super::splash::SplashScreen;
 use super::svg_mode::SvgModeForm;
@@ -29,13 +28,12 @@ pub struct FormsTab {
     license: Option<LicenseForm>,
     legal: Option<LegalDisclaimer>,
     splash: Option<SplashScreen>,
-    new_version: Option<NewVersionForm>,
     log: Vec<String>,
     shot: Option<ShotSeq>,
 }
 
 /// Form names in screenshot order.
-const SHOT_NAMES: [&str; 9] = ["svg_mode", "cutting_test", "power_vs_speed", "shake_test", "save_options", "license", "legal_disclaimer", "splash", "new_version"];
+const SHOT_NAMES: [&str; 8] = ["svg_mode", "cutting_test", "power_vs_speed", "shake_test", "save_options", "license", "legal_disclaimer", "splash"];
 
 impl Default for FormsTab {
     fn default() -> Self {
@@ -49,7 +47,6 @@ impl Default for FormsTab {
             license: None,
             legal: None,
             splash: None,
-            new_version: None,
             log: Vec::new(),
             shot: ShotSeq::from_env("LASERGRBL_FORMS_SHOT", &SHOT_NAMES),
         }
@@ -92,9 +89,6 @@ impl FormsTab {
             if ui.button("Splash").clicked() {
                 self.splash = Some(SplashScreen::new());
             }
-            if ui.button("New version").clicked() {
-                self.new_version = Some(NewVersionForm::new("7.14.1", "7.15.0", true, "https://github.com/arkypita/LaserGRBL/releases", ""));
-            }
         });
         ui.separator();
         for l in self.log.iter().rev().take(20) {
@@ -115,8 +109,7 @@ impl FormsTab {
             4 => self.save = Some(SaveOptionForm::new()),
             5 => self.license = Some(LicenseForm::new()),
             6 => self.legal = Some(LegalDisclaimer::new()),
-            7 => self.splash = Some(SplashScreen::new()),
-            _ => self.new_version = Some(NewVersionForm::new("7.14.1", "7.15.0", true, "https://github.com/arkypita/LaserGRBL/releases", "")),
+            _ => self.splash = Some(SplashScreen::new()),
         }
     }
 
@@ -136,7 +129,6 @@ impl FormsTab {
                 self.license = None;
                 self.legal = None;
                 self.splash = None;
-                self.new_version = None;
             }
             ShotStep::Idle => {}
         }
@@ -196,12 +188,6 @@ impl FormsTab {
                 self.splash = None;
             }
         }
-        if let Some(f) = &mut self.new_version {
-            if let Some(o) = f.show(ctx) {
-                self.log.push(format!("New version: {o:?}"));
-                self.new_version = None;
-            }
-        }
     }
 }
 
@@ -231,11 +217,8 @@ mod tests {
         for k in ["$this.Text", "BtnAccept.Text", "CbIHaveRead.Text", "LblFree.Text", "LblHaveFun.Text", "LblNotToy.Text", "LlTranslate.Text"] {
             keys.push(format!("LegalDisclaimer.{k}"));
         }
-        for k in ["$this.Text", "BtnCancel.Text", "BtnUpdate.Text", "BtnWebsite.Text", "TxtCurrentV.Text", "TxtHeader.Text", "TxtNewV.Text"] {
-            keys.push(format!("AutoUpdate.NewVersionForm.{k}"));
-        }
         keys.extend(["Title", "Material", "MaterialNone", "Modified", "EditMaterials", "Apply", "NoSource", "Generating", "Passes", "ApplyFailed"].map(|k| format!("ParamsDock.{k}")));
-        keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "Strings.BoxAutoUpdateResult", "LicenseForm.richTextBox1.Text", "LicenseForm.richTextBox2.Text"].map(String::from));
+        keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "LicenseForm.richTextBox1.Text", "LicenseForm.richTextBox2.Text"].map(String::from));
         let missing: Vec<&String> = keys.iter().filter(|k| tr(k) == k.as_str()).collect();
         assert!(missing.is_empty(), "missing keys: {missing:?}");
     }
@@ -261,7 +244,6 @@ mod tests {
         tab.save = Some(SaveOptionForm::new());
         tab.license = Some(LicenseForm::new());
         tab.legal = Some(LegalDisclaimer::new());
-        tab.new_version = Some(NewVersionForm::new("7.14.1", "7.15.0", false, "", ""));
         // one form at a time: modals stack and only the top one takes input
         for _ in 0..3 {
             let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {

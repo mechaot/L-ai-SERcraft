@@ -173,7 +173,7 @@ pub fn setting_row(ui: &mut Ui, info: Option<&str>, ctl_w: f32, control: impl Fn
 ///
 /// `url`: http(s) link.
 pub fn open_link(url: &str) {
-    lg_base::tools::utils::open_link(url, "");
+    lg_base::tools::utils::open_link(url);
 }
 
 /// Shared settings test guard (see `form_util::test_guard`).

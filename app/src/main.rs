@@ -145,6 +145,11 @@ fn main() -> eframe::Result {
     forms::main::exception::register_handler();
     lg_base::logger::start();
     lasergrbl_core::usage_stats::load_file();
+    // Telegram notifications removed: drop stored keys (bot code was kept as plain text)
+    // update check removed too: drop its flags
+    for k in ["TelegramNotification.Enabled", "TelegramNotification.Code", "TelegramNotification.Threshold", "Auto Update", "Auto Update Build", "Auto Update Pre"] {
+        lg_base::settings::delete(k);
+    }
     let (files, gallery) = parse_args(&argv);
     let (size, pos, maximized) = saved_geometry();
     let mut vp = egui::ViewportBuilder::default().with_title(form_title(None)).with_inner_size(size.unwrap_or([1024.0, 768.0])).with_maximized(maximized);

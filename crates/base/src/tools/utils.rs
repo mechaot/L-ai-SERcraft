@@ -166,14 +166,12 @@ pub fn human_readable_date_diff(
 
 /// `Utils.OpenLink`: open every `http(s)://` entry of a `|` separated list.
 ///
-/// `url`: list of URLs; each may hold `{0}`. `usage_id`: value for `{0}` (C# `UsageStats.GetID()`).
-pub fn open_link(url: &str, usage_id: &str) {
+/// `url`: list of URLs. No usage id is ever inserted (C# filled `{0}` with `UsageStats.GetID()`).
+pub fn open_link(url: &str) {
     for s in url.split('|') {
         let l = s.to_lowercase();
         if l.starts_with("http://") || l.starts_with("https://") {
-            // string.Format with one arg
-            let f = s.replace("{{", "\u{1}").replace("}}", "\u{2}").replace("{0}", usage_id).replace('\u{1}', "{").replace('\u{2}', "}");
-            open_target(&f);
+            open_target(s);
         }
     }
 }

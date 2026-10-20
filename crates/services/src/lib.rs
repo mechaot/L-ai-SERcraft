@@ -8,8 +8,8 @@
 //! * [`material_db`] - `PSHelper/MaterialDB.cs`
 //! * [`flash_grbl`] - logic of `Firmware/FlashGrbl.cs`
 //! * [`wifi_discovery`] - `WiFiDiscovery/IPAddressHelper.cs` + scan logic of `DiscoveryForm.cs`
-//! * [`json`] - `Tools/Json.cs`
-//! * [`github`] - `AutoUpdate/GitHub.cs` (version helpers only, network disabled)
+//!
+//! No update check: `AutoUpdate/*` and `Tools/Json.cs` (only used by it) are not ported.
 
 // stylistic lints that fight with the line-by-line C# port
 #![allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::chunks_exact_to_as_chunks, clippy::manual_is_multiple_of, clippy::field_reassign_with_default, clippy::manual_checked_ops)]
@@ -17,10 +17,8 @@
 pub mod autotrace;
 pub mod custom_button;
 pub mod flash_grbl;
-pub mod github;
 pub mod hotkeys;
 pub mod image_processor;
-pub mod json;
 pub mod material_db;
 pub mod project;
 pub mod wifi_discovery;

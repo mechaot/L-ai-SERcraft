@@ -100,7 +100,7 @@ impl ResolutionHelperForm {
         // linkLabel1
         let link = ui.add(egui::Label::new(RichText::new(tr(&format!("{P}.linkLabel1.Text"))).underline().color(egui::Color32::from_rgb(0, 102, 204))).wrap().sense(egui::Sense::click()));
         if link.on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-            lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/setting-reliable-resolution/", "");
+            lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/setting-reliable-resolution/");
         }
         ui.add_space(4.0);
         let mut recompute = false;

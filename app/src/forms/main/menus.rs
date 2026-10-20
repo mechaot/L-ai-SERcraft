@@ -8,7 +8,7 @@ use lg_base::settings;
 use crate::ui::i18n::cultures;
 use crate::ui::icons::icons;
 use crate::ui::theme::{Scheme, Theme};
-use crate::ui::{tr, tr_plain};
+use crate::ui::tr_plain;
 
 /// Control names of the language items in menu order (same order as `cultures.json`).
 const LANGUAGE_KEYS: [&str; 20] = [
@@ -416,23 +416,6 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
 
         // ---- Help ("?" with legacy icons, icon only otherwise) ----
         top_menu(ui, ico("mdi-help"), if legacy { "?" } else { "" }, |ui| {
-            let why = tr("MainForm.MnAutoUpdate.Text");
-            let note = "Auto update is disabled in the Linux port: upstream releases are Windows installers.";
-            ui.add_enabled_ui(false, |ui| {
-                ui.menu_button(egui::Atoms::new((icons().image(ui.ctx(), "mdi-cloud-download", 16.0), why.replace('&', ""))), |ui| {
-                    let ck = |ui: &mut Ui, key: &str, def: bool, name: &str| {
-                        item(ui, None, false, &tr_plain(&format!("MainForm.{key}.Text")), false, Some(settings::get(name, def)));
-                    };
-                    ck(ui, "MnNotifyNewVersion", true, "Auto Update");
-                    ck(ui, "MnNotifyMinorVersion", false, "Auto Update Build");
-                    ck(ui, "MnNotifyPreRelease", false, "Auto Update Pre");
-                    ui.separator();
-                    item(ui, Some("mdi-cloud-check-variant-outline"), false, &tr_plain("MainForm.MnCheckNow.Text"), false, None);
-                });
-            })
-            .response
-            .on_hover_text(note);
-            ui.separator();
             // toggled when the menu opens in C# (DropDownOpening)
             st.session_log_exists = lg_base::logger::exist_log();
             st.extended_log = lg_base::logger::com::enabled();

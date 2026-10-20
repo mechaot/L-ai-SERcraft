@@ -219,7 +219,7 @@ pub fn already_loading_box() -> MessageBox {
 ///
 /// `url`: http(s) link, `|` separated list allowed.
 pub fn open_link(url: &str) {
-    lg_base::tools::utils::open_link(url, "");
+    lg_base::tools::utils::open_link(url);
 }
 
 /// Guard of [`test_guard`]; resets the settings store again when dropped so other test modules

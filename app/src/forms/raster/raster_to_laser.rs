@@ -1253,7 +1253,7 @@ fn left_column(ui: &mut Ui, uid: u64, c: &mut Ctl, ip: &mut ImageProcessor, demo
                 ui.label("");
                 let r = ui.add(ImageButton::new("mdi-information-slab-box").size(Vec2::splat(17.0)));
                 if tip(r, P, "BtnAdaptiveQualityInfo").clicked() {
-                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/vectorization-tool/#adaptive-quality", "");
+                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/vectorization-tool/#adaptive-quality");
                 }
                 ui.end_row();
                 // Optimize travel

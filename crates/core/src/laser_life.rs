@@ -3,7 +3,7 @@
 //! Differences to C#:
 //! * Persisted as JSON `LaserLifeCounter.json` in the data dir (C#: BinaryFormatter `.bin`) with the same
 //!   `.old` backup rotation.
-//! * `RealDoSend` never uploads (PLAN section 6); `build_json` / `escape_json` are kept for completeness.
+//! * No statistics upload: `RealDoSend` / `BuildJson` / `EscapeJson` (telemetry) are not ported.
 //! * `OnConnect(parent)` opened `LaserSelector`; here [`on_connect`] returns the alive counters when the UI
 //!   must ask, and the UI then calls [`select`].
 //! * The handler is a process-wide static like the C# static class.
@@ -13,7 +13,7 @@ use crate::util::new_guid;
 use chrono::{Local, NaiveDateTime, NaiveTime};
 use lg_base::paths::data_path;
 use lg_base::tools::hires_timer;
-use lg_dotnet::{fmt_double_custom, TimeSpan};
+use lg_dotnet::TimeSpan;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex, MutexGuard};
@@ -26,7 +26,6 @@ pub const DEF_BRAND: &str = "Unknown";
 pub const DEF_MODEL: &str = "Unknown";
 
 const DATE_FMT: &str = "%Y-%m-%dT%H:%M:%S";
-const JSON_DATE_FMT: &str = "%Y-%m-%d %H:%M:%S";
 
 /// `DateTime.Today` (local midnight).
 fn today() -> NaiveDateTime {
@@ -530,72 +529,6 @@ pub fn undeath(selected: &LaserLifeCounter) {
     save_now();
 }
 
-/// `EscapeJson` for strings (`JavaScriptStringEncode(s, true)`).
-///
-/// `s`: text or None (= ""). Returns the quoted, escaped literal.
-pub fn escape_json_str(s: Option<&str>) -> String {
-    let mut out = String::from("\"");
-    for c in s.unwrap_or("").chars() {
-        match c {
-            '\\' => out.push_str("\\\\"),
-            '"' => out.push_str("\\\""),
-            '\'' => out.push_str("\\'"),
-            '\u{8}' => out.push_str("\\b"),
-            '\t' => out.push_str("\\t"),
-            '\n' => out.push_str("\\n"),
-            '\u{c}' => out.push_str("\\f"),
-            '\r' => out.push_str("\\r"),
-            '<' => out.push_str("\\u003c"),
-            '>' => out.push_str("\\u003e"),
-            '&' => out.push_str("\\u0026"),
-            c if (c as u32) < 0x20 || c == '\u{2028}' || c == '\u{2029}' => out.push_str(&format!("\\u{:04x}", c as u32)),
-            c => out.push(c),
-        }
-    }
-    out.push('"');
-    out
-}
-
-/// `EscapeJson` for doubles: quoted `0.000`.
-///
-/// `v`: value (None = 0).
-pub fn escape_json_double(v: Option<f64>) -> String {
-    format!("\"{}\"", fmt_double_custom(v.unwrap_or(0.0), "0.000"))
-}
-
-/// `BuildJson`: payload the C# code posted to the statistics server (never sent by this port).
-///
-/// `tosend`: counters. Returns the JSON-ish text with the exact C# spacing.
-pub fn build_json(tosend: &[LaserLifeCounter]) -> String {
-    let date = |d: &Option<NaiveDateTime>| escape_json_str(d.map(|x| x.format(JSON_DATE_FMT).to_string()).as_deref());
-    let mut sb = String::from("[ ");
-    for (i, llc) in tosend.iter().enumerate() {
-        sb.push_str("{ ");
-        sb.push_str(&format!("\"Guid\": {},", escape_json_str(Some(&llc.guid))));
-        sb.push_str(&format!("\"Name\": {},", escape_json_str(llc.name.as_deref())));
-        sb.push_str(&format!("\"Brand\": {},", escape_json_str(llc.brand.as_deref())));
-        sb.push_str(&format!("\"Model\": {},", escape_json_str(llc.model.as_deref())));
-        sb.push_str(&format!("\"OpticalPower\": {},", escape_json_double(llc.optical_power)));
-        sb.push_str(&format!("\"PurchaseDate\": {},", date(&llc.purchase_date)));
-        sb.push_str(&format!("\"MonitoringDate\": {},", date(&llc.monitoring_date)));
-        sb.push_str(&format!("\"DeathDate\": {},", date(&llc.death_date)));
-        sb.push_str(&format!("\"LastUsage\": {},", date(&llc.last_usage)));
-        sb.push_str(&format!("\"TimeInRun\": {},", escape_json_double(Some(llc.time_in_run.total_hours()))));
-        sb.push_str(&format!("\"TimeUsageNormalizedPower\": {},", escape_json_double(Some(llc.time_usage_normalized_power.total_hours()))));
-        sb.push_str(&format!("\"AveragePowerFactor\": {},", escape_json_double(Some(llc.average_power_factor()))));
-        sb.push_str("\"Classes\": ");
-        sb.push_str("{ ");
-        let n = llc.time_classes.len();
-        for (j, c) in llc.time_classes.iter().enumerate() {
-            sb.push_str(&fmt_double_custom(c.total_hours(), "0.000"));
-            sb.push_str(if j == n - 1 { " } " } else { ", " });
-        }
-        sb.push_str(if i == tosend.len() - 1 { " } " } else { " }, " });
-    }
-    sb.push_str(" ]");
-    sb
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -681,22 +614,6 @@ mod tests {
         compute_laser_time(MacStatus::Idle);
         on_disconnect();
         assert_eq!(get_current_time(), TimeSpan::ZERO);
-    }
-
-    #[test]
-    fn json_builder_matches_csharp_layout() {
-        let mut c = LaserLifeCounter::create_new();
-        c.guid = "g1".into();
-        c.name = Some("A\"b".into());
-        c.optical_power = Some(5.0);
-        c.monitoring_date = chrono::NaiveDate::from_ymd_opt(2024, 3, 5).map(|d| d.and_time(NaiveTime::MIN));
-        let s = build_json(&[c]);
-        assert!(s.starts_with("[ { \"Guid\": \"g1\",\"Name\": \"A\\\"b\",\"Brand\": \"\","), "{s}");
-        assert!(s.contains("\"OpticalPower\": \"5.000\","));
-        assert!(s.contains("\"MonitoringDate\": \"2024-03-05 00:00:00\","));
-        assert!(s.contains("\"PurchaseDate\": \"\","));
-        assert!(s.ends_with("0.000 }  }  ]"), "{s}");
-        assert_eq!(escape_json_str(Some("a<b'")), "\"a\\u003cb\\'\"");
     }
 
     #[test]

@@ -7,7 +7,6 @@ pub mod gallery_tab;
 pub mod generators;
 pub mod legal_disclaimer;
 pub mod license;
-pub mod new_version;
 pub mod save_options;
 pub mod splash;
 pub mod params_dock;

@@ -254,7 +254,7 @@ impl CustomButtonForm {
             if legacy {
                 ui.label(tr("CustomButtonForm.LblCaption.Text"));
             } else if ui.add(egui::Label::new(egui::RichText::new(tr("Strings.MdiIconCaption")).color(th.link_color)).sense(egui::Sense::click())).on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                lg_base::tools::utils::open_link(MDI_URL, "");
+                lg_base::tools::utils::open_link(MDI_URL);
             }
             ui.add(TextInput::new(&mut self.caption).width(330.0));
             ui.end_row();
@@ -276,7 +276,7 @@ impl CustomButtonForm {
         ui.add_space(6.0);
         ui.add(egui::Label::new(tr("CustomButtonForm.LblDescription.Text").replace(HELP_URL, "")).wrap());
         if ui.link(HELP_URL).clicked() {
-            lg_base::tools::utils::open_link(HELP_URL, "");
+            lg_base::tools::utils::open_link(HELP_URL);
         }
         ui.add_space(6.0);
         // buttons: Cancel, Create/Save (right aligned)

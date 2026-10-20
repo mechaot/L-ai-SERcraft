@@ -13,50 +13,50 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class OnlineVersion` | DONE | crates/services/src/github.rs |
-| `field html_url` | DONE | crates/services/src/github.rs |
-| `field tag_name` | DONE | crates/services/src/github.rs |
-| `field name` | DONE | crates/services/src/github.rs |
-| `field prerelease` | DONE | crates/services/src/github.rs |
-| `field assets` | DONE | crates/services/src/github.rs |
-| `class VersionAsset` | DONE | crates/services/src/github.rs |
-| `field browser_download_url` | DONE | crates/services/src/github.rs |
-| `property Url` | DONE | crates/services/src/github.rs |
-| `property IsValid` | DONE | crates/services/src/github.rs |
-| `property IsPreRelease` | DONE | crates/services/src/github.rs |
-| `property VersionName` | DONE | crates/services/src/github.rs |
-| `method ToString` | DONE | crates/services/src/github.rs |
+| `class OnlineVersion` | N/A | removed: no update check / phone-home |
+| `field html_url` | N/A | removed: no update check / phone-home |
+| `field tag_name` | N/A | removed: no update check / phone-home |
+| `field name` | N/A | removed: no update check / phone-home |
+| `field prerelease` | N/A | removed: no update check / phone-home |
+| `field assets` | N/A | removed: no update check / phone-home |
+| `class VersionAsset` | N/A | removed: no update check / phone-home |
+| `field browser_download_url` | N/A | removed: no update check / phone-home |
+| `property Url` | N/A | removed: no update check / phone-home |
+| `property IsValid` | N/A | removed: no update check / phone-home |
+| `property IsPreRelease` | N/A | removed: no update check / phone-home |
+| `property VersionName` | N/A | removed: no update check / phone-home |
+| `method ToString` | N/A | removed: no update check / phone-home |
 | `delegate void` | N/A | event of the disabled update check |
 | `field NewVersion` | N/A | event of the disabled update check |
 | `field Updating` | N/A | update disabled |
 | `method CheckVersion` | N/A | network update check disabled (PLAN section 6); check_version() returns false |
 | `method AsyncCheckVersion` | N/A | network disabled (PLAN section 6) |
 | `method AsyncDownloadDB` | N/A | network disabled (PLAN section 6) |
-| `method CheckVersionFromSite` | DONE | crates/services/src/github.rs select_update (selection only, no download) |
-| `property installer` | DONE | crates/services/src/github.rs |
+| `method CheckVersionFromSite` | N/A | removed: no update check / phone-home |
+| `property installer` | N/A | removed: no update check / phone-home |
 | `field client` | N/A | update disabled |
 | `method DownloadUpdateA` | N/A | update disabled |
 | `method disposeclient` | N/A | update disabled |
 | `method ApplyUpdateEXE` | N/A | Windows installer, update disabled |
-| `method InitUpdate` | DONE | crates/services/src/github.rs init_flags (CleanupOldVersion N/A) |
-| `method InitFlags` | DONE | crates/services/src/github.rs |
+| `method InitUpdate` | N/A | removed: no update check / phone-home |
+| `method InitFlags` | N/A | removed: no update check / phone-home |
 | `method CleanupOldVersion` | N/A | deletes *.todelete below the cwd; Windows installer leftovers |
 
 ## `AutoUpdate/NewVersionForm.cs` (WP-U4)
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class NewVersionForm` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `field mDownloadUrl` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `field mPageUrl` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `field mClosing` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `ctor NewVersionForm` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method CreateAndShowDialog` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method BtnUpdate_Click` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method dprog` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method dcomplete` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method NewVersionForm_FormClosing` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
-| `method BtnWebsite_Click` | DONE | app/src/forms/new_version.rs (UI only; update check/download disabled (PLAN §6), Download! shows info box) |
+| `class NewVersionForm` | N/A | removed: no update check / phone-home |
+| `field mDownloadUrl` | N/A | removed: no update check / phone-home |
+| `field mPageUrl` | N/A | removed: no update check / phone-home |
+| `field mClosing` | N/A | removed: no update check / phone-home |
+| `ctor NewVersionForm` | N/A | removed: no update check / phone-home |
+| `method CreateAndShowDialog` | N/A | removed: no update check / phone-home |
+| `method BtnUpdate_Click` | N/A | removed: no update check / phone-home |
+| `method dprog` | N/A | removed: no update check / phone-home |
+| `method dcomplete` | N/A | removed: no update check / phone-home |
+| `method NewVersionForm_FormClosing` | N/A | removed: no update check / phone-home |
+| `method BtnWebsite_Click` | N/A | removed: no update check / phone-home |
 
 ## `Autotrace/Autotrace.cs` (WP-C2)
 
@@ -3488,7 +3488,7 @@ Vendored libraries are not listed (see PLAN.md §6).
 | `method EnableTest` | DONE | app/src/forms/dialogs/settings_form.rs |
 | `method BtnTestNotification_Click` | DONE | app/src/forms/dialogs/settings_form.rs |
 | `method BtnTelegNoteInfo_Click` | DONE | app/src/forms/dialogs/settings_form.rs |
-| `method CbTelegramNotification_CheckedChanged` | DONE | app/src/forms/dialogs/settings_form.rs |
+| `method CbTelegramNotification_CheckedChanged` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
 | `method BtnRenderingMode_Click` | DONE | app/src/forms/dialogs/settings_form.rs |
 
 ## `SincroStart.cs` (WP-C2)
@@ -3833,12 +3833,12 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class Telegram` | DONE | crates/base/src/telegram.rs |
-| `method NotifyEvent` | DONE | crates/base/src/telegram.rs |
-| `method NotifyEvent` | DONE | crates/base/src/telegram.rs |
-| `method InternalNotifyEvent` | DONE | crates/base/src/telegram.rs |
-| `class MyWebClient` | N/A | ureq agent with 5 s global timeout |
-| `method GetWebRequest` | N/A | ureq agent with 5 s global timeout |
+| `class Telegram` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
+| `method NotifyEvent` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
+| `method NotifyEvent` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
+| `method InternalNotifyEvent` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
+| `class MyWebClient` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
+| `method GetWebRequest` | N/A | removed: no telemetry / phone-home (Telegram notifier deleted) |
 
 ## `Tools/Application.cs` (WP-U4)
 
@@ -3883,10 +3883,10 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class Protector` | N/A | DPAPI not available off Windows; bot code stored as plain text in settings (file mode 0600), see crates/base/src/telegram.rs |
-| `field Scope` | N/A | DPAPI not available off Windows; bot code stored as plain text in settings (file mode 0600), see crates/base/src/telegram.rs |
-| `method Encrypt` | N/A | DPAPI not available off Windows; bot code stored as plain text in settings (file mode 0600), see crates/base/src/telegram.rs |
-| `method Decrypt` | N/A | DPAPI not available off Windows; bot code stored as plain text in settings (file mode 0600), see crates/base/src/telegram.rs |
+| `class Protector` | N/A | only protected the Telegram bot code; Telegram removed |
+| `field Scope` | N/A | only protected the Telegram bot code; Telegram removed |
+| `method Encrypt` | N/A | only protected the Telegram bot code; Telegram removed |
+| `method Decrypt` | N/A | only protected the Telegram bot code; Telegram removed |
 
 ## `Tools/DoubleBufferBmp.cs` (WP-U4)
 
@@ -4038,16 +4038,16 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class JSONParser` | DONE | crates/services/src/json.rs |
+| `class JSONParser` | N/A | removed: no update check / phone-home |
 | `field splitArrayPool` | N/A | allocation cache |
 | `field stringBuilder` | N/A | allocation cache |
 | `field fieldInfoCache` | N/A | reflection cache; typed parse only for OnlineVersion |
 | `field propertyInfoCache` | N/A | reflection cache; typed parse only for OnlineVersion |
-| `method AppendUntilStringEnd` | DONE | crates/services/src/json.rs |
-| `method Split` | DONE | crates/services/src/json.rs |
-| `method ParseValue` | DONE | crates/services/src/json.rs |
-| `method ParseAnonymousValue` | DONE | crates/services/src/json.rs |
-| `method ParseObject` | DONE | crates/services/src/json.rs split_object + github.rs parse_online_version (reflection replaced by typed parse) |
+| `method AppendUntilStringEnd` | N/A | removed: no update check / phone-home |
+| `method Split` | N/A | removed: no update check / phone-home |
+| `method ParseValue` | N/A | removed: no update check / phone-home |
+| `method ParseAnonymousValue` | N/A | removed: no update check / phone-home |
+| `method ParseObject` | N/A | removed: no update check / phone-home |
 
 ## `Tools/MathHelper.cs` (WP-C1)
 
@@ -4313,15 +4313,15 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 | member | status | Rust location / reason |
 |---|---|---|
-| `class UrlManager` | DONE | crates/base/src/url_manager.rs |
-| `field UpdateMain` | DONE | crates/base/src/url_manager.rs |
-| `field UpdateMirror` | DONE | crates/base/src/url_manager.rs |
-| `field Statistics` | DONE | crates/base/src/url_manager.rs |
-| `field TelegramHandler` | DONE | crates/base/src/url_manager.rs |
-| `field TelegramServiceKey` | DONE | crates/base/src/url_manager.rs |
-| `field UpdateMaterialDB` | DONE | crates/base/src/url_manager.rs |
-| `field DownloadMaterialDB` | DONE | crates/base/src/url_manager.rs |
-| `field LaserStatistics` | DONE | crates/base/src/url_manager.rs |
+| `class UrlManager` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field UpdateMain` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field UpdateMirror` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field Statistics` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field TelegramHandler` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field TelegramServiceKey` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field UpdateMaterialDB` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field DownloadMaterialDB` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
+| `field LaserStatistics` | N/A | removed: only held phone-home endpoints (update, statistics, Telegram, material DB download) |
 
 ## `UsageStats.cs` (WP-C2)
 

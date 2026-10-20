@@ -1,4 +1,4 @@
-//! `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound, telegram, URL manager.
+//! `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound.
 //!
 //! Foundation crate of the LaserGRBL Rust port (WP-C1a).
 
@@ -9,5 +9,3 @@ pub mod nrbf;
 pub mod tools;
 pub mod csv;
 pub mod sound;
-pub mod telegram;
-pub mod url_manager;

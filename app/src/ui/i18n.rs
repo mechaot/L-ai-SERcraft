@@ -250,7 +250,7 @@ mod tests {
         assert_eq!(it.get("No.Such.Key"), "No.Such.Key");
         let en = Catalog::load("en");
         assert_eq!(en.get("MainForm.MnConnect.Text"), "&Connect");
-        assert_ne!(it.get("AutoUpdate.NewVersionForm.BtnCancel.Text"), "AutoUpdate.NewVersionForm.BtnCancel.Text");
+        assert_eq!(it.get("SaveOptionForm.BtnSave.Text"), "Salva");
     }
 
     #[test]

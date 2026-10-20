@@ -130,7 +130,7 @@ impl StatusBar {
                 let (bg, sfg) = status_colors(status, &th);
                 let r = label(ui, crate::ui::tr(&format!("Strings.MacStatus{}", lasergrbl_core::NamedEnum::variant_name(&status))), Some(bg), sfg, false);
                 if r.double_clicked() {
-                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/machine-status/", "");
+                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/machine-status/");
                 }
                 label(ui, tr("MainForm.TTLStatus.Text"), None, fg, true);
                 if core.support_override() {

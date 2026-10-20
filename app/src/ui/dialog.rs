@@ -207,7 +207,7 @@ impl MessageBox {
                 // Help sits right of the answer buttons and keeps the box open
                 if let Some(url) = &help {
                     if ui.add_sized(Vec2::new(80.0, 24.0), egui::Button::new("Help")).clicked() {
-                        lg_base::tools::utils::open_link(url, "");
+                        lg_base::tools::utils::open_link(url);
                     }
                 }
                 for (i, b) in list.iter().enumerate().rev() {

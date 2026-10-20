@@ -16,7 +16,7 @@ config (139 versions), expr (2233 cases) + custom_code, hershey (all glyphs), sv
 raster (216 ops), base (NRBF, settings sample, TimeSpan), services (hotkeys, materials, project files).
 NOT covered by goldens: raster-filling branch of `LoadImagePotrace` (smoke only, GDI+ resampling), `SaveGCODE`,
 `LoadFile` text decoding, `DrawOnGraphics`, `LoadImageCenterline`, everything in `ImageProcessor`, custom
-button logic, Json, GitHub selection, wifi discovery, flash/autotrace runners, Settings/Logger/Serializer I/O.
+button logic, wifi discovery, flash/autotrace runners, Settings/Logger/Serializer I/O.
 
 ## 1. Verdict per C# file
 
@@ -32,7 +32,8 @@ button logic, Json, GitHub selection, wifi discovery, flash/autotrace runners, S
 | `Tools/MobileAverageCalculator.cs` | base/tools/mobile_average.rs | OK |
 | `Tools/WordWrap.cs`, `RetainedSetting.cs` | base/tools/* | OK |
 | `Tools/Serializer.cs` | base/nrbf/serializer.rs | FIXED: global lock; docs/rows wrong about the password (R3) |
-| `Sound/SoundEvent.cs`, `Telegram.cs`, `UrlManager.cs` | base/sound.rs, telegram.rs, url_manager.rs | OK (R4) |
+| `Sound/SoundEvent.cs` | base/sound.rs | OK (R4) |
+| `Telegram.cs`, `UrlManager.cs` | removed | intentional: no telemetry or phone-home of any kind (no HTTP client linked) |
 | `GrblCommand.cs` | gcode/command.rs, csvd.rs | OK |
 | `StateBuilder.cs` | gcode/state_builder.rs | OK |
 | `GrblFile.cs` (+ `ProgramRange`) | gcode/grbl_file.rs, l2l.rs, vector.rs, generators.rs, optimize.rs, draw.rs, program_range.rs | FIXED: `LoadFile` text decoding (R5 residual) |
@@ -49,7 +50,7 @@ button logic, Json, GitHub selection, wifi discovery, flash/autotrace runners, S
 | `PSHelper/MaterialDB.cs` | services/material_db.rs | OK (R10) |
 | `Tools/Project.cs` | services/project.rs | OK (R11) |
 | `Tools/Json.cs` | services/json.rs | FIXED: `\uXXXX` hex parsing accepted a sign |
-| `AutoUpdate/GitHub.cs` | services/github.rs | OK (network N/A by PLAN section 6) |
+| `AutoUpdate/GitHub.cs`, `Tools/Json.cs` | removed | intentional: no update check (Json reader was only used by it) |
 | `Autotrace/Autotrace.cs` | services/autotrace.rs | OK (R12) |
 | `WiFiDiscovery/IPAddressHelper.cs` (+ non-UI of `DiscoveryForm.cs`) | services/wifi_discovery.rs | OK (R13) |
 | `Firmware/FlashGrbl.cs` (logic) | services/flash_grbl.rs | OK (R14) |

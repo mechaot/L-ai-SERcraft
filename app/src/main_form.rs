@@ -310,7 +310,7 @@ impl MainForm {
                     MsgTag::UnlockStuck,
                     MessageBox::new(tr("Strings.WarnBufferStuckUnlockText"), tr("Strings.WarnBufferStuckUnlockTitle")).buttons(MessageBoxButtons::OkCancel).icon(MessageBoxIcon::Information),
                 ),
-                StatusAction::LaserUsage => self.overlays.push_back(Overlay::LaserUsage(LaserUsage::open())),
+                StatusAction::LaserUsage => self.overlays.push_back(Overlay::LaserUsage(Box::new(LaserUsage::open()))),
             }
         }
         if let Some(append) = self.want_open.take() {
@@ -948,7 +948,7 @@ impl MainForm {
             MenuAction::GrblConfig => self.overlays.push_back(Overlay::GrblConfig(GrblConfig::open(&core))),
             MenuAction::Settings => self.overlays.push_back(Overlay::Settings(SettingsForm::open(&core))),
             MenuAction::MaterialDb => self.overlays.push_back(Overlay::Material(MaterialEditor::new(default_db()))),
-            MenuAction::LaserUsage => self.overlays.push_back(Overlay::LaserUsage(LaserUsage::open())),
+            MenuAction::LaserUsage => self.overlays.push_back(Overlay::LaserUsage(Box::new(LaserUsage::open()))),
             MenuAction::Hotkeys => self.overlays.push_back(Overlay::Hotkeys(hotkey_manager_form::HotkeyManagerForm::open(&self.state.hotkeys))),
             MenuAction::Exit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
             MenuAction::FileOpen => {
@@ -1011,7 +1011,7 @@ impl MainForm {
                 }
             }
             MenuAction::ConfigureWifi => self.show_wifi_config(),
-            MenuAction::OpenLink(u) => lg_base::tools::utils::open_link(u, ""),
+            MenuAction::OpenLink(u) => lg_base::tools::utils::open_link(u),
             MenuAction::OpenSessionLog => {
                 if lg_base::logger::exist_log() {
                     lg_base::logger::show_log();
@@ -1100,7 +1100,7 @@ impl MainForm {
                 Actions::SaveFile => self.pending_save = Some(SaveOptions { header: false, footer: false, between: false, cycles: 1, use_lf_line_endings: false }),
                 Actions::ExecuteFile => self.request_run(),
                 Actions::AbortFile => core.abort_program(),
-                Actions::HelpOnline => lg_base::tools::utils::open_link("https://lasergrbl.com/usage/", ""),
+                Actions::HelpOnline => lg_base::tools::utils::open_link("https://lasergrbl.com/usage/"),
                 Actions::AutoSizeDrawing => core.auto_size_drawing(),
                 Actions::ZoomInDrawing => core.zoom_in_drawing(),
                 Actions::ZoomOutDrawing => core.zoom_out_drawing(),

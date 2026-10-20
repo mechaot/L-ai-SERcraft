@@ -325,7 +325,7 @@ impl ConvertSizeForm {
                 }
                 ui.label("");
                 if ui.add(ImageButton::new("mdi-information-slab-box").size(Vec2::splat(17.0))).on_hover_text(tr(&format!("{P}.BtnOnOffInfo.ToolTip"))).clicked() {
-                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#laser-modes", "");
+                    lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#laser-modes");
                 }
                 ui.end_row();
                 if self.support_pwm {
@@ -338,7 +338,7 @@ impl ConvertSizeForm {
                     }
                     ui.label(self.perc_text(self.min_power));
                     if ui.add(ImageButton::new("mdi-information-slab-box").size(Vec2::splat(17.0))).on_hover_text(tr(&format!("{P}.BtnModulationInfo.ToolTip"))).clicked() {
-                        lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#power-modulation", "");
+                        lg_base::tools::utils::open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#power-modulation");
                     }
                     ui.end_row();
                     ui.label(tr_plain(&format!("{P}.LblSmax.Text")));
