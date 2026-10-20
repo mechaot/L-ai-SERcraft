@@ -5,6 +5,7 @@
 //! [`DisplayListLink`] that the commands share: `set_result` / `clear_result` bump its generation and
 //! the panel recolors only that chunk (C# `Object3DDisplayList.Invalidate`).
 
+use std::ops::Range;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
@@ -196,10 +197,19 @@ pub fn status_color(status: CommandStatus, colors: &JobColors, base: Rgb) -> Rgb
     }
 }
 
+/// Segment color that draws nothing (premultiplied blend: rgb and alpha are 0).
+pub const HIDDEN_RGBA: [u8; 4] = [0, 0, 0, 0];
+
+/// Is command `cmd` inside one of `hidden`. `hidden`: ranges. `cmd`: command index. Returns bool.
+fn is_hidden(hidden: &[Range<u32>], cmd: u32) -> bool {
+    hidden.iter().any(|r| r.contains(&cmd))
+}
+
 /// Recolor one on-layer chunk from the command states (C# `Grbl3D.Invalidate` per display list).
 ///
 /// `chunk`: chunk to update. `file`: program (read). `colors`: palette. `show_executed`: use status colors.
-pub fn recolor_chunk(chunk: &mut Chunk, file: &GrblFile, colors: &JobColors, show_executed: bool) {
+/// `hidden`: command ranges that are not drawn (alpha 0).
+pub fn recolor_chunk(chunk: &mut Chunk, file: &GrblFile, colors: &JobColors, show_executed: bool, hidden: &[Range<u32>]) {
     // read generation first so a later invalidation is not lost
     let generation = chunk.link.generation();
     let cmds = file.commands();
@@ -212,7 +222,7 @@ pub fn recolor_chunk(chunk: &mut Chunk, file: &GrblFile, colors: &JobColors, sho
         } else {
             colors.laser_power
         };
-        chunk.segs[i].rgba = blend(colors.background, base, chunk.intensity[i]);
+        chunk.segs[i].rgba = if is_hidden(hidden, chunk.cmd[i]) { HIDDEN_RGBA } else { blend(colors.background, base, chunk.intensity[i]) };
     }
     chunk.seen_gen = generation;
     chunk.version += 1;
@@ -220,10 +230,10 @@ pub fn recolor_chunk(chunk: &mut Chunk, file: &GrblFile, colors: &JobColors, sho
 
 /// Recolor an off-layer chunk (no status coloring).
 ///
-/// `chunk`: chunk. `colors`: palette.
-pub fn recolor_off_chunk(chunk: &mut Chunk, colors: &JobColors) {
+/// `chunk`: chunk. `colors`: palette. `hidden`: command ranges that are not drawn (alpha 0).
+pub fn recolor_off_chunk(chunk: &mut Chunk, colors: &JobColors, hidden: &[Range<u32>]) {
     for i in 0..chunk.segs.len() {
-        chunk.segs[i].rgba = blend(colors.background, colors.other_movement, chunk.intensity[i]);
+        chunk.segs[i].rgba = if is_hidden(hidden, chunk.cmd[i]) { HIDDEN_RGBA } else { blend(colors.background, colors.other_movement, chunk.intensity[i]) };
     }
     chunk.version += 1;
 }
@@ -428,6 +438,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::single_range_in_vec_init)]
     fn small_build_and_invalidate() {
         let file = raster_file(5000);
         let shared = SceneShared::new(1);
@@ -445,7 +456,18 @@ mod tests {
         let cols = colors();
         let ch = &mut s.on.chunks[0];
         ch.intensity[0] = 255;
-        recolor_chunk(ch, &f, &cols, true);
+        recolor_chunk(ch, &f, &cols, true, &[]);
+        let first = ch.segs[0].rgba;
+        let cmd0 = ch.cmd[0];
+        recolor_chunk(ch, &f, &cols, true, &[cmd0..cmd0 + 1]);
+        assert_eq!(ch.segs[0].rgba, HIDDEN_RGBA);
+        // only segments of that command vanish
+        for i in 0..ch.segs.len() {
+            assert_eq!(ch.segs[i].rgba == HIDDEN_RGBA, ch.cmd[i] == cmd0);
+        }
+        recolor_chunk(ch, &f, &cols, true, &[]);
+        assert_eq!(ch.segs[0].rgba, first);
+        recolor_chunk(ch, &f, &cols, true, &[]);
         assert_eq!(ch.segs[0].rgba, [0, 200, 0, 255]);
     }
 

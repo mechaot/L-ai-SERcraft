@@ -94,6 +94,31 @@ pub struct Hotkeys {
     pub zoom_out: String,
 }
 
+/// Layer overlay for the preview: which commands to highlight and which to hide.
+///
+/// Ranges are command indices in the loaded program (`start..end`).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct LayerView {
+    /// Bumped on every change (selection, enable toggle, new ranges); panels re-apply on change.
+    pub revision: u64,
+    /// Selected layer (drawn wide red), only set when the SVG has more than one layer.
+    pub highlight: Option<std::ops::Range<u32>>,
+    /// Layers disabled by the user (not drawn).
+    pub hidden: Vec<std::ops::Range<u32>>,
+}
+
+impl LayerView {
+    /// Is command `cmd` inside a hidden range. `cmd`: command index. Returns bool.
+    pub fn is_hidden(&self, cmd: u32) -> bool {
+        self.hidden.iter().any(|r| r.contains(&cmd))
+    }
+
+    /// Is command `cmd` inside the highlight range. `cmd`: command index. Returns bool.
+    pub fn is_highlighted(&self, cmd: u32) -> bool {
+        self.highlight.as_ref().is_some_and(|r| r.contains(&cmd))
+    }
+}
+
 /// Everything the panels read each frame.
 #[derive(Clone)]
 pub struct PreviewInput {
@@ -125,6 +150,8 @@ pub struct PreviewInput {
     /// (use [`PreviewInput::table_size_from_config`]).
     pub machine_area: Option<(f32, f32)>,
     pub hotkeys: Hotkeys,
+    /// Layer highlight / hide overlay (None = off).
+    pub layer_view: Option<LayerView>,
 }
 
 impl Default for PreviewInput {
@@ -147,6 +174,7 @@ impl Default for PreviewInput {
             enable_z_jog: false,
             machine_area: None,
             hotkeys: Hotkeys::default(),
+            layer_view: None,
         }
     }
 }

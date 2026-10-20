@@ -30,6 +30,8 @@ pub struct NumericOutput<T> {
 struct EditState {
     text: String,
     old: String,
+    /// Had focus at the end of the last frame (detects focus taken by a widget drawn later).
+    editing: bool,
 }
 
 /// Filter typed characters (`AcceptKeys`).
@@ -56,6 +58,13 @@ fn edit_box(
     let mut began = false;
     let mut ended = None;
     let mut typing = None;
+    // focus moved to a later widget last frame: commit the buffer before it is reset
+    if st.editing && !had_focus {
+        st.editing = false;
+        if enabled {
+            ended = Some(st.text.clone());
+        }
+    }
     let resp = egui::Frame::new()
         .stroke(Stroke::new(1.0, border))
         .fill(th.log_back_color)
@@ -99,9 +108,11 @@ fn edit_box(
                 ui.memory_mut(|m| m.surrender_focus(id));
             }
         }
-        if had_focus && !ui.memory(|m| m.has_focus(id)) {
+        let still = ui.memory(|m| m.has_focus(id));
+        if had_focus && !still {
             ended = Some(st.text.clone());
         }
+        st.editing = still;
     }
     ui.data_mut(|d| d.insert_temp(id, st));
     (resp, began, ended, typing)
@@ -464,6 +475,42 @@ impl Widget for NumericUpDown<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One headless frame with two integer inputs.
+    fn two_fields(ctx: &egui::Context, a: &mut i32, b: &mut i32, events: Vec<egui::Event>) {
+        let ri = egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(300.0, 200.0))), events, ..Default::default() };
+        let mut out = ctx.run_ui(ri, |ui| {
+            IntegerInputRanged::new(a).range(0, 9999).id(Id::unique("num-a")).show(ui);
+            IntegerInputRanged::new(b).range(0, 9999).id(Id::unique("num-b")).show(ui);
+        });
+        out.textures_delta.clear();
+    }
+
+    /// Mouse press + release at `p`.
+    fn click(p: egui::Pos2) -> [Vec<egui::Event>; 2] {
+        let btn = |pressed| egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE };
+        [vec![egui::Event::PointerMoved(p), btn(true)], vec![btn(false)]]
+    }
+
+    #[test]
+    fn edit_commits_when_focus_jumps_to_next_field() {
+        let ctx = egui::Context::default();
+        let (mut a, mut b) = (1000, 5);
+        two_fields(&ctx, &mut a, &mut b, vec![]);
+        let ra = ctx.read_response(Id::unique("num-a")).expect("a").rect;
+        let rb = ctx.read_response(Id::unique("num-b")).expect("b").rect;
+        for ev in click(ra.center()) {
+            two_fields(&ctx, &mut a, &mut b, ev);
+        }
+        let all = egui::Event::Key { key: Key::A, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
+        two_fields(&ctx, &mut a, &mut b, vec![all, egui::Event::Text("1500".into())]);
+        // click straight into the second field: first one must keep its value
+        for ev in click(rb.center()) {
+            two_fields(&ctx, &mut a, &mut b, ev);
+        }
+        two_fields(&ctx, &mut a, &mut b, vec![]);
+        assert_eq!((a, b), (1500, 5));
+    }
 
     #[test]
     fn parse_comma() {

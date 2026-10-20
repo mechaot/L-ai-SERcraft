@@ -12,6 +12,8 @@ use lg_dotnet::{decimal_to_f64, f64_to_i32, fmt_decimal, Decimal};
 use lg_potrace::{export_to_gcode, export_to_gdiplus, potrace_trace, FillConf, PotraceParams};
 use lg_raster::{resize_image, rotate_flip, InterpolationMode, RotateFlipType};
 use lg_svg2gcode::{ColorFilter, GCodeFromSvg, PointF, SvgConvOptions};
+pub use lg_svg2gcode::{LayerInfo, LayerParams, list_layers_from_file};
+use std::ops::Range;
 use std::sync::OnceLock;
 
 /// C# `gcodeRelated.firmwareType`: static initialiser, read once per process.
@@ -123,6 +125,50 @@ impl GrblFile {
         let elapsed = lg_base::tools::hires_timer::total_milliseconds() - start;
         self.rise_on_file_loaded(filename, elapsed);
         Ok(())
+    }
+
+    /// Layered variant of [`Self::load_imported_svg`]: per-layer feed, power, passes, enable and filter.
+    ///
+    /// `filename`: SVG file. `append`: keep old commands. `layers`: params aligned with
+    /// `list_layers_from_file` order (empty = plain conversion). Returns, per layer, the command index
+    /// range it produced in the list (absolute, `None` = disabled layer).
+    pub fn load_imported_svg_layered(&mut self, filename: &str, append: bool, layers: &[LayerParams]) -> GResult<Vec<Option<Range<u32>>>> {
+        self.rise_on_file_loading(filename);
+        let start = lg_base::tools::hires_timer::total_milliseconds();
+        if !append {
+            self.clear_list();
+        }
+        self.range.reset_range();
+
+        use lg_base::settings::get;
+        let mut converter = GCodeFromSvg::new();
+        converter.gcode_xy_feed = get("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1000i32) as f32;
+        converter.use_legacy_bezier = !get("Vector.UseSmartBezier", true);
+        let (gcode, byte_ranges) = converter
+            .convert_from_file_layered(std::path::Path::new(filename), &svg_conv_options(), layers)
+            .map_err(|e| GcodeError::Other(e.to_string()))?;
+
+        // feed text slice by slice, so each layer gets an exact command range
+        let mut out = Vec::with_capacity(byte_ranges.len());
+        let mut cursor = 0usize;
+        for br in &byte_ranges {
+            match br {
+                Some(r) if r.start >= cursor && r.end <= gcode.len() => {
+                    self.add_text_lines(&gcode[cursor..r.start]);
+                    let a = self.list.len() as u32;
+                    self.add_text_lines(&gcode[r.clone()]);
+                    out.push(Some(a..self.list.len() as u32));
+                    cursor = r.end;
+                }
+                _ => out.push(None),
+            }
+        }
+        self.add_text_lines(&gcode[cursor..]);
+
+        self.analyze()?;
+        let elapsed = lg_base::tools::hires_timer::total_milliseconds() - start;
+        self.rise_on_file_loaded(filename, elapsed);
+        Ok(out)
     }
 
     /// C# `LoadImagePotrace`. Flips `bmp` vertically in place; may set `c.vectorfilling`.

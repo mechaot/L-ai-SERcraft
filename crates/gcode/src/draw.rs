@@ -80,13 +80,16 @@ impl Transform2D {
     }
 }
 
+/// `cmd` value of primitives that do not come from a program command.
+pub const NO_CMD: u32 = u32::MAX;
+
 /// One drawing primitive, in world coordinates (y up, mm).
 #[derive(Debug, Clone, PartialEq)]
 pub enum DrawPrim {
-    /// `g.DrawLine`.
-    Line { x1: f32, y1: f32, x2: f32, y2: f32, pen: Pen },
+    /// `g.DrawLine`. `cmd`: index of the program command ([`NO_CMD`] for ruler/range lines).
+    Line { x1: f32, y1: f32, x2: f32, y2: f32, pen: Pen, cmd: u32 },
     /// `g.DrawArc` (angles in degrees, GDI convention: clockwise positive in device space).
-    Arc { x: f32, y: f32, w: f32, h: f32, start_deg: f32, sweep_deg: f32, pen: Pen },
+    Arc { x: f32, y: f32, w: f32, h: f32, start_deg: f32, sweep_deg: f32, pen: Pen, cmd: u32 },
     /// `DrawString` through `DrawRotatedTextAt`: the text is drawn in the y-flipped world
     /// (`ScaleTransform(1,-1)` applied before), at `(x, y)` rotated by `rotation_deg`, with a
     /// monospace font of `em_size` world units (8 / zoom).
@@ -137,7 +140,7 @@ impl GrblFile {
     /// C# `DrawJobPreview`: the program as lines and arcs.
     fn draw_job_preview(&self, prims: &mut Vec<DrawPrim>, spb: &mut StatePositionBuilder, zoom: f32) -> GResult<()> {
         let mut firstline = true;
-        for orig in &self.list {
+        for (cmd_idx, orig) in self.list.iter().enumerate() {
             // work on a copy: the C# build/delete dance leaves the command unchanged anyway
             let mut cmd = orig.clone();
             cmd.build_helper();
@@ -167,6 +170,7 @@ impl GrblFile {
                         x2: decimal_to_f32(spb.x().number()),
                         y2: decimal_to_f32(spb.y().number()),
                         pen,
+                        cmd: cmd_idx as u32,
                     });
                 } else if spb.g2g3() && cmd.is_arc_movement() && pen.alpha > 0 {
                     let ah = spb.get_arc_helper(&cmd)?;
@@ -179,6 +183,7 @@ impl GrblFile {
                             start_deg: (ah.start_angle * 180.0 / std::f64::consts::PI) as f32,
                             sweep_deg: (ah.angular_width * 180.0 / std::f64::consts::PI) as f32,
                             pen,
+                            cmd: cmd_idx as u32,
                         });
                     }
                 }
@@ -231,18 +236,18 @@ impl GrblFile {
 
         // cartesian plane
         let p = pen(PreviewColor::Text, None);
-        prims.push(DrawPrim::Line { x1: -w_size.0, y1: 0.0, x2: w_size.0, y2: 0.0, pen: p.clone() });
-        prims.push(DrawPrim::Line { x1: 0.0, y1: -w_size.1, x2: 0.0, y2: w_size.1, pen: p });
+        prims.push(DrawPrim::Line { x1: -w_size.0, y1: 0.0, x2: w_size.0, y2: 0.0, pen: p.clone(), cmd: NO_CMD });
+        prims.push(DrawPrim::Line { x1: 0.0, y1: -w_size.1, x2: 0.0, y2: w_size.1, pen: p, cmd: NO_CMD });
 
         // job range
         if dr.valid_range() {
             let p = pen(PreviewColor::JobRange, Some(vec![1.0 / zoom, 2.0 / zoom]));
             let (xmin, xmax) = (decimal_to_f32(dr.x.min), decimal_to_f32(dr.x.max));
             let (ymin, ymax) = (decimal_to_f32(dr.y.min), decimal_to_f32(dr.y.max));
-            prims.push(DrawPrim::Line { x1: -w_size.0, y1: ymin, x2: w_size.0, y2: ymin, pen: p.clone() });
-            prims.push(DrawPrim::Line { x1: -w_size.0, y1: ymax, x2: w_size.0, y2: ymax, pen: p.clone() });
-            prims.push(DrawPrim::Line { x1: xmin, y1: -w_size.1, x2: xmin, y2: w_size.1, pen: p.clone() });
-            prims.push(DrawPrim::Line { x1: xmax, y1: -w_size.1, x2: xmax, y2: w_size.1, pen: p });
+            prims.push(DrawPrim::Line { x1: -w_size.0, y1: ymin, x2: w_size.0, y2: ymin, pen: p.clone(), cmd: NO_CMD });
+            prims.push(DrawPrim::Line { x1: -w_size.0, y1: ymax, x2: w_size.0, y2: ymax, pen: p.clone(), cmd: NO_CMD });
+            prims.push(DrawPrim::Line { x1: xmin, y1: -w_size.1, x2: xmin, y2: w_size.1, pen: p.clone(), cmd: NO_CMD });
+            prims.push(DrawPrim::Line { x1: xmax, y1: -w_size.1, x2: xmax, y2: w_size.1, pen: p, cmd: NO_CMD });
 
             let q = self.quadrant();
             let right = q == CartesianQuadrant::I || q == CartesianQuadrant::IV;
@@ -273,12 +278,12 @@ impl GrblFile {
         let h3 = (if top { 1.0 } else { -1.0 }) / zoom as f64;
         let mut d = hscale.first_small() as f32;
         while d < w_size.0 {
-            prims.push(DrawPrim::Line { x1: d, y1: 0.0, x2: d, y2: h1 as f32, pen: p.clone() });
+            prims.push(DrawPrim::Line { x1: d, y1: 0.0, x2: d, y2: h1 as f32, pen: p.clone(), cmd: NO_CMD });
             d += hscale.small_step() as f32;
         }
         let mut d = hscale.first_big() as f32;
         while d < w_size.0 {
-            prims.push(DrawPrim::Line { x1: d, y1: 0.0, x2: d, y2: h2 as f32, pen: p.clone() });
+            prims.push(DrawPrim::Line { x1: d, y1: 0.0, x2: d, y2: h2 as f32, pen: p.clone(), cmd: NO_CMD });
             d += hscale.big_step() as f32;
         }
         let mut d = hscale.first_big() as f32;
@@ -294,12 +299,12 @@ impl GrblFile {
         let v3 = (if right { 2.5 } else { 0.0 }) / zoom as f64;
         let mut d = vscale.first_small() as f32;
         while d < w_size.1 {
-            prims.push(DrawPrim::Line { x1: 0.0, y1: d, x2: v1 as f32, y2: d, pen: p.clone() });
+            prims.push(DrawPrim::Line { x1: 0.0, y1: d, x2: v1 as f32, y2: d, pen: p.clone(), cmd: NO_CMD });
             d += vscale.small_step() as f32;
         }
         let mut d = vscale.first_big() as f32;
         while d < w_size.1 {
-            prims.push(DrawPrim::Line { x1: 0.0, y1: d, x2: v2 as f32, y2: d, pen: p.clone() });
+            prims.push(DrawPrim::Line { x1: 0.0, y1: d, x2: v2 as f32, y2: d, pen: p.clone(), cmd: NO_CMD });
             d += vscale.big_step() as f32;
         }
         let mut d = vscale.first_big() as f32;

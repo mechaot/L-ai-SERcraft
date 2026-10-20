@@ -21,7 +21,7 @@ pub use draw::*;
 pub use grbl_file::*;
 pub use l2l::*;
 pub use optimize::*;
-pub use vector::svg_conv_options;
+pub use vector::{LayerInfo, LayerParams, list_layers_from_file, svg_conv_options};
 pub use config::*;
 pub use error::{GResult, GcodeError};
 pub use program_range::*;

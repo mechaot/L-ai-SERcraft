@@ -22,6 +22,12 @@ use crate::ui::{tr, Theme};
 /// Unique scene ids (GL buffers keyed by them).
 static SCENE_ID: AtomicU64 = AtomicU64::new(1);
 
+/// Cache key of the highlight segments: (overlay revision, scene id, scene done, segment count).
+type HighlightKey = (u64, u64, bool, usize);
+
+/// Color of the selected layer overlay (pure red).
+const HIGHLIGHT_RGBA: [u8; 4] = [255, 0, 0, 255];
+
 /// Moving average of the last `n` samples (C# `MobileDAverageCalculator`).
 #[derive(Debug, Clone)]
 struct MovingAvg {
@@ -65,6 +71,10 @@ pub struct GlPanel {
     pending_auto_size: bool,
     last_size: Vec2,
     colors: Option<(JobColors, bool)>,
+    /// Layer overlay state last applied to the chunks: (revision, scene id, segment count when hiding).
+    layer_sig: Option<(u64, u64, usize)>,
+    /// Red segments of the selected layer, with their cache key.
+    highlight: Option<(HighlightKey, Vec<Segment>)>,
     mouse_world: Option<(f64, f64)>,
     fs_trig: bool,
     frame_time: MovingAvg,
@@ -93,6 +103,8 @@ impl GlPanel {
             pending_auto_size: true,
             last_size: Vec2::ZERO,
             colors: None,
+            layer_sig: None,
+            highlight: None,
             mouse_world: None,
             fs_trig: false,
             frame_time: MovingAvg::new(10),
@@ -257,18 +269,46 @@ impl GlPanel {
 
     /// Recolor chunks when the palette changed or commands got results.
     fn update_colors(&mut self, input: &PreviewInput, colors: JobColors, show_executed: bool) {
-        let Some(sc) = self.scene.clone() else { return };
-        let all = self.colors != Some((colors, show_executed));
-        self.colors = Some((colors, show_executed));
+        let Some(sc) = self.scene.clone() else {
+            self.highlight = None;
+            return;
+        };
+        let view = input.layer_view.clone().unwrap_or_default();
+        let hidden = &view.hidden;
         let file = input.file.as_ref();
         let mut s = sc.scene.lock().unwrap_or_else(|e| e.into_inner());
+        let total = s.on.segment_count() + s.off.segment_count();
+        // hidden layers need a recolor on every geometry growth; plain changes only on revision
+        let sig = (view.revision, sc.id, if hidden.is_empty() { 0 } else { total });
+        let layer_changed = self.layer_sig != Some(sig);
+        self.layer_sig = Some(sig);
+        let all = self.colors != Some((colors, show_executed)) || layer_changed;
+        self.colors = Some((colors, show_executed));
         if all {
             for c in &mut s.on.chunks {
                 c.seen_gen = u64::MAX;
             }
             for c in &mut s.off.chunks {
-                recolor_off_chunk(c, &colors);
+                recolor_off_chunk(c, &colors, hidden);
             }
+        }
+        // selected layer in red, cached per overlay revision and scene growth
+        let hl_key = (view.revision, sc.id, s.done, total);
+        match (&view.highlight, input.in_program) {
+            (Some(range), false) => {
+                if self.highlight.as_ref().map(|h| h.0) != Some(hl_key) {
+                    let mut segs = Vec::new();
+                    for c in &s.on.chunks {
+                        for (i, seg) in c.segs.iter().enumerate() {
+                            if range.contains(&c.cmd[i]) {
+                                segs.push(Segment { rgba: HIGHLIGHT_RGBA, ..*seg });
+                            }
+                        }
+                    }
+                    self.highlight = Some((hl_key, segs));
+                }
+            }
+            _ => self.highlight = None,
         }
         let Some(file) = file else { return };
         let Ok(f) = file.try_read() else { return };
@@ -276,7 +316,7 @@ impl GlPanel {
         let mut budget = 64;
         for c in &mut s.on.chunks {
             if c.link.generation() != c.seen_gen {
-                recolor_chunk(c, &f, &colors, show_executed);
+                recolor_chunk(c, &f, &colors, show_executed, hidden);
                 budget -= 1;
                 if budget == 0 {
                     break;
@@ -339,6 +379,10 @@ impl GlPanel {
         }
         if has_scene {
             items.push(Item::On(opts.preview_line_size.max(0.5)));
+            // selected layer on top, wide red stroke
+            if let Some((_, segs)) = self.highlight.as_ref().filter(|(_, s)| !s.is_empty()) {
+                items.push(Item::Batch(Batch { segs: segs.clone(), width: (3.0 * opts.preview_line_size).max(3.0), dash: 0.0 }));
+            }
         }
         items.push(Item::Batch(pointer_batch(&self.cam, w, input, rgba(theme.preview_cross))));
         items

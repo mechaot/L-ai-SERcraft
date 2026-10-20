@@ -71,7 +71,7 @@ impl PreviewFormDemo {
             }
             ui.label(format!("status: {:?}  {}", self.core.machine_status(), self.log));
         });
-        let actions = self.form.show(ui, &self.core, &mut self.buttons, &self.hotkeys);
+        let actions = self.form.show(ui, &self.core, &mut self.buttons, &self.hotkeys, None);
         if !actions.is_empty() {
             self.log = format!("{actions:?}");
         }

@@ -1,20 +1,25 @@
 //! "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm`
 //! (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked
-//! here and "Apply" regenerates the G-code. Not part of the C# app (intentional deviation).
+//! here and "Apply" regenerates the G-code. Settings are kept per SVG layer (top-level `<g>`).
+//! Not part of the C# app (intentional deviation).
 
 use eframe::egui::{self, Grid, RichText, Ui};
 use lasergrbl_core::GrblCore;
 use lg_dotnet::Decimal;
 use lg_gcode::GrblFile;
 use lg_services::material_db::{culture_compare, MaterialRow};
-use lg_svg2gcode::ColorFilter;
+use lg_svg2gcode::{ColorFilter, LayerInfo, LayerParams};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::ops::Range;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crate::forms::form_util::*;
 use crate::forms::material::default_db;
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
+use crate::ui::preview::LayerView;
 use crate::ui::widgets::{flat_combo, grbl_group_box, ImageButton};
 use crate::ui::{tr, tr_fmt, tr_plain};
 
@@ -23,6 +28,18 @@ const P: &str = "SvgConverter.ConvertSizeAndOptionForm.";
 
 /// Setting that stores the selected material row id.
 const MATERIAL_KEY: &str = "ParametersDock.MaterialId";
+
+/// Setting that stores the per-file layer settings (JSON array of [`StoredSet`]).
+const SETS_KEY: &str = "ParametersDock.LayerSets";
+
+/// Most files kept in the per-file store.
+const MAX_SETS: usize = 50;
+
+/// Layer key of the pseudo-layer used without SVG.
+const KEY_DEFAULTS: &str = "#defaults";
+
+/// Layer key of the single layer used when the SVG cannot be listed.
+const KEY_ALL: &str = "#all";
 
 /// C# `FilterOptions`: `Enum.GetValues(typeof(ColorFilter))` in declaration order.
 pub const FILTER_OPTIONS: [ColorFilter; 5] = [ColorFilter::All, ColorFilter::Red, ColorFilter::Green, ColorFilter::Blue, ColorFilter::Black];
@@ -54,6 +71,56 @@ pub enum ParamsAction {
     OpenMaterialEditor,
 }
 
+/// Editable values of one layer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct LayerUi {
+    /// Layer is converted (and shown) when true.
+    enabled: bool,
+    /// Repeat count, 1..=100.
+    passes: i32,
+    border_speed: i32,
+    /// S value while burning (PWM mode). No S-MIN: vector paths burn at constant power.
+    max_power: i32,
+    /// Index into [`LASER_OPTIONS`].
+    laser_on: usize,
+    /// Index into [`FILTER_OPTIONS`].
+    filter: usize,
+    /// Selected material row id.
+    material_id: Option<String>,
+}
+
+/// Saved layer values of one SVG file.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct StoredSet {
+    path: String,
+    saved_unix_secs: u64,
+    /// Layer key to values.
+    layers: BTreeMap<String, LayerUi>,
+}
+
+/// Read the per-file store. Returns the saved sets (empty when none/unreadable).
+fn load_sets() -> Vec<StoredSet> {
+    lg_base::settings::get(SETS_KEY, Vec::new())
+}
+
+/// Add a set to the store: one entry per path (newest timestamp wins), newest first, capped.
+///
+/// `sets`: store content, modified in place. `new`: set to add.
+fn merge_set(sets: &mut Vec<StoredSet>, new: StoredSet) {
+    match sets.iter().position(|s| s.path == new.path) {
+        Some(i) if sets[i].saved_unix_secs > new.saved_unix_secs => {}
+        Some(i) => sets[i] = new,
+        None => sets.push(new),
+    }
+    sets.sort_by_key(|s| std::cmp::Reverse(s.saved_unix_secs));
+    sets.truncate(MAX_SETS);
+}
+
+/// Current time as unix seconds. Returns 0 on a clock before the epoch.
+fn now_secs() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
+}
+
 /// SVG the dock regenerates G-code from.
 struct SvgSource {
     /// Shared program.
@@ -64,40 +131,46 @@ struct SvgSource {
     append: bool,
     /// Commands that existed before the import (kept on every re-apply when `append`).
     base_len: usize,
+    /// Layers could be listed: use the layered converter.
+    layered: bool,
 }
+
+/// Command ranges per layer, filled by the worker.
+type Ranges = Vec<Option<Range<u32>>>;
 
 /// Running G-code generation.
 struct ApplyJob {
     handle: JoinHandle<()>,
     /// Set by the worker when the conversion succeeded.
     ok: Arc<AtomicBool>,
+    /// Command range per layer, written by the worker.
+    ranges: Arc<Mutex<Ranges>>,
 }
 
 /// Parameters dock state.
 pub struct ParamsDock {
     limits: Limits,
     support_pwm: bool,
-    border_speed: i32,
-    min_power: i32,
-    max_power: i32,
-    /// Index into [`LASER_OPTIONS`].
-    laser_on: usize,
-    /// Index into [`FILTER_OPTIONS`].
-    filter: usize,
+    /// Layers and their values; one pseudo-layer without SVG.
+    layers: Vec<(LayerInfo, LayerUi)>,
+    /// Index of the edited layer.
+    selected: usize,
     /// Upper limit of the speed input.
     border_max: i32,
     /// Upper limit of the S-MAX input (also the 100 % base of material power).
     power_max_limit: i32,
     /// Visible material rows, sorted for the dropdown.
     materials: Vec<MaterialRow>,
-    /// Selected index into `materials`.
-    material: Option<usize>,
     source: Option<SvgSource>,
     /// Edited since the last successful generation.
     dirty: bool,
     job: Option<ApplyJob>,
     last_error: Option<String>,
     msgs: MessageBoxHost<Msg>,
+    /// Command ranges of the layers in the loaded program (from the last good generation).
+    generated: Ranges,
+    /// Bumped on every change the preview overlay depends on.
+    revision: u64,
 }
 
 impl ParamsDock {
@@ -108,53 +181,95 @@ impl ParamsDock {
         let mut d = ParamsDock {
             limits: Limits::from_config(),
             support_pwm: true,
-            border_speed: 1000,
-            min_power: 0,
-            max_power: 0,
-            laser_on: 0,
-            filter: 0,
+            layers: Vec::new(),
+            selected: 0,
             border_max: 0,
             power_max_limit: 0,
             materials: Vec::new(),
-            material: None,
             source: None,
             dirty: false,
             job: None,
             last_error: None,
             msgs: MessageBoxHost::default(),
+            generated: Vec::new(),
+            revision: 0,
         };
         d.load_values();
         d.refresh_materials();
         // restore selection by id, values stay as stored
         let id: Option<String> = lg_base::settings::get(MATERIAL_KEY, None);
-        d.material = id.and_then(|id| d.materials.iter().position(|r| r.id == id));
+        let found = id.filter(|id| d.materials.iter().any(|r| &r.id == id));
+        d.cur_mut().material_id = found;
         d
     }
 
-    /// Load the four persisted values (same keys/defaults as the old dialog) and refresh limits.
-    fn load_values(&mut self) {
+    /// Values of the last-used settings (same keys/defaults as the old dialog).
+    ///
+    /// Returns a layer (enabled, one pass) built from the settings; refreshes limits as a side effect.
+    fn settings_layer(&mut self) -> LayerUi {
         self.limits = Limits::from_config();
         self.support_pwm = lg_base::settings::get("Support Hardware PWM", true);
-        self.border_speed = lg_base::settings::get("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1000);
         let laser_on_s: String = lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.LaserOn", "M3".to_owned());
-        self.laser_on = if laser_on_s == "M3" || !self.limits.laser_mode { 0 } else { 1 };
-        self.min_power = lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.PowerMin", 0);
-        self.max_power = lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.PowerMax", self.limits.max_pwm);
         self.border_max = self.limits.max_rate_x;
         self.power_max_limit = self.limits.max_pwm;
+        LayerUi {
+            enabled: true,
+            passes: 1,
+            border_speed: lg_base::settings::get("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1000),
+            max_power: lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.PowerMax", self.limits.max_pwm),
+            laser_on: if laser_on_s == "M3" || !self.limits.laser_mode { 0 } else { 1 },
+            filter: 0,
+            material_id: None,
+        }
+    }
+
+    /// Reset to a single "(defaults)" layer holding the persisted values.
+    fn load_values(&mut self) {
+        let l = self.settings_layer();
+        self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, l)];
+        self.selected = 0;
+    }
+
+    /// Edited layer. Returns its values.
+    fn cur(&self) -> &LayerUi {
+        &self.layers[self.selected.min(self.layers.len() - 1)].1
+    }
+
+    /// Edited layer, mutable. Returns its values.
+    fn cur_mut(&mut self) -> &mut LayerUi {
+        let i = self.selected.min(self.layers.len() - 1);
+        &mut self.layers[i].1
     }
 
     /// Set a new SVG source and generate at once.
     ///
     /// `file`: shared program. `path`: SVG path. `append`: keep the commands already in `file`.
-    /// `from_settings`: reload the values from settings first (project restore stored them just before).
+    /// `from_settings`: reload the values from settings first (project restore stored them just before);
+    /// otherwise the per-file store and the current values seed the layers.
     pub fn load_svg(&mut self, file: SharedFile, path: &str, append: bool, from_settings: bool) {
-        if from_settings {
-            self.load_values();
-        }
+        // seed values for layers without stored settings
+        let seed = if from_settings {
+            self.settings_layer()
+        } else {
+            LayerUi { enabled: true, passes: 1, ..self.cur().clone() }
+        };
+        let listed = lg_svg2gcode::list_layers_from_file(std::path::Path::new(path)).ok().filter(|l| !l.is_empty());
+        let layered = listed.is_some();
+        let infos = listed.unwrap_or_else(|| vec![LayerInfo { key: KEY_ALL.into(), label: "(all)".into(), shapes: 0 }]);
+        let stored = if from_settings { None } else { load_sets().into_iter().find(|s| s.path == path) };
+        self.layers = infos
+            .into_iter()
+            .map(|info| {
+                let ui = stored.as_ref().and_then(|s| s.layers.get(&info.key)).cloned().unwrap_or_else(|| seed.clone());
+                (info, ui)
+            })
+            .collect();
+        self.selected = 0;
+        self.generated.clear();
+        self.revision += 1;
         // commands that stay in front of the import
         let base_len = if append { file.read().map(|f| f.count()).unwrap_or(0) } else { 0 };
-        self.source = Some(SvgSource { file, path: path.to_owned(), append, base_len });
+        self.source = Some(SvgSource { file, path: path.to_owned(), append, base_len, layered });
         self.dirty = true;
         self.last_error = None;
         self.apply();
@@ -165,38 +280,96 @@ impl ParamsDock {
         self.source = None;
         self.dirty = false;
         self.last_error = None;
+        self.generated.clear();
+        // keep the edited layer as the plain defaults
+        let keep = self.cur().clone();
+        self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, keep)];
+        self.selected = 0;
+        self.revision += 1;
+    }
+
+    /// Dev hook (`LASERGRBL_DEV_SEQ` `layer=N` / `layeroff=N`): select layer `i`, or disable it.
+    ///
+    /// `i`: layer index. `select`: true = select it, false = disable it (selection unchanged).
+    pub fn dev_select_layer(&mut self, i: usize, select: bool) {
+        if i >= self.layers.len() {
+            return;
+        }
+        if select {
+            self.selected = i;
+        } else {
+            self.layers[i].1.enabled = false;
+            self.dirty = true;
+        }
+        self.revision += 1;
+    }
+
+    /// True when at least one layer would be converted. Returns bool.
+    fn any_enabled(&self) -> bool {
+        self.layers.iter().any(|(_, l)| l.enabled)
+    }
+
+    /// Converter parameters of all layers. Returns one entry per layer, in layer order.
+    fn layer_params(&self) -> Vec<LayerParams> {
+        self.layers
+            .iter()
+            .map(|(_, l)| LayerParams {
+                enabled: l.enabled,
+                passes: l.passes.clamp(1, 100) as u32,
+                border_speed: l.border_speed,
+                power_max: l.max_power,
+                laser_on: LASER_OPTIONS[l.laser_on].1.to_owned(),
+                filter: FILTER_OPTIONS[l.filter],
+            })
+            .collect()
     }
 
     /// Persist the settings and start the G-code generation on a worker.
     ///
-    /// Returns false when nothing was started (no source, or file busy: busy box queued).
+    /// Returns false when nothing was started (no source, no layer enabled, or file busy: busy box queued).
     pub fn apply(&mut self) -> bool {
         use lg_base::settings::set;
         if self.job.is_some() {
             return false;
         }
-        let Some(src) = &self.source else { return false };
-        set("GrayScaleConversion.VectorizeOptions.BorderSpeed", self.border_speed);
-        set("GrayScaleConversion.Gcode.LaserOptions.PowerMax", self.max_power);
-        set("GrayScaleConversion.Gcode.LaserOptions.PowerMin", self.min_power);
-        set("GrayScaleConversion.Gcode.LaserOptions.LaserOn", LASER_OPTIONS[self.laser_on].1);
+        if self.source.is_none() {
+            return false;
+        }
+        if !self.any_enabled() {
+            self.last_error = Some(tr_plain("ParamsDock.NoLayerEnabled"));
+            return false;
+        }
+        // selected layer becomes the "last used" values
+        let c = self.cur().clone();
+        set("GrayScaleConversion.VectorizeOptions.BorderSpeed", c.border_speed);
+        set("GrayScaleConversion.Gcode.LaserOptions.PowerMax", c.max_power);
+        set("GrayScaleConversion.Gcode.LaserOptions.LaserOn", LASER_OPTIONS[c.laser_on].1);
+        self.save_set();
 
-        let filter = FILTER_OPTIONS[self.filter];
-        let (path, append, base_len) = (src.path.clone(), src.append, src.base_len);
+        let params = self.layer_params();
+        let filter = FILTER_OPTIONS[c.filter];
+        let Some(src) = &self.source else { return false };
+        let (path, append, base_len, layered) = (src.path.clone(), src.append, src.base_len, src.layered);
         let ok = Arc::new(AtomicBool::new(false));
-        let ok_w = ok.clone();
+        let ranges: Arc<Mutex<Ranges>> = Arc::new(Mutex::new(Vec::new()));
+        let (ok_w, ranges_w) = (ok.clone(), ranges.clone());
         let handle = GrblFile::spawn_load(&src.file, move |f| {
             // drop the previous import, keep what was there before it
             if append {
                 f.truncate_list(base_len);
             }
-            f.load_imported_svg(&path, append, filter)?;
+            if layered {
+                let r = f.load_imported_svg_layered(&path, append, &params)?;
+                *ranges_w.lock().unwrap_or_else(|e| e.into_inner()) = r;
+            } else {
+                f.load_imported_svg(&path, append, filter)?;
+            }
             ok_w.store(true, Ordering::SeqCst);
             Ok(())
         });
         match handle {
             Some(handle) => {
-                self.job = Some(ApplyJob { handle, ok });
+                self.job = Some(ApplyJob { handle, ok, ranges });
                 self.last_error = None;
                 true
             }
@@ -207,6 +380,15 @@ impl ParamsDock {
         }
     }
 
+    /// Save the layer values of the current file into the per-file store.
+    fn save_set(&self) {
+        let Some(src) = &self.source else { return };
+        let layers = self.layers.iter().map(|(i, l)| (i.key.clone(), l.clone())).collect();
+        let mut sets = load_sets();
+        merge_set(&mut sets, StoredSet { path: src.path.clone(), saved_unix_secs: now_secs(), layers });
+        lg_base::settings::set(SETS_KEY, sets);
+    }
+
     /// Returns true when the G-code is out of date or being generated (SVG loaded).
     pub fn needs_apply(&self) -> bool {
         self.source.is_some() && (self.dirty || self.job.is_some())
@@ -214,7 +396,7 @@ impl ParamsDock {
 
     /// Returns true when edits wait and no generation runs (an `apply()` call would start one).
     pub fn is_dirty_idle(&self) -> bool {
-        self.source.is_some() && self.dirty && self.job.is_none()
+        self.source.is_some() && self.dirty && self.job.is_none() && self.any_enabled()
     }
 
     /// Returns true while the worker runs.
@@ -235,15 +417,33 @@ impl ParamsDock {
         if ok {
             self.dirty = false;
             self.last_error = None;
+            self.generated = std::mem::take(&mut *job.ranges.lock().unwrap_or_else(|e| e.into_inner()));
+            self.revision += 1;
         } else {
             self.last_error = Some(tr_plain("ParamsDock.ApplyFailed"));
         }
         Some(ok)
     }
 
+    /// Overlay for the preview: highlight of the selected layer, hidden disabled layers.
+    ///
+    /// Returns None without an SVG source.
+    pub fn layer_view(&self) -> Option<LayerView> {
+        self.source.as_ref()?;
+        let hidden = self
+            .layers
+            .iter()
+            .zip(&self.generated)
+            .filter(|((_, l), _)| !l.enabled)
+            .filter_map(|(_, r)| r.clone())
+            .collect();
+        let sel_on = self.layers.get(self.selected).is_some_and(|(_, l)| l.enabled);
+        let highlight = if self.layers.len() > 1 && sel_on { self.generated.get(self.selected).cloned().flatten() } else { None };
+        Some(LayerView { revision: self.revision, highlight, hidden })
+    }
+
     /// Rebuild the dropdown rows from the material database (after the editor closed).
     pub fn refresh_materials(&mut self) {
-        let selected_id = self.material.and_then(|i| self.materials.get(i)).map(|r| r.id.clone());
         let db = default_db();
         let mut rows: Vec<MaterialRow> = db.lock().unwrap_or_else(|e| e.into_inner()).materials.rows().iter().filter(|r| r.visible).cloned().collect();
         rows.sort_by(|a, b| {
@@ -253,8 +453,12 @@ impl ParamsDock {
                 .then_with(|| culture_compare(&a.thickness, &b.thickness))
         });
         self.materials = rows;
-        // keep selection when the row survived
-        self.material = selected_id.and_then(|id| self.materials.iter().position(|r| r.id == id));
+    }
+
+    /// Index into `materials` of the selected layer's material row. Returns None when none/vanished.
+    fn material_index(&self) -> Option<usize> {
+        let id = self.cur().material_id.as_ref()?;
+        self.materials.iter().position(|r| &r.id == id)
     }
 
     /// Dropdown text of a material row.
@@ -264,21 +468,24 @@ impl ParamsDock {
         format!("{} · {} · {} · {}", r.model, r.material, r.action, r.thickness)
     }
 
-    /// Take speed and power of material row `i` (C# `BtnPSHelper_Click` tail) and mark dirty.
+    /// Take speed, power and passes of material row `i` (C# `BtnPSHelper_Click` tail) and mark dirty.
     ///
     /// `i`: index into `materials`.
     fn select_material(&mut self, i: usize) {
-        let Some(r) = self.materials.get(i) else { return };
-        self.border_speed = r.speed;
-        self.max_power = self.power_max_limit * r.power / 100;
-        self.material = Some(i);
+        let Some(r) = self.materials.get(i).cloned() else { return };
+        let max = self.power_max_limit;
+        let c = self.cur_mut();
+        c.border_speed = r.speed;
+        c.max_power = max * r.power / 100;
+        c.passes = r.cycles.clamp(1, 100);
+        c.material_id = Some(r.id.clone());
         lg_base::settings::set(MATERIAL_KEY, Some(r.id.clone()));
         self.dirty = true;
     }
 
     /// Drop the material selection (dropdown "(none)"); values stay.
     fn deselect_material(&mut self) {
-        self.material = None;
+        self.cur_mut().material_id = None;
         lg_base::settings::delete(MATERIAL_KEY);
     }
 
@@ -286,21 +493,20 @@ impl ParamsDock {
     ///
     /// Returns false without a selection.
     fn material_modified(&self) -> bool {
-        self.material.and_then(|i| self.materials.get(i)).is_some_and(|r| r.speed != self.border_speed || self.power_max_limit * r.power / 100 != self.max_power)
+        let c = self.cur();
+        self.material_index().and_then(|i| self.materials.get(i)).is_some_and(|r| r.speed != c.border_speed || self.power_max_limit * r.power / 100 != c.max_power)
     }
 
-    /// C# `IIMinPowerCurrentValueChanged` (user edit).
-    fn on_min_power_changed(&mut self) {
-        if self.max_power <= self.min_power {
-            self.max_power = self.min_power + 1;
+    /// Copy the selected layer's values (not `enabled`) to every other layer and mark dirty.
+    fn sync_layers(&mut self) {
+        let src = self.cur().clone();
+        let sel = self.selected;
+        for (i, (_, l)) in self.layers.iter_mut().enumerate() {
+            if i != sel {
+                *l = LayerUi { enabled: l.enabled, ..src.clone() };
+            }
         }
-    }
-
-    /// C# `IIMaxPowerCurrentValueChanged` (user edit).
-    fn on_max_power_changed(&mut self) {
-        if self.min_power >= self.max_power {
-            self.min_power = self.max_power - 1;
-        }
+        self.dirty = true;
     }
 
     /// C# `RefreshPerc`: "P1" text of a power value, empty without a valid MaxPWM.
@@ -316,7 +522,7 @@ impl ParamsDock {
 
     /// C# `CBLaserON_SelectedIndexChanged`: warn when M4 is picked but firmware is not in laser mode.
     fn on_laser_mode_changed(&mut self) {
-        if !self.limits.laser_mode && LASER_OPTIONS[self.laser_on].1 == "M4" {
+        if !self.limits.laser_mode && LASER_OPTIONS[self.cur().laser_on].1 == "M4" {
             self.msgs.push(Msg::WrongLaserMode, MessageBox::new(tr("Strings.WarnWrongLaserMode"), tr("Strings.WarnWrongLaserModeTitle")).icon(MessageBoxIcon::Warning));
         }
     }
@@ -344,6 +550,10 @@ impl ParamsDock {
         ui.label(RichText::new(tr_plain("ParamsDock.Title")).strong());
         ui.add_space(2.0);
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+            if self.source.is_some() {
+                self.layer_group(ui, &mut edited);
+                ui.add_space(4.0);
+            }
             self.material_group(ui, &mut actions, &mut edited);
             ui.add_space(4.0);
             self.speed_group(ui, &mut edited);
@@ -360,6 +570,54 @@ impl ParamsDock {
         actions
     }
 
+    /// Display text of a layer.
+    ///
+    /// `i`: layer index. Returns "label (shapes)", prefixed with "(off)" when the layer is disabled.
+    fn layer_text(&self, i: usize) -> String {
+        let (info, l) = &self.layers[i];
+        let label = if info.key == "#root" { tr_plain("ParamsDock.Ungrouped") } else { info.label.clone() };
+        let off = if l.enabled { "" } else { "(off) " };
+        format!("{off}{label} ({})", info.shapes)
+    }
+
+    /// Layer picker, enable checkbox, passes and the sync button.
+    ///
+    /// `ui`: parent. `edited`: set on any change that needs a re-apply.
+    fn layer_group(&mut self, ui: &mut Ui, edited: &mut bool) {
+        grbl_group_box(ui, &tr_plain("ParamsDock.Layer"), |ui| {
+            let items: Vec<String> = (0..self.layers.len()).map(|i| self.layer_text(i)).collect();
+            let mut sel = Some(self.selected);
+            let w = ui.available_width().max(60.0);
+            if flat_combo(ui, "params-layer", &mut sel, &items, w).changed() {
+                self.selected = sel.unwrap_or(self.selected);
+                self.revision += 1;
+            }
+            ui.horizontal(|ui| {
+                let mut en = self.cur().enabled;
+                if ui.checkbox(&mut en, tr_plain("ParamsDock.Enabled")).changed() {
+                    self.cur_mut().enabled = en;
+                    self.revision += 1;
+                    *edited = true;
+                }
+                ui.label(tr_plain("ParamsDock.PassesLabel"));
+                let mut passes = self.cur().passes;
+                if int_input(ui, "params-passes", &mut passes, 1, 100, false, 40.0).is_some() {
+                    self.cur_mut().passes = passes;
+                    *edited = true;
+                }
+            });
+            let btn = ui.add_enabled(self.layers.len() > 1, egui::Button::new(tr_plain("ParamsDock.SyncLayers")).min_size(egui::vec2(ui.available_width(), 22.0)));
+            if btn.on_hover_text(tr_plain("ParamsDock.SyncLayersTip")).clicked() {
+                self.sync_layers();
+            }
+            // disabled layer that is not in the program yet
+            let missing = self.layers.iter().enumerate().any(|(i, (_, l))| l.enabled && self.generated.get(i).is_some_and(Option::is_none));
+            if missing {
+                ui.label(RichText::new(tr_plain("ParamsDock.ReenableHint")).small().italics());
+            }
+        });
+    }
+
     /// Material dropdown, info text and editor button.
     ///
     /// `ui`: parent. `actions`: collects editor requests. `edited`: set on a material pick.
@@ -367,7 +625,7 @@ impl ParamsDock {
         grbl_group_box(ui, &tr_plain("ParamsDock.Material"), |ui| {
             let mut items = vec![tr_plain("ParamsDock.MaterialNone")];
             items.extend(self.materials.iter().map(Self::material_text));
-            let mut sel = Some(self.material.map_or(0, |i| i + 1));
+            let mut sel = Some(self.material_index().map_or(0, |i| i + 1));
             ui.horizontal(|ui| {
                 let w = (ui.available_width() - 44.0).max(60.0);
                 let r = flat_combo(ui, "params-material", &mut sel, &items, w);
@@ -385,7 +643,7 @@ impl ParamsDock {
                 }
             });
             // passes + remarks of the selected row
-            if let Some(r) = self.material.and_then(|i| self.materials.get(i)) {
+            if let Some(r) = self.material_index().and_then(|i| self.materials.get(i)) {
                 let mut info = tr_fmt("ParamsDock.Passes", &[&r.cycles]);
                 if !r.remarks().is_empty() {
                     info = format!("{info} - {}", r.remarks());
@@ -403,15 +661,17 @@ impl ParamsDock {
     /// `ui`: parent. `edited`: set on a committed edit.
     fn speed_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         let lim_rate = self.border_max;
+        let mut v = self.cur().border_speed;
         grbl_group_box(ui, &ctl_text(P, "GbSpeed"), |ui| {
             ui.horizontal(|ui| {
                 label(ui, P, "LblBorderTracing");
-                if int_input(ui, "params-border", &mut self.border_speed, 1, lim_rate, false, 55.0).is_some() {
+                if int_input(ui, "params-border", &mut v, 1, lim_rate, false, 55.0).is_some() {
                     *edited = true;
                 }
                 label(ui, P, "LblBorderTracingmm");
             });
         });
+        self.cur_mut().border_speed = v;
     }
 
     /// Laser mode, S-MIN and S-MAX.
@@ -424,15 +684,15 @@ impl ParamsDock {
             // laser mode row
             ui.horizontal(|ui| {
                 label(ui, P, "label18");
-                let before = self.laser_on;
-                let mut sel = Some(self.laser_on);
+                let before = self.cur().laser_on;
+                let mut sel = Some(before);
                 let w = (ui.available_width() - 40.0).max(60.0);
                 flat_combo(ui, "params-laser-on", &mut sel, &items, w);
-                self.laser_on = sel.unwrap_or(before);
+                self.cur_mut().laser_on = sel.unwrap_or(before);
                 if info_button(ui, &ctl_tip(P, "BtnOnOffInfo")) {
                     open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#laser-modes");
                 }
-                if self.laser_on != before {
+                if self.cur().laser_on != before {
                     *edited = true;
                     self.on_laser_mode_changed();
                 }
@@ -440,25 +700,18 @@ impl ParamsDock {
             if !self.support_pwm {
                 return;
             }
+            let mut max_p = self.cur().max_power;
             Grid::new("params-power").num_columns(4).spacing([8.0, 4.0]).show(ui, |ui| {
-                // S-MIN
-                label(ui, P, "LblSmin");
-                if int_input(ui, "params-smin", &mut self.min_power, 0, 999, false, 43.0).is_some() {
-                    self.on_min_power_changed();
+                // S-MAX only: SVG paths burn at one power, S-MIN is never used
+                label(ui, P, "LblSmax");
+                if int_input(ui, "params-smax", &mut max_p, 1, pwm_max, false, 43.0).is_some() {
+                    self.cur_mut().max_power = max_p;
                     *edited = true;
                 }
-                ui.label(self.perc_text(self.min_power));
+                ui.label(self.perc_text(self.cur().max_power));
                 if info_button(ui, &ctl_tip(P, "BtnModulationInfo")) {
                     open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#power-modulation");
                 }
-                ui.end_row();
-                // S-MAX
-                label(ui, P, "LblSmax");
-                if int_input(ui, "params-smax", &mut self.max_power, 1, pwm_max, false, 43.0).is_some() {
-                    self.on_max_power_changed();
-                    *edited = true;
-                }
-                ui.label(self.perc_text(self.max_power));
                 ui.end_row();
             });
         });
@@ -472,12 +725,12 @@ impl ParamsDock {
             let items: Vec<String> = FILTER_OPTIONS.iter().map(|f| filter_name(*f).to_owned()).collect();
             ui.horizontal(|ui| {
                 label(ui, P, "labelFilter");
-                let mut sel = Some(self.filter);
+                let mut sel = Some(self.cur().filter);
                 let w = (ui.available_width() - 40.0).max(60.0);
                 if flat_combo(ui, "params-filter", &mut sel, &items, w).changed() {
                     *edited = true;
                 }
-                self.filter = sel.unwrap_or(self.filter);
+                self.cur_mut().filter = sel.unwrap_or(self.cur().filter);
                 if info_button(ui, &ctl_tip(P, "BtnColorFilter")) {
                     open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#color-filter");
                 }
@@ -489,10 +742,14 @@ impl ParamsDock {
     ///
     /// `ui`: parent. `core`: for `can_load_new_file`.
     fn apply_row(&mut self, ui: &mut Ui, core: &GrblCore) {
-        let enabled = self.dirty && self.source.is_some() && self.job.is_none() && core.can_load_new_file();
+        let any = self.any_enabled();
+        let enabled = self.dirty && self.source.is_some() && self.job.is_none() && core.can_load_new_file() && any;
         let btn = egui::Button::new(tr_plain("ParamsDock.Apply")).min_size(egui::vec2(ui.available_width(), 26.0));
         if ui.add_enabled(enabled, btn).clicked() {
             self.apply();
+        }
+        if self.source.is_some() && !any {
+            ui.label(RichText::new(tr_plain("ParamsDock.NoLayerEnabled")).small().italics());
         }
         // status line
         let status = match &self.source {
@@ -557,10 +814,10 @@ mod tests {
     fn defaults_from_empty_settings() {
         let _g = settings_guard();
         let d = ParamsDock::new();
-        assert_eq!((d.border_speed, d.min_power, d.max_power), (1000, 0, 1000));
+        assert_eq!((d.cur().border_speed, d.cur().max_power), (1000, 1000));
         // empty config reports laser mode on, stored "M3" wins
-        assert_eq!(d.laser_on, 0);
-        assert_eq!(d.filter, 0);
+        assert_eq!(d.cur().laser_on, 0);
+        assert_eq!(d.cur().filter, 0);
         assert!(d.support_pwm);
         assert!(!d.needs_apply());
     }
@@ -569,19 +826,7 @@ mod tests {
     fn laser_mode_m4_restored_only_in_laser_mode() {
         let _g = settings_guard();
         lg_base::settings::set("GrayScaleConversion.Gcode.LaserOptions.LaserOn", "M4");
-        assert_eq!(ParamsDock::new().laser_on, 1);
-    }
-
-    #[test]
-    fn power_limits_follow_user_edits() {
-        let _g = settings_guard();
-        let mut d = ParamsDock::new();
-        d.min_power = 1000;
-        d.on_min_power_changed();
-        assert_eq!(d.max_power, 1001);
-        d.max_power = 0;
-        d.on_max_power_changed();
-        assert_eq!(d.min_power, -1);
+        assert_eq!(ParamsDock::new().cur().laser_on, 1);
     }
 
     #[test]
@@ -599,9 +844,9 @@ mod tests {
         let mut d = ParamsDock::new();
         d.materials = vec![row("a", 25, 750)];
         d.select_material(0);
-        assert_eq!((d.border_speed, d.max_power), (750, 250));
+        assert_eq!((d.cur().border_speed, d.cur().max_power, d.cur().passes), (750, 250, 2));
         assert!(d.dirty && !d.material_modified());
-        d.border_speed = 800;
+        d.cur_mut().border_speed = 800;
         assert!(d.material_modified());
         // id persisted
         assert_eq!(lg_base::settings::get(MATERIAL_KEY, None::<String>), Some("a".to_owned()));
@@ -616,17 +861,17 @@ mod tests {
         let p = write_svg("persist");
         let file = new_file();
         let mut d = ParamsDock::new();
-        d.border_speed = 1500;
-        d.min_power = 10;
-        d.max_power = 800;
-        d.laser_on = 1;
+        d.cur_mut().border_speed = 1500;
+        d.cur_mut().max_power = 800;
+        d.cur_mut().laser_on = 1;
         d.load_svg(file.clone(), p.to_str().unwrap(), false, false);
         assert!(d.job_running());
         assert!(wait(&mut d));
         assert!(file.read().unwrap().count() > 0);
         let get = |k: &str| lg_base::settings::get(k, -1i32);
         assert_eq!(get("GrayScaleConversion.VectorizeOptions.BorderSpeed"), 1500);
-        assert_eq!(get("GrayScaleConversion.Gcode.LaserOptions.PowerMin"), 10);
+        // S-MIN is not part of the dock: raster default stays untouched
+        assert_eq!(get("GrayScaleConversion.Gcode.LaserOptions.PowerMin"), -1);
         assert_eq!(get("GrayScaleConversion.Gcode.LaserOptions.PowerMax"), 800);
         assert_eq!(lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.LaserOn", String::new()), "M4");
         let _ = std::fs::remove_file(&p);
@@ -680,5 +925,442 @@ mod tests {
         let mut d = ParamsDock::new();
         assert!(!d.apply());
         assert!(d.poll().is_none());
+    }
+
+    /// Two-layer SVG in the scratchpad-independent temp dir. `tag`: file tag. Returns path.
+    fn write_layer_svg(tag: &str) -> std::path::PathBuf {
+        let p = std::env::temp_dir().join(format!("lg-params-{tag}-{}.svg", std::process::id()));
+        std::fs::write(
+            &p,
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="40mm" height="40mm" viewBox="0 0 40 40">
+<g id="a" inkscape:label="Engrave"><rect x="2" y="2" width="10" height="10"/></g>
+<g id="b" inkscape:label="Cut"><circle cx="25" cy="25" r="6"/></g></svg>"#,
+        )
+        .unwrap();
+        p
+    }
+
+    #[test]
+    fn layers_listed_and_sync_copies_all_but_enabled() {
+        let _g = settings_guard();
+        let p = write_layer_svg("sync");
+        let mut d = ParamsDock::new();
+        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        assert!(wait(&mut d));
+        assert_eq!(d.layers.len(), 2);
+        assert_eq!(d.layers[1].0.label, "Cut");
+        d.layers[1].1.enabled = false;
+        d.cur_mut().border_speed = 321;
+        d.cur_mut().passes = 3;
+        d.cur_mut().max_power = 77;
+        d.cur_mut().material_id = Some("m".into());
+        d.dirty = false;
+        d.sync_layers();
+        assert!(d.dirty);
+        let l = &d.layers[1].1;
+        assert_eq!((l.border_speed, l.passes, l.max_power), (321, 3, 77));
+        assert_eq!(l.material_id.as_deref(), Some("m"));
+        assert!(!l.enabled);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn per_file_store_roundtrip_restores_by_key() {
+        let _g = settings_guard();
+        let p = write_layer_svg("store");
+        let path = p.to_str().unwrap();
+        let mut d = ParamsDock::new();
+        d.load_svg(new_file(), path, false, false);
+        assert!(wait(&mut d));
+        d.layers[1].1.border_speed = 555;
+        d.layers[1].1.passes = 4;
+        d.layers[0].1.enabled = false;
+        d.dirty = true;
+        assert!(d.apply());
+        assert!(wait(&mut d));
+        // reopen with a fresh dock
+        let mut d2 = ParamsDock::new();
+        d2.load_svg(new_file(), path, false, false);
+        assert!(wait(&mut d2));
+        assert_eq!((d2.layers[1].1.border_speed, d2.layers[1].1.passes), (555, 4));
+        assert!(!d2.layers[0].1.enabled);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn store_dedups_by_path_newest_wins_and_caps() {
+        let set = |path: &str, t: u64| StoredSet { path: path.into(), saved_unix_secs: t, layers: BTreeMap::new() };
+        let mut v = Vec::new();
+        merge_set(&mut v, set("a", 10));
+        merge_set(&mut v, set("a", 20));
+        merge_set(&mut v, set("a", 5));
+        assert_eq!(v.len(), 1);
+        assert_eq!(v[0].saved_unix_secs, 20);
+        for i in 0..60u64 {
+            merge_set(&mut v, set(&format!("f{i}"), 100 + i));
+        }
+        assert_eq!(v.len(), MAX_SETS);
+        // oldest dropped, newest first
+        assert!(!v.iter().any(|s| s.path == "a"));
+        assert_eq!(v[0].path, "f59");
+    }
+
+    #[test]
+    fn all_layers_disabled_refuses_apply() {
+        let _g = settings_guard();
+        let p = write_layer_svg("off");
+        let mut d = ParamsDock::new();
+        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        assert!(wait(&mut d));
+        for (_, l) in d.layers.iter_mut() {
+            l.enabled = false;
+        }
+        d.dirty = true;
+        assert!(!d.apply());
+        assert!(!d.job_running() && d.last_error.is_some());
+        assert!(!d.is_dirty_idle());
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn layer_view_highlights_selected_and_hides_disabled() {
+        let _g = settings_guard();
+        let p = write_layer_svg("view");
+        let mut d = ParamsDock::new();
+        assert!(d.layer_view().is_none());
+        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        assert!(wait(&mut d));
+        let v = d.layer_view().unwrap();
+        assert_eq!(v.highlight, d.generated[0]);
+        assert!(v.hidden.is_empty());
+        // select layer 2, disable layer 1
+        d.selected = 1;
+        d.layers[0].1.enabled = false;
+        let v2 = d.layer_view().unwrap();
+        assert_eq!(v2.highlight, d.generated[1]);
+        assert_eq!(v2.hidden, vec![d.generated[0].clone().unwrap()]);
+        // ranges are disjoint
+        let (a, b) = (d.generated[0].clone().unwrap(), d.generated[1].clone().unwrap());
+        assert!(a.end <= b.start);
+        let _ = std::fs::remove_file(&p);
+    }
+}
+
+/// End-to-end: drive the dock through egui input events, press Apply, check the G-code.
+#[cfg(test)]
+mod e2e {
+    use super::*;
+    use lg_gcode::Firmware;
+    use std::time::{Duration, Instant};
+
+    /// Three layers: ungrouped (X 5..10), Cut (red X 20..30, black X 45..50), Engrave (X 60..80, nested group).
+    const SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <path d="M5 5 L10 5" style="stroke:#000000;fill:none"/>
+  <g id="cut" inkscape:label="Cut" inkscape:groupmode="layer">
+    <path d="M20 20 L30 20 L30 30" style="stroke:#ff0000;fill:none"/>
+    <path d="M45 50 L50 50" style="stroke:#000000;fill:none"/>
+  </g>
+  <g id="engrave" inkscape:label="Engrave" inkscape:groupmode="layer">
+    <path d="M60 60 L80 60 L80 80 L60 80 Z" style="stroke:#000000;fill:none"/>
+    <g><path d="M62 90 L70 90" style="stroke:#000000;fill:none"/></g>
+  </g>
+</svg>"##;
+
+    /// Headless egui driver around one dock.
+    pub(super) struct Harness {
+        pub ctx: egui::Context,
+        pub core: Arc<GrblCore>,
+        pub dock: ParamsDock,
+        /// Text shapes of the last frame: (text, screen rect).
+        texts: Vec<(String, egui::Rect)>,
+    }
+
+    /// Collect text shapes recursively. `s`: shape. `out`: sink.
+    fn collect(s: &egui::Shape, out: &mut Vec<(String, egui::Rect)>) {
+        match s {
+            egui::Shape::Text(t) => out.push((t.galley.text().to_owned(), t.galley.rect.translate(t.pos.to_vec2()))),
+            egui::Shape::Vec(v) => v.iter().for_each(|c| collect(c, out)),
+            _ => {}
+        }
+    }
+
+    impl Harness {
+        /// Build core + dock. Returns the harness.
+        pub fn new() -> Self {
+            let (tx, _rx) = crossbeam_channel::unbounded();
+            let core = GrblCore::new(Firmware::Grbl, tx);
+            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::new(), texts: Vec::new() };
+            h.frame(vec![]);
+            h
+        }
+
+        /// Run one frame. `events`: input events.
+        pub fn frame(&mut self, events: Vec<egui::Event>) {
+            let ri = egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(320.0, 1000.0))), events, ..Default::default() };
+            let (dock, core) = (&mut self.dock, &self.core);
+            let mut out = self.ctx.run_ui(ri, |ui| {
+                dock.show(ui, core);
+            });
+            out.textures_delta.clear();
+            self.texts.clear();
+            for cs in &out.shapes {
+                collect(&cs.shape, &mut self.texts);
+            }
+        }
+
+        /// Click at `p` (press frame + release frame + settle frame).
+        pub fn click_at(&mut self, p: egui::Pos2) {
+            let btn = |pressed| egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE };
+            self.frame(vec![egui::Event::PointerMoved(p), btn(true)]);
+            self.frame(vec![btn(false)]);
+            self.frame(vec![]);
+        }
+
+        /// Click the last drawn text equal to `t` (popup items are drawn last). Panics when absent.
+        pub fn click_text(&mut self, t: &str) {
+            let r = self.texts.iter().rev().find(|(s, _)| s == t).map(|(_, r)| *r).unwrap_or_else(|| panic!("text {t:?} not on screen: {:?}", self.texts.iter().map(|x| &x.0).collect::<Vec<_>>()));
+            self.click_at(r.center());
+        }
+
+        /// Pick `item` in the combo currently showing `current`.
+        pub fn pick(&mut self, current: &str, item: &str) {
+            self.click_text(current);
+            self.click_text(item);
+        }
+
+        /// Type `v` into the numeric field `id` and press Enter.
+        pub fn type_into(&mut self, id: &str, v: &str) {
+            let r = self.ctx.read_response(egui::Id::unique(id)).unwrap_or_else(|| panic!("field {id} not shown")).rect;
+            self.click_at(r.center());
+            let all = egui::Event::Key { key: egui::Key::A, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
+            self.frame(vec![all, egui::Event::Text(v.into())]);
+            let enter = |p| egui::Event::Key { key: egui::Key::Enter, physical_key: None, pressed: p, repeat: false, modifiers: egui::Modifiers::NONE };
+            self.frame(vec![enter(true), enter(false)]);
+            self.frame(vec![]);
+        }
+
+        /// True when a text is on screen. `t`: text.
+        pub fn shows(&self, t: &str) -> bool {
+            // also accept captions with a trailing colon/space difference
+            let t = t.trim();
+            self.texts.iter().any(|(s, _)| s.trim() == t)
+        }
+
+        /// Wait for the running generation (frames keep going). Returns success.
+        pub fn wait(&mut self) -> bool {
+            let t = Instant::now();
+            loop {
+                if let Some(ok) = self.dock.poll() {
+                    self.frame(vec![]);
+                    return ok;
+                }
+                assert!(t.elapsed() < Duration::from_secs(10), "generation timeout");
+                std::thread::sleep(Duration::from_millis(5));
+                self.frame(vec![]);
+            }
+        }
+
+        /// Click Apply and wait. Panics when Apply did not start a generation.
+        pub fn apply(&mut self) {
+            assert!(self.dock.dirty, "apply clicked while not dirty");
+            self.click_text(&tr_plain("ParamsDock.Apply"));
+            assert!(self.dock.job.is_some() || !self.dock.dirty, "Apply click did not start generation");
+            assert!(self.wait(), "generation failed");
+            assert!(!self.dock.dirty);
+        }
+
+        /// G-code lines of layer `i` (None = layer not generated).
+        pub fn layer_lines(&self, i: usize) -> Option<Vec<String>> {
+            let r = self.dock.generated.get(i)?.clone()?;
+            let f = self.core.loaded_file();
+            let g = f.read().unwrap();
+            Some(g.commands()[r.start as usize..r.end as usize].iter().map(|c| c.command().to_owned()).collect())
+        }
+
+        /// Whole program text lines.
+        pub fn all_lines(&self) -> Vec<String> {
+            let f = self.core.loaded_file();
+            let g = f.read().unwrap();
+            g.commands().iter().map(|c| c.command().to_owned()).collect()
+        }
+    }
+
+    /// Values of word `w` (e.g. 'F') over `lines`. Returns the numbers.
+    pub(super) fn words(lines: &[String], w: char) -> Vec<f64> {
+        let mut out = Vec::new();
+        for l in lines {
+            for (i, c) in l.char_indices() {
+                if c == w {
+                    let rest: String = l[i + 1..].chars().take_while(|c| c.is_ascii_digit() || *c == '.' || *c == '-').collect();
+                    if let Ok(v) = rest.parse() {
+                        out.push(v);
+                    }
+                }
+            }
+        }
+        out
+    }
+
+    /// Pen-down power lines (`S<n>` alone, n > 0). Returns their S values.
+    pub(super) fn pen_downs(lines: &[String]) -> Vec<f64> {
+        lines.iter().filter(|l| l.starts_with('S')).filter_map(|l| l[1..].trim().parse::<f64>().ok()).filter(|v| *v > 0.0).collect()
+    }
+
+    /// Distinct X values rounded to mm. Returns sorted set.
+    pub(super) fn xs(lines: &[String]) -> Vec<i64> {
+        let mut v: Vec<i64> = words(lines, 'X').into_iter().map(|x| x.round() as i64).collect();
+        v.sort();
+        v.dedup();
+        v
+    }
+
+    /// Write the test SVG. `tag`: file tag. Returns the path.
+    fn write_svg(tag: &str) -> std::path::PathBuf {
+        let p = std::env::temp_dir().join(format!("lg-e2e-{tag}-{}.svg", std::process::id()));
+        std::fs::write(&p, SVG).unwrap();
+        p
+    }
+
+    /// Print a layer for debugging.
+    fn dump(h: &Harness, i: usize) -> String {
+        format!("{:?}", h.layer_lines(i))
+    }
+
+    #[test]
+    fn every_input_reaches_the_gcode() {
+        let _g = settings_guard();
+        let p = write_svg("all");
+        let mut h = Harness::new();
+        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h.wait());
+        // layers listed: ungrouped, Cut, Engrave
+        let labels: Vec<String> = (0..h.dock.layers.len()).map(|i| h.dock.layer_text(i)).collect();
+        assert_eq!(labels, ["(ungrouped) (1)", "Cut (2)", "Engrave (2)"].map(|s| s.replace("(ungrouped)", &tr_plain("ParamsDock.Ungrouped"))));
+        // defaults: every layer F1000 S1000
+        for i in 0..3 {
+            let l = h.layer_lines(i).unwrap();
+            assert!(pen_downs(&l).iter().all(|s| *s == 1000.0), "layer {i}: {}", dump(&h, i));
+        }
+        assert_eq!(xs(&h.layer_lines(0).unwrap()), [5, 10]);
+        assert_eq!(xs(&h.layer_lines(1).unwrap()), [20, 30, 45, 50]);
+        assert_eq!(xs(&h.layer_lines(2).unwrap()), [60, 62, 70, 80]);
+
+        // --- Cut: speed, S-MAX, mode, passes, filter via the UI
+        h.pick(&labels[0], &labels[1]);
+        assert_eq!(h.dock.selected, 1);
+        h.type_into("params-border", "1500");
+        h.type_into("params-smax", "400");
+        h.pick("M3 - Constant Power", "M4 - Dynamic Power");
+        h.type_into("params-passes", "3");
+        h.pick("All", "Red");
+        h.apply();
+        let cut = h.layer_lines(1).unwrap();
+        assert!(cut.iter().any(|l| l == "M4 S0"), "mode switch missing: {cut:?}");
+        let all = h.all_lines();
+        assert_eq!(all[0], "M3 S0", "program starts with the first layer's mode: {all:?}");
+        assert_eq!(all.iter().filter(|l| l.starts_with("M3 S0") || l.starts_with("M4 S0")).count(), 3, "one mode line per change: {all:?}");
+        assert!(words(&cut, 'F').iter().filter(|f| **f != 0.0).all(|f| *f == 1500.0), "{cut:?}");
+        assert!(words(&cut, 'F').contains(&1500.0), "{cut:?}");
+        assert_eq!(pen_downs(&cut), [400.0; 3], "3 passes of the red path only: {cut:?}");
+        assert_eq!(xs(&cut), [20, 30], "red filter: {cut:?}");
+        // other layers untouched, mode back to M3 for Engrave
+        assert!(pen_downs(&h.layer_lines(0).unwrap()).iter().all(|s| *s == 1000.0));
+        let eng = h.layer_lines(2).unwrap();
+        assert!(eng.iter().any(|l| l == "M3 S0"), "M3 restore missing: {eng:?}");
+        assert!(pen_downs(&eng).iter().all(|s| *s == 1000.0), "{eng:?}");
+        assert!(words(&eng, 'F').contains(&1000.0), "engrave feed: {eng:?}");
+
+        // --- Engrave disabled: gone from the program
+        h.pick(&h.dock.layer_text(1), &h.dock.layer_text(2));
+        assert_eq!(h.dock.selected, 2);
+        h.click_text(&tr_plain("ParamsDock.Enabled"));
+        assert!(!h.dock.layers[2].1.enabled);
+        h.apply();
+        assert!(h.layer_lines(2).is_none());
+        assert!(xs(&h.all_lines()).iter().all(|x| *x < 60), "engrave still in program");
+
+        // --- re-enable, Cut filter back to All, sync Cut to every layer
+        h.click_text(&tr_plain("ParamsDock.Enabled"));
+        h.pick(&h.dock.layer_text(2), &h.dock.layer_text(1));
+        h.pick("Red", "All");
+        h.click_text(&tr_plain("ParamsDock.SyncLayers"));
+        h.apply();
+        for i in 0..3 {
+            let l = h.layer_lines(i).unwrap();
+            let pd = pen_downs(&l);
+            assert!(!pd.is_empty() && pd.iter().all(|s| *s == 400.0), "layer {i} power: {l:?}");
+            assert!(words(&l, 'F').iter().filter(|f| **f != 0.0).all(|f| *f == 1500.0), "layer {i} feed: {l:?}");
+        }
+        // 3 passes everywhere: ungrouped 1 path, Cut 2, Engrave 2
+        assert_eq!(pen_downs(&h.layer_lines(0).unwrap()).len(), 3);
+        assert_eq!(pen_downs(&h.layer_lines(1).unwrap()).len(), 6);
+        assert_eq!(pen_downs(&h.layer_lines(2).unwrap()).len(), 6);
+        // all M4 now: one switch at the start of the program at most
+        let all = h.all_lines();
+        assert!(!all.iter().any(|l| l == "M3 S0"), "stale M3: {all:?}");
+
+        // --- material pick: speed, power % of max PWM and passes of the row
+        // bundled StandardMaterials.psh guarantees rows
+        {
+            let r = h.dock.materials.first().cloned().expect("material rows");
+            h.pick(&tr_plain("ParamsDock.MaterialNone"), &ParamsDock::material_text(&r));
+            assert_eq!(h.dock.cur().material_id.as_deref(), Some(r.id.as_str()));
+            h.apply();
+            let cut = h.layer_lines(1).unwrap();
+            let pd = pen_downs(&cut);
+            assert_eq!(pd.len(), 2 * r.cycles.clamp(1, 100) as usize, "passes from material: {cut:?}");
+            assert!(pd.iter().all(|s| *s == (1000 * r.power / 100) as f64), "power from material {}%: {cut:?}", r.power);
+            assert!(words(&cut, 'F').contains(&(r.speed as f64)), "speed from material {}: {cut:?}", r.speed);
+        }
+
+        // --- reopen: per-file store restores everything, identical G-code
+        let before = h.all_lines();
+        let mut h2 = Harness::new();
+        h2.dock.load_svg(h2.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h2.wait());
+        assert_eq!(h2.all_lines(), before);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn no_smin_input() {
+        let _g = settings_guard();
+        let p = write_svg("smin");
+        let mut h = Harness::new();
+        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h.wait());
+        h.frame(vec![]);
+        assert!(h.shows(&ctl_text(P, "LblSmax")));
+        assert!(!h.shows(&ctl_text(P, "LblSmin")));
+        assert!(h.ctx.read_response(egui::Id::unique("params-smin")).is_none());
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn without_hardware_pwm_mode_switches_per_pen_down() {
+        let _g = settings_guard();
+        lg_base::settings::set("Support Hardware PWM", false);
+        let p = write_svg("nopwm");
+        let mut h = Harness::new();
+        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h.wait());
+        // no power input without PWM
+        assert!(!h.shows(&ctl_text(P, "LblSmax")));
+        let labels: Vec<String> = (0..3).map(|i| h.dock.layer_text(i)).collect();
+        h.pick(&labels[0], &labels[1]);
+        h.type_into("params-border", "700");
+        h.pick("M3 - Constant Power", "M4 - Dynamic Power");
+        h.apply();
+        let all = h.all_lines();
+        // laser on = M3/M4 line per pen down, laser off = M5
+        let cut = h.layer_lines(1).unwrap();
+        assert!(cut.iter().filter(|l| l.starts_with("M4")).count() == 2, "{cut:?}");
+        assert!(!cut.iter().any(|l| l.starts_with("M3")), "{cut:?}");
+        assert!(words(&cut, 'F').contains(&700.0), "{cut:?}");
+        let eng = h.layer_lines(2).unwrap();
+        assert!(eng.iter().filter(|l| l.starts_with("M3")).count() == 2, "{eng:?}");
+        assert!(words(&eng, 'F').contains(&1000.0), "{eng:?}");
+        assert!(!all.iter().any(|l| l == "M4 S0" || l == "M3 S0"), "no PWM mode lines: {all:?}");
+        let _ = std::fs::remove_file(&p);
     }
 }

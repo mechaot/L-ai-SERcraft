@@ -141,3 +141,36 @@ fn truncate_list_keeps_head_only() {
     f.truncate_list(0);
     assert_eq!(f.count(), 0);
 }
+
+#[test]
+fn svg_layered_ranges_cover_layers() {
+    use lg_svg2gcode::{ColorFilter, LayerParams};
+    let _g = sandbox();
+    let dir = std::env::temp_dir().join(format!("lg_layers_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let svg = dir.join("two.svg");
+    std::fs::write(
+        &svg,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="50mm" height="50mm" viewBox="0 0 50 50">
+<g id="a"><rect x="1" y="1" width="10" height="10"/></g>
+<g id="b"><circle cx="30" cy="30" r="5"/></g></svg>"#,
+    )
+    .unwrap();
+    let o = lg_gcode::svg_conv_options();
+    let base = LayerParams::from_options(&o, ColorFilter::All);
+    let path = svg.to_str().unwrap();
+    let mut f = GrblFile::new();
+    f.commands_mut().push(GrblCommand::new("G0 X1"));
+    let r = f.load_imported_svg_layered(path, true, &[base.clone(), base.clone()]).unwrap();
+    let (a, b) = (r[0].clone().unwrap(), r[1].clone().unwrap());
+    // append offset: first layer starts after head + initial command
+    assert!(a.start >= 2 && a.end == b.start && b.end as usize <= f.count());
+    assert!(f.commands_mut()[b.start as usize..b.end as usize].iter().any(|c| c.command().contains("G3")));
+    assert!(!f.commands_mut()[a.start as usize..a.end as usize].iter().any(|c| c.command().contains("G3")));
+    // disabled layer -> None
+    let mut off = base.clone();
+    off.enabled = false;
+    let r = f.load_imported_svg_layered(path, false, &[off, base]).unwrap();
+    assert!(r[0].is_none() && r[1].is_some());
+    std::fs::remove_dir_all(&dir).ok();
+}

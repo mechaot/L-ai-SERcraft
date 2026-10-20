@@ -283,7 +283,7 @@ impl MainForm {
         }
         let mut preview_actions = Vec::new();
         egui::CentralPanel::default().frame(Frame::new().fill(th.form_back_color)).show(ui, |ui| {
-            preview_actions = self.preview.show(ui, &self.state.core, &mut self.state.custom_buttons, &self.state.hotkeys);
+            preview_actions = self.preview.show(ui, &self.state.core, &mut self.state.custom_buttons, &self.state.hotkeys, self.params.layer_view());
         });
         let _ = preview_actions;
         for a in params_actions {
@@ -432,7 +432,11 @@ impl MainForm {
                     "reset" => core.grbl_reset(),
                     "emuhide" => lasergrbl_core::emulator::EmulatorUiHost::hide_ui(&*self.emulator),
                     a => {
-                        if let Some(c) = a.strip_prefix("cmd=") {
+                        if let Some(n) = a.strip_prefix("layer=") {
+                            self.params.dev_select_layer(n.parse().unwrap_or(0), true);
+                        } else if let Some(n) = a.strip_prefix("layeroff=") {
+                            self.params.dev_select_layer(n.parse().unwrap_or(0), false);
+                        } else if let Some(c) = a.strip_prefix("cmd=") {
                             core.enqueue_command(&lg_gcode::GrblCommand::with_options(c, 0, true));
                         }
                     }

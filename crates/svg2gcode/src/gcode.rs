@@ -4,6 +4,7 @@
 //! Settings the C# reads (`Settings.GetObject`, `GrblCore.Configuration.MaxPWM`) come in via [`SvgConvOptions`].
 
 use crate::SvgError;
+use crate::convert::LayerParams;
 use crate::matrix::Point;
 use lg_dotnet::{Decimal, decimal_to_f32, f64_to_i32, fmt_float, fmt_float_custom, fmt_i32};
 use regex::Regex;
@@ -69,6 +70,7 @@ pub struct Gcode {
     spindle_speed: f32,
     spindle_cmd_on: String,
     spindle_cmd_off: String,
+    active_laser_on: String,
     compress: bool,
     no_arcs: bool,
     angle_step: f32,
@@ -125,6 +127,7 @@ impl Default for Gcode {
             spindle_speed: 999.0,
             spindle_cmd_on: "M3".into(),
             spindle_cmd_off: "M4".into(),
+            active_laser_on: "M3".into(),
             compress: true,
             no_arcs: false,
             angle_step: 1.0,
@@ -167,18 +170,7 @@ impl Gcode {
         self.firmware = o.firmware;
         self.support_pwm = o.support_hardware_pwm;
         self.set_decimal_places(self.decimal_places);
-        self.xy_feed = o.border_speed as f32;
-        // PWM: S = power max, else S = controller max PWM
-        if self.support_pwm {
-            self.spindle_speed = o.power_max as f32;
-        } else {
-            self.spindle_speed = decimal_to_f32(o.max_pwm);
-        }
-        // Smoothieware wants 0.0..1.1
-        if self.firmware == Firmware::Smoothie {
-            self.spindle_speed /= 255.0f32;
-        }
-        self.spindle_cmd_on = o.laser_on.clone();
+        self.derive_layer_values(o, o.border_speed, o.power_max, &o.laser_on);
         self.spindle_cmd_off = o.laser_off.clone();
         self.last_move_was_g0 = true;
         self.lastx = -1.0;
@@ -186,6 +178,39 @@ impl Gcode {
         self.lastz = 0.0;
         self.lasts = -1.0;
         self.lastg = -1.0;
+    }
+
+    /// Derive feed, spindle speed and laser-on command from per-layer values.
+    ///
+    /// `o`: global options (PWM flag, max PWM, firmware). `border_speed`: G1 feed. `power_max`: S value
+    /// (PWM mode). `laser_on`: laser-on command. No return value.
+    fn derive_layer_values(&mut self, o: &SvgConvOptions, border_speed: i32, power_max: i32, laser_on: &str) {
+        self.xy_feed = border_speed as f32;
+        // PWM: S = power max, else S = controller max PWM
+        if self.support_pwm {
+            self.spindle_speed = power_max as f32;
+        } else {
+            self.spindle_speed = decimal_to_f32(o.max_pwm);
+        }
+        // Smoothieware wants 0.0..1.1
+        if self.firmware == Firmware::Smoothie {
+            self.spindle_speed /= 255.0f32;
+        }
+        self.spindle_cmd_on = laser_on.to_string();
+        self.active_laser_on = laser_on.to_string();
+    }
+
+    /// Switch to the settings of one layer (no state reset, modal state kept).
+    ///
+    /// `o`: global options. `lp`: layer values. `out`: buffer; gets `"<mode> S0"` when PWM is on and
+    /// the laser mode differs from the active one. No return value.
+    pub fn set_layer(&mut self, o: &SvgConvOptions, lp: &LayerParams, out: &mut String) {
+        let changed = self.active_laser_on != lp.laser_on;
+        self.derive_layer_values(o, lp.border_speed, lp.power_max, &lp.laser_on);
+        // PWM: laser mode only set once at start, so re-emit on change
+        if self.support_pwm && changed {
+            out.push_str(&format!("{} S0\r\n", lp.laser_on));
+        }
     }
 
     /// `reduceGCode` getter. Returns whether modal compression is on.

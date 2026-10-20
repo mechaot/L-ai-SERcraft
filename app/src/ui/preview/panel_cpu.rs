@@ -13,7 +13,7 @@ use lg_dotnet::fmt_float_custom;
 use lg_gcode::{CartesianQuadrant, DrawList, DrawPrim, GrblFile, PreviewColor, Transform2D};
 use resvg::tiny_skia::{self, FillRule, LineCap, Paint, PathBuilder, Pixmap, Stroke, StrokeDash};
 
-use super::{PreviewEvent, PreviewInput};
+use super::{LayerView, PreviewEvent, PreviewInput};
 use crate::ui::Theme;
 
 /// Preview palette for the CPU job (C# `ColorScheme.Preview*`).
@@ -88,8 +88,9 @@ fn measure_mono(text: &str, em: f32) -> (f32, f32) {
 
 /// Rasterise a [`DrawList`] (C# `DrawOnGraphics` onto a bitmap).
 ///
-/// `dl`: draw list. `size`: bitmap size in px. `colors`: palette. Returns pixmap plus text prims.
-pub fn rasterize(dl: &DrawList, size: (i32, i32), colors: &CpuColors) -> Option<(Pixmap, Vec<TextPrim>)> {
+/// `dl`: draw list. `size`: bitmap size in px. `colors`: palette. `view`: layer overlay (hidden prims are
+/// skipped, highlighted laser-on prims get a second, wide red stroke). Returns pixmap plus text prims.
+pub fn rasterize(dl: &DrawList, size: (i32, i32), colors: &CpuColors, view: &LayerView) -> Option<(Pixmap, Vec<TextPrim>)> {
     let mut pm = Pixmap::new(size.0.max(1) as u32, size.1.max(1) as u32)?;
     let t = dl.transform;
     let ts = tiny_skia::Transform::from_row(t.a, t.b, t.c, t.d, t.e, t.f);
@@ -103,9 +104,18 @@ pub fn rasterize(dl: &DrawList, size: (i32, i32), colors: &CpuColors) -> Option<
             }
         }
     };
+    // red overlay path and its base pen width
+    let mut hl = PathBuilder::new();
+    let mut hl_width: Option<f32> = None;
     for prim in &dl.prims {
         match prim {
-            DrawPrim::Line { x1, y1, x2, y2, pen } => {
+            DrawPrim::Line { cmd, .. } | DrawPrim::Arc { cmd, .. } if view.is_hidden(*cmd) => {}
+            DrawPrim::Line { x1, y1, x2, y2, pen, cmd } => {
+                if view.is_highlighted(*cmd) && pen.dash.is_none() {
+                    hl.move_to(*x1, *y1);
+                    hl.line_to(*x2, *y2);
+                    hl_width.get_or_insert(pen.width);
+                }
                 let k = PenKey::of(pen);
                 let same = run.as_ref().is_some_and(|(rk, _, n)| *rk == k && *n < 4096);
                 if !same {
@@ -118,15 +128,13 @@ pub fn rasterize(dl: &DrawList, size: (i32, i32), colors: &CpuColors) -> Option<
                     *n += 1;
                 }
             }
-            DrawPrim::Arc { x, y, w, h, start_deg, sweep_deg, pen } => {
+            DrawPrim::Arc { x, y, w, h, start_deg, sweep_deg, pen, cmd } => {
                 flush(&mut pm, &mut run);
                 let mut pb = PathBuilder::new();
-                let n = ((sweep_deg.abs() / 2.0).ceil() as usize).clamp(2, 720);
-                let (cx, cy, rx, ry) = (x + w / 2.0, y + h / 2.0, w / 2.0, h / 2.0);
-                for i in 0..=n {
-                    let a = (start_deg + sweep_deg * i as f32 / n as f32).to_radians();
-                    let (px, py) = (cx + rx * a.cos(), cy + ry * a.sin());
-                    if i == 0 { pb.move_to(px, py) } else { pb.line_to(px, py) }
+                arc_points(&mut pb, *x, *y, *w, *h, *start_deg, *sweep_deg);
+                if view.is_highlighted(*cmd) && pen.dash.is_none() {
+                    arc_points(&mut hl, *x, *y, *w, *h, *start_deg, *sweep_deg);
+                    hl_width.get_or_insert(pen.width);
                 }
                 if let Some(path) = pb.finish() {
                     stroke(&mut pm, &path, &PenKey::of(pen), colors, ts);
@@ -140,7 +148,28 @@ pub fn rasterize(dl: &DrawList, size: (i32, i32), colors: &CpuColors) -> Option<
         }
     }
     flush(&mut pm, &mut run);
+    // selected layer: wide red stroke on top
+    if let (Some(path), Some(w)) = (hl.finish(), hl_width) {
+        let mut paint = Paint::default();
+        paint.set_color_rgba8(255, 0, 0, 255);
+        paint.anti_alias = true;
+        let st = Stroke { width: (w * 3.0).max(1e-6), line_cap: LineCap::Round, ..Default::default() };
+        pm.stroke_path(&path, &paint, &st, ts, None);
+    }
     Some((pm, texts))
+}
+
+/// Add an elliptical arc as a polyline sub-path.
+///
+/// `pb`: target path. `x`,`y`,`w`,`h`: bounding rect of the ellipse. `start_deg`,`sweep_deg`: GDI angles.
+fn arc_points(pb: &mut PathBuilder, x: f32, y: f32, w: f32, h: f32, start_deg: f32, sweep_deg: f32) {
+    let n = ((sweep_deg.abs() / 2.0).ceil() as usize).clamp(2, 720);
+    let (cx, cy, rx, ry) = (x + w / 2.0, y + h / 2.0, w / 2.0, h / 2.0);
+    for i in 0..=n {
+        let a = (start_deg + sweep_deg * i as f32 / n as f32).to_radians();
+        let (px, py) = (cx + rx * a.cos(), cy + ry * a.sin());
+        if i == 0 { pb.move_to(px, py) } else { pb.line_to(px, py) }
+    }
 }
 
 /// Pen identity for run grouping.
@@ -181,8 +210,8 @@ fn stroke(pm: &mut Pixmap, path: &tiny_skia::Path, k: &PenKey, colors: &CpuColor
 
 /// Render the whole preview bitmap (C# `DoTheWork`).
 ///
-/// `file`: program. `size`: bitmap px. `colors`: palette. Returns the bitmap + overlay data.
-pub fn render(file: &GrblFile, size: (i32, i32), colors: &CpuColors) -> Option<Rendered> {
+/// `file`: program. `size`: bitmap px. `colors`: palette. `view`: layer overlay. Returns the bitmap + overlay data.
+pub fn render(file: &GrblFile, size: (i32, i32), colors: &CpuColors, view: &LayerView) -> Option<Rendered> {
     if size.0 < 1 || size.1 < 1 {
         return None;
     }
@@ -196,7 +225,7 @@ pub fn render(file: &GrblFile, size: (i32, i32), colors: &CpuColors) -> Option<R
             return Some(Rendered { size, transform: None, image: ColorImage::filled([size.0 as usize, size.1 as usize], Color32::TRANSPARENT), texts: Vec::new() });
         }
     };
-    let (pm, texts) = rasterize(&dl, size, colors)?;
+    let (pm, texts) = rasterize(&dl, size, colors, view)?;
     // premultiplied RGBA -> egui
     let px = pm.data();
     let pixels: Vec<Color32> = px.chunks_exact(4).map(|p| Color32::from_rgba_premultiplied(p[0], p[1], p[2], p[3])).collect();
@@ -210,6 +239,8 @@ struct JobKey {
     revision: u64,
     size: (i32, i32),
     colors: CpuColors,
+    /// Layer overlay (highlight suppressed while a job runs).
+    view: LayerView,
 }
 
 /// Worker mailbox.
@@ -272,7 +303,7 @@ impl CpuPanel {
             let (key, file) = job;
             // wait for loads in progress instead of blocking on the lock
             let out = match file.read() {
-                Ok(g) if !g.loading_flag().load(Ordering::Relaxed) => render(&g, key.size, &key.colors),
+                Ok(g) if !g.loading_flag().load(Ordering::Relaxed) => render(&g, key.size, &key.colors, &key.view),
                 Ok(_) | Err(_) => None,
             };
             if let Some(r) = out {
@@ -298,7 +329,11 @@ impl CpuPanel {
 
         // request a render when anything it depends on changed
         if let Some(file) = &input.file {
-            let key = JobKey { ptr: Arc::as_ptr(file) as *const () as usize, revision: input.file_revision, size, colors: CpuColors::of(&theme) };
+            let mut view = input.layer_view.clone().unwrap_or_default();
+            if input.in_program {
+                view.highlight = None;
+            }
+            let key = JobKey { ptr: Arc::as_ptr(file) as *const () as usize, revision: input.file_revision, size, colors: CpuColors::of(&theme), view };
             if size.0 > 0 && size.1 > 0 && (self.requested.as_ref() != Some(&key) || self.force) {
                 self.force = false;
                 self.requested = Some(key.clone());
@@ -427,7 +462,7 @@ mod tests {
     #[test]
     fn renders_pixels_and_inverts() {
         let th = Theme::of(crate::ui::Scheme::CADDark);
-        let r = render(&file(), (400, 300), &CpuColors::of(&th)).unwrap();
+        let r = render(&file(), (400, 300), &CpuColors::of(&th), &LayerView::default()).unwrap();
         assert!(r.image.pixels.iter().any(|p| p.a() > 0), "nothing drawn");
         let t = r.transform.unwrap();
         let (dx, dy) = t.apply(12.5, 7.5);
@@ -439,7 +474,31 @@ mod tests {
     #[test]
     fn empty_file_is_transparent() {
         let th = Theme::of(crate::ui::Scheme::CADDark);
-        let r = render(&GrblFile::new(), (50, 50), &CpuColors::of(&th)).unwrap();
+        let r = render(&GrblFile::new(), (50, 50), &CpuColors::of(&th), &LayerView::default()).unwrap();
         assert!(r.transform.is_none());
+    }
+
+    /// Count of strongly red pixels. `r`: render. Returns count.
+    fn red(r: &Rendered) -> usize {
+        r.image.pixels.iter().filter(|p| p.a() > 200 && p.r() > 200 && p.g() < 60 && p.b() < 60).count()
+    }
+
+    #[test]
+    #[allow(clippy::single_range_in_vec_init)]
+    fn highlight_is_red_and_hidden_vanishes() {
+        let th = Theme::of(crate::ui::Scheme::CADDark);
+        let c = CpuColors::of(&th);
+        let f = file();
+        let plain = render(&f, (400, 300), &c, &LayerView::default()).unwrap();
+        // highlight the laser-on commands 3..6
+        let hl = LayerView { revision: 1, highlight: Some(3..6), hidden: vec![] };
+        let r = render(&f, (400, 300), &c, &hl).unwrap();
+        assert!(red(&r) > red(&plain) + 100, "no red stroke: {} vs {}", red(&r), red(&plain));
+        // hide them: fewer pixels, no red
+        let hid = LayerView { revision: 2, highlight: None, hidden: vec![3..6] };
+        let r = render(&f, (400, 300), &c, &hid).unwrap();
+        let count = |r: &Rendered| r.image.pixels.iter().filter(|p| p.a() > 0).count();
+        assert!(count(&r) < count(&plain));
+        assert_eq!(red(&r), red(&plain));
     }
 }

@@ -25,6 +25,117 @@ pub enum ColorFilter {
     Black,
 }
 
+/// One selectable layer of an SVG (top-level `<g>` or the ungrouped root shapes).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LayerInfo {
+    /// Stable key: `#root`, `id:<id>` or `idx:<n>` (n = 1-based group index).
+    pub key: String,
+    /// Display label (`inkscape:label`, id, `Layer n` or `(ungrouped)`).
+    pub label: String,
+    /// Number of shape elements inside.
+    pub shapes: usize,
+}
+
+/// Per-layer conversion values.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LayerParams {
+    /// Layer is converted when true.
+    pub enabled: bool,
+    /// Repeat count of the layer body.
+    pub passes: u32,
+    /// G1 feed.
+    pub border_speed: i32,
+    /// S value in PWM mode.
+    pub power_max: i32,
+    /// Laser-on command (`M3`/`M4`).
+    pub laser_on: String,
+    /// Colour filter for this layer.
+    pub filter: ColorFilter,
+}
+
+impl LayerParams {
+    /// Layer values equal to the global options. `o`: options. `filter`: colour filter. Returns params.
+    pub fn from_options(o: &SvgConvOptions, filter: ColorFilter) -> Self {
+        LayerParams { enabled: true, passes: 1, border_speed: o.border_speed, power_max: o.power_max, laser_on: o.laser_on.clone(), filter }
+    }
+}
+
+/// Per layer, its byte range in the generated G-code (`None` = layer disabled).
+pub type LayerRanges = Vec<Option<std::ops::Range<usize>>>;
+
+const SHAPE_NAMES: [&str; 8] = ["path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "text"];
+const INKSCAPE_NS: &str = "http://www.inkscape.org/namespaces/inkscape";
+
+/// Strip chars invalid in XML 1.0 (see `convert_from_text`). `text`: raw XML. Returns cleaned text.
+fn clean_xml(text: &str) -> String {
+    text.chars()
+        .filter(|&c| matches!(c as u32, 0x09 | 0x0A | 0x0D | 0x20..=0xD7FF | 0xE000..=0xFFFD))
+        .collect()
+}
+
+/// Default namespace of the root (as `parse_globals`). `svg`: root. Returns URI or "".
+fn root_namespace(svg: Node) -> String {
+    svg.namespaces().find(|ns| ns.name().is_none()).map(|ns| ns.uri().to_string()).unwrap_or_default()
+}
+
+/// Is `n` a shape element in namespace `ns`. `n`: node. `ns`: namespace URI. Returns bool.
+fn is_shape(n: Node, ns: &str) -> bool {
+    n.is_element()
+        && (SHAPE_NAMES.contains(&n.tag_name().name()) || n.tag_name().name() == "image")
+        && n.tag_name().namespace().unwrap_or("") == ns
+}
+
+/// Top-level `<g>` children in namespace `ns`. `svg`: root. `ns`: namespace URI. Returns nodes.
+fn top_groups<'a, 'i>(svg: Node<'a, 'i>, ns: &str) -> Vec<Node<'a, 'i>> {
+    svg.children().filter(|c| c.is_element() && c.tag_name().name() == "g" && c.tag_name().namespace().unwrap_or("") == ns).collect()
+}
+
+/// Does the root hold direct shapes. `svg`: root. `ns`: namespace URI. Returns bool.
+fn root_has_shapes(svg: Node, ns: &str) -> bool {
+    svg.children().any(|c| is_shape(c, ns))
+}
+
+/// List layers of a parsed document. `svg`: root element. Returns layers in conversion order.
+fn list_layers_node(svg: Node) -> Vec<LayerInfo> {
+    let ns = root_namespace(svg);
+    let mut out = Vec::new();
+    if root_has_shapes(svg, &ns) {
+        let shapes = svg.children().filter(|c| is_shape(*c, &ns)).count();
+        out.push(LayerInfo { key: "#root".into(), label: "(ungrouped)".into(), shapes });
+    }
+    for (i, g) in top_groups(svg, &ns).into_iter().enumerate() {
+        let n = i + 1;
+        let id = g.attribute("id").filter(|s| !s.is_empty());
+        let label = g
+            .attribute((INKSCAPE_NS, "label"))
+            .filter(|s| !s.is_empty())
+            .or(id)
+            .map(str::to_string)
+            .unwrap_or_else(|| format!("Layer {n}"));
+        let key = id.map_or_else(|| format!("idx:{n}"), |s| format!("id:{s}"));
+        let shapes = g.descendants().filter(|d| *d != g && is_shape(*d, &ns)).count();
+        out.push(LayerInfo { key, label, shapes });
+    }
+    out
+}
+
+/// List layers of SVG text.
+///
+/// `text`: SVG XML. Returns layers (root pseudo-layer first when needed) or the XML error.
+pub fn list_layers_from_text(text: &str) -> Result<Vec<LayerInfo>, SvgError> {
+    let cleaned = clean_xml(text);
+    let opt = roxmltree::ParsingOptions { allow_dtd: true, ..Default::default() };
+    let doc = roxmltree::Document::parse_with_options(&cleaned, opt)
+        .map_err(|e| SvgError::new("System.Xml.XmlException", e.to_string()))?;
+    Ok(list_layers_node(doc.root_element()))
+}
+
+/// List layers of an SVG file. `path`: file. Returns layers or error.
+pub fn list_layers_from_file(path: &std::path::Path) -> Result<Vec<LayerInfo>, SvgError> {
+    let bytes = std::fs::read(path).map_err(|e| SvgError::new("System.IO.IOException", e.to_string()))?;
+    list_layers_from_text(&decode_read_all_text(&bytes))
+}
+
 /// `System.Drawing.PointF`.
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct PointF {
@@ -291,6 +402,8 @@ pub struct GCodeFromSvg {
     last_set_gcx: f64,
     last_set_gcy: f64,
     distance: f64,
+    layers: Vec<LayerParams>,
+    layer_ranges: Vec<Option<std::ops::Range<usize>>>,
 }
 
 impl Default for GCodeFromSvg {
@@ -353,6 +466,8 @@ impl GCodeFromSvg {
             last_set_gcx: 0.0,
             last_set_gcy: 0.0,
             distance: 0.0,
+            layers: Vec::new(),
+            layer_ranges: Vec::new(),
         }
     }
 
@@ -365,10 +480,7 @@ impl GCodeFromSvg {
         self.import_in_mm = import_mm;
         // strip chars not valid in XML 1.0 (upstream regex also drops astral chars, see NOTE)
         // NOTE(upstream): `က0-u10FFFF` in the regex is a typo; effective allowed set is 09 0A 0D 20-D7FF E000-FFFD.
-        let cleaned: String = text
-            .chars()
-            .filter(|&c| matches!(c as u32, 0x09 | 0x0A | 0x0D | 0x20..=0xD7FF | 0xE000..=0xFFFD))
-            .collect();
+        let cleaned = clean_xml(text);
         let opt = roxmltree::ParsingOptions { allow_dtd: true, ..Default::default() };
         let doc = roxmltree::Document::parse_with_options(&cleaned, opt)
             .map_err(|e| SvgError::new("System.Xml.XmlException", e.to_string()))?;
@@ -386,6 +498,84 @@ impl GCodeFromSvg {
         self.convert_from_text(&xml, opts, true, filter)
     }
 
+    /// Layered `convertFromText`: per-layer feed, power, passes, enable and colour filter.
+    ///
+    /// `text`: SVG XML. `opts`: global options. `import_mm`: stored only. `layers`: params aligned with
+    /// [`list_layers_from_text`] order (empty = plain conversion; missing entries use the globals).
+    /// Returns the G-code and, per layer, its byte range in it (`None` = disabled), or the exception.
+    pub fn convert_from_text_layered(
+        &mut self,
+        text: &str,
+        opts: &SvgConvOptions,
+        import_mm: bool,
+        layers: &[LayerParams],
+    ) -> Result<(String, LayerRanges), SvgError> {
+        self.layers = layers.to_vec();
+        self.layer_ranges.clear();
+        // plain path for empty layer list
+        let filter = layers.first().map_or(ColorFilter::All, |l| l.filter);
+        // initial command uses the first converted layer's values, no instant mode switch
+        let mut o = opts.clone();
+        if let Some(first) = layers.iter().find(|l| l.enabled) {
+            o.border_speed = first.border_speed;
+            o.power_max = first.power_max;
+            o.laser_on = first.laser_on.clone();
+        }
+        let r = self.convert_from_text(text, &o, import_mm, filter);
+        self.layers.clear();
+        let ranges = std::mem::take(&mut self.layer_ranges);
+        r.map(|g| (g, ranges))
+    }
+
+    /// Layered `convertFromFile`. `path`: SVG file. Other args and return as [`Self::convert_from_text_layered`].
+    pub fn convert_from_file_layered(
+        &mut self,
+        path: &std::path::Path,
+        opts: &SvgConvOptions,
+        layers: &[LayerParams],
+    ) -> Result<(String, LayerRanges), SvgError> {
+        let bytes = std::fs::read(path).map_err(|e| SvgError::new("System.IO.IOException", e.to_string()))?;
+        let xml = decode_read_all_text(&bytes);
+        self.convert_from_text_layered(&xml, opts, true, layers)
+    }
+
+    /// Layered body of `startConvert`: each layer in turn with its own values.
+    ///
+    /// `svg`: root. `opts`: global options. Records `layer_ranges`.
+    fn convert_layers(&mut self, svg: Node, opts: &SvgConvOptions) -> Result<(), SvgError> {
+        let ns = self.nspace.clone();
+        let mut idx = 0usize;
+        // one layer: params lookup, skip, set values, repeat body
+        let mut run = |this: &mut Self, body: &dyn Fn(&mut Self) -> Result<(), SvgError>| -> Result<(), SvgError> {
+            let lp = this.layers.get(idx).cloned().unwrap_or_else(|| LayerParams::from_options(opts, ColorFilter::All));
+            idx += 1;
+            if !lp.enabled {
+                this.layer_ranges.push(None);
+                return Ok(());
+            }
+            let start = this.gcode_string.len();
+            this.gcode.set_layer(opts, &lp, &mut this.gcode_string);
+            this.load_color_filter = lp.filter;
+            for _ in 0..lp.passes.max(1) {
+                body(this)?;
+            }
+            this.layer_ranges.push(Some(start..this.gcode_string.len()));
+            Ok(())
+        };
+        if root_has_shapes(svg, &ns) {
+            run(self, &|t: &mut Self| {
+                if !t.svg_nodes_only {
+                    t.parse_basic_elements(svg, 1)?;
+                }
+                t.parse_path(svg, 1)
+            })?;
+        }
+        for group in top_groups(svg, &ns) {
+            run(self, &|t: &mut Self| t.parse_one_group(group, 1))?;
+        }
+        Ok(())
+    }
+
     /// `convertSVG`. `svg`: root element. `opts`: settings. Returns G-code.
     fn convert_svg(&mut self, svg: Node, opts: &SvgConvOptions) -> Result<String, SvgError> {
         // C# `gcode` is a static class: its state is shared by the whole process (e.g. `lastf` survives)
@@ -400,13 +590,13 @@ impl GCodeFromSvg {
         self.gcode.setup(opts);
         self.gcode.set_rapid_num(if opts.disable_g0_fast_skip { 1 } else { 0 });
         self.gcode.put_initial_command(&mut self.gcode_string);
-        self.start_convert(svg)?;
+        self.start_convert(svg, opts)?;
         self.gcode.put_final_command(&mut self.gcode_string);
         Ok(self.gcode_string.replace(',', "."))
     }
 
-    /// `startConvert`: reset state, parse root. `svg`: root element.
-    fn start_convert(&mut self, svg: Node) -> Result<(), SvgError> {
+    /// `startConvert`: reset state, parse root. `svg`: root element. `opts`: global options (layered mode).
+    fn start_convert(&mut self, svg: Node, opts: &SvgConvOptions) -> Result<(), SvgError> {
         self.count_sub_path = 0;
         self.start_first_element = true;
         self.gcode_scale = 1.0;
@@ -426,6 +616,9 @@ impl GCodeFromSvg {
             m.set_identity();
         }
         self.parse_globals(svg)?;
+        if !self.layers.is_empty() {
+            return self.convert_layers(svg, opts);
+        }
         if !self.svg_nodes_only {
             self.parse_basic_elements(svg, 1)?;
         }
@@ -523,18 +716,24 @@ impl GCodeFromSvg {
     /// `parseGroup`: recurse over `<g>`. `svg`: parent. `level`: nesting level.
     fn parse_group(&mut self, svg: Node, level: usize) -> Result<(), SvgError> {
         for group in self.elements(svg, "g") {
-            if self.svg_comments
-                && let Some(id) = attr(group, "id")
-            {
-                self.gcode_string.push_str(&format!("\r\n( Group level:{} id={} )\r\n", level, id));
-            }
-            self.parse_transform(group, true, level)?; // applied in gcodeMove
-            if !self.svg_nodes_only {
-                self.parse_basic_elements(group, level)?;
-            }
-            self.parse_path(group, level)?;
-            self.parse_group(group, level + 1)?;
+            self.parse_one_group(group, level)?;
         }
+        Ok(())
+    }
+
+    /// Body of the `parseGroup` loop. `group`: `<g>` node. `level`: nesting level.
+    fn parse_one_group(&mut self, group: Node, level: usize) -> Result<(), SvgError> {
+        if self.svg_comments
+            && let Some(id) = attr(group, "id")
+        {
+            self.gcode_string.push_str(&format!("\r\n( Group level:{} id={} )\r\n", level, id));
+        }
+        self.parse_transform(group, true, level)?; // applied in gcodeMove
+        if !self.svg_nodes_only {
+            self.parse_basic_elements(group, level)?;
+        }
+        self.parse_path(group, level)?;
+        self.parse_group(group, level + 1)?;
         Ok(())
     }
 

@@ -22,7 +22,7 @@ use lg_services::hotkeys::{Actions, HotKeysManager};
 
 use crate::ui::dialog::{filters, DialogResult, FileDialogOptions, MessageBox, MessageBoxButtons, MessageBoxHost, MessageBoxIcon, PendingFile};
 use crate::ui::icons::icons;
-use crate::ui::preview::{Backend, Hotkeys, MachineStatus, PreviewEvent, PreviewInput, PreviewOptions, PreviewPanel};
+use crate::ui::preview::{Backend, Hotkeys, LayerView, MachineStatus, PreviewEvent, PreviewInput, PreviewOptions, PreviewPanel};
 use crate::ui::theme::Theme;
 use crate::ui::tr;
 use crate::ui::widgets::ImageButton;
@@ -271,8 +271,8 @@ impl PreviewForm {
     /// Draw the form into the remaining space of `ui`.
     ///
     /// `ui`: target ui. `core`: engine. `buttons`: custom button list (edited by the form, saved on change).
-    /// `hotkeys`: shortcut texts for the preview tips. Returns actions for the host.
-    pub fn show(&mut self, ui: &mut Ui, core: &Arc<GrblCore>, buttons: &mut CustomButtons, hotkeys: &HotKeysManager) -> Vec<PreviewFormAction> {
+    /// `hotkeys`: shortcut texts for the preview tips. `layer_view`: layer highlight/hide overlay. Returns actions for the host.
+    pub fn show(&mut self, ui: &mut Ui, core: &Arc<GrblCore>, buttons: &mut CustomButtons, hotkeys: &HotKeysManager, layer_view: Option<LayerView>) -> Vec<PreviewFormAction> {
         let mut actions = Vec::new();
         self.button_count = buttons.count();
         let bctx = button_context(core);
@@ -285,7 +285,7 @@ impl PreviewForm {
             .frame(Frame::NONE.fill(th.form_back_color))
             .show_separator_line(false)
             .show(ui, |ui| self.toolbar(ui, core, buttons, &bctx, &mut cmds, &mut actions));
-        let input = self.build_input(core, hotkeys);
+        let input = self.build_input(core, hotkeys, layer_view);
         for ev in self.panel.show(ui, &input) {
             match ev {
                 PreviewEvent::JogToPosition { x, y, fast } => core.jog_to_position_fast(PointF::new(x, y), fast),
@@ -299,7 +299,7 @@ impl PreviewForm {
     }
 
     /// Fill `PreviewInput` from the core (C# panel reads these in `TimerUpdate`).
-    fn build_input(&self, core: &GrblCore, hotkeys: &HotKeysManager) -> PreviewInput {
+    fn build_input(&self, core: &GrblCore, hotkeys: &HotKeysManager, layer_view: Option<LayerView>) -> PreviewInput {
         let o = {
             let v = core.view_options();
             PreviewOptions {
@@ -327,6 +327,7 @@ impl PreviewForm {
             in_program: core.in_program(),
             options: o,
             hotkeys: Hotkeys { auto_size: hk(Actions::AutoSizeDrawing), zoom_in: hk(Actions::ZoomInDrawing), zoom_out: hk(Actions::ZoomOutDrawing) },
+            layer_view,
             ..PreviewInput::from_settings()
         }
     }
