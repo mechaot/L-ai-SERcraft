@@ -1,0 +1,9 @@
+#!/bin/sh
+# AppRun: AppImage entry point. Args: passed through to lasergrbl. Output: exit code of app.
+# Find AppDir, fall back to script dir if runtime did not set APPDIR.
+APPDIR="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
+export APPDIR
+# Resources live inside image.
+export LASERGRBL_RESOURCES="$APPDIR/usr/share/lasergrbl/resources"
+# GL/X11/Wayland libs come from host. Do not touch LD_LIBRARY_PATH.
+exec "$APPDIR/usr/bin/lasergrbl" "$@"

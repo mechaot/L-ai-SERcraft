@@ -42,6 +42,21 @@ Settings and data live in `~/.config/LaserGRBL/` (Linux) or `%APPDATA%\LaserGRBL
 Windows `LaserGRBL.Settings.bin` is imported on first start; custom-button `.zbn` files and `.lps` projects from
 the Windows version can be imported, and `.zbn` exports stay readable by Windows LaserGRBL.
 
+## AppImage
+
+```sh
+packaging/appimage/build-appimage.sh --install-deps   # first run: zig + cargo-zigbuild into .cache/ (no root)
+packaging/appimage/build-appimage.sh                  # later runs
+# options: --native (plain cargo build), --skip-build, --out DIR
+```
+
+Output: `dist/LaserGRBL-<version>-x86_64.AppImage`. The binary is built with `cargo-zigbuild` against a glibc 2.28
+baseline, so it runs on older distros too (the script prints the max required `GLIBC_*` symbol version). With
+`--native`, or when zigbuild is missing, it falls back to a plain build that needs a glibc as new as the build
+host's. GL/EGL/X11/Wayland/xkbcommon libraries are not bundled: they are loaded at runtime from the host, so
+graphics drivers always come from the host system. `appimagetool` (pinned, sha256-checked) is downloaded to
+`.cache/appimage/` and run without FUSE.
+
 ## Repository layout
 
 | path | content |

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.lasergrbl.LaserGRBL</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>LaserGRBL</name>
+  <summary>GRBL laser engraver and cutter controller</summary>
+  <description>
+    <p>Unofficial Rust port of LaserGRBL. Generates G-code from images and SVG files and streams it to GRBL laser machines.</p>
+  </description>
+  <launchable type="desktop-id">lasergrbl.desktop</launchable>
+  <provides><binary>lasergrbl</binary></provides>
+  <content_rating type="oars-1.1"/>
+</component>

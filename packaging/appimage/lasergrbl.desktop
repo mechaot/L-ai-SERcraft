@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=LaserGRBL
+GenericName=Laser engraver controller
+Comment=GRBL laser engraver and cutter controller
+Exec=lasergrbl %f
+Icon=lasergrbl
+Terminal=false
+Categories=Graphics;Engineering;
+MimeType=image/svg+xml;text/x-gcode;
+Keywords=laser;grbl;gcode;engraver;cnc;

@@ -1,0 +1,7 @@
+# cargo build output
+/target/
+/target-*/
+# golden harness build dirs (Mono builds + throw-away HOME)
+/tools/golden/**/.build/
+/dist/
+/.cache/
