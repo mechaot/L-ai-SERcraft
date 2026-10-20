@@ -59,6 +59,10 @@ graphics drivers always come from the host system. `appimagetool` (pinned, sha25
 
 ## Repository layout
 
+Before editing, read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (layers, threads, data flow, rules) and
+use [`docs/SOURCE_MAP.md`](docs/SOURCE_MAP.md) (task index + every source file with its purpose) to find the
+right place. After adding or renaming source files, run `python3 -I tools/gen_source_map.py`.
+
 | path | content |
 |---|---|
 | `crates/dotnet` | .NET Framework numeric semantics (number formatting, parsing, `Math.Round`, `decimal`, `TimeSpan`) so generated numbers match byte for byte |
