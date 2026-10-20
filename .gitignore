@@ -5,3 +5,5 @@
 /tools/golden/**/.build/
 /dist/
 /.cache/
+/build-appimage.log
+/.cargo-home/

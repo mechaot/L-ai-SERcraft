@@ -57,6 +57,13 @@ host's. GL/EGL/X11/Wayland/xkbcommon libraries are not bundled: they are loaded 
 graphics drivers always come from the host system. `appimagetool` (pinned, sha256-checked) is downloaded to
 `.cache/appimage/` and run without FUSE.
 
+## CI
+
+`.gitlab-ci.yml` (GitLab CE, docker executor): `lint:clippy` (warnings are errors) and `test:cargo` (whole
+workspace incl. golden tests) run in parallel; `build:appimage` runs after both and keeps
+`dist/LaserGRBL-<version>-x86_64.AppImage` (+ `.sha256`) as job artifact for a month. The job fails if the
+binary needs a glibc newer than 2.28. Tool versions (Rust image, cargo-zigbuild, zig) are pinned at the top.
+
 ## Repository layout
 
 Before editing, read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (layers, threads, data flow, rules) and

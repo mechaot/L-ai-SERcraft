@@ -1,0 +1,140 @@
+# LaserGRBL (Rust port) -- CI for GitLab CE + a self-hosted docker-executor runner.
+#
+# .yml, not .yaml: only the .yml spelling is auto-detected.
+#
+#   lint:clippy      clippy, warnings are errors              | lint
+#   test:cargo       whole workspace incl. golden tests       | test
+#   build:appimage   portable AppImage (glibc 2.28 baseline)  | build -> artifact
+#
+# Runner: docker executor, internet access, non-privileged. The AppImage needs
+# no FUSE (appimagetool runs with APPIMAGE_EXTRACT_AND_RUN=1).
+#
+# No rustfmt gate: the code base is not rustfmt-formatted (long lines kept on
+# purpose), a `cargo fmt --check` job would always fail.
+#
+# Caches: only cargo's download cache (registry + git) keyed by Cargo.lock, and
+# the pinned AppImage tools. `target/` is not cached (tens of GB).
+#
+# Scheduling: every job has an explicit `needs:`; stages are only a fallback
+# order. build:appimage needs both checks, so a red tree never yields an
+# AppImage artifact.
+#
+# Runner-side, not expressible here: Settings > CI/CD > "Auto-cancel redundant
+# pipelines" (what makes the `interruptible: true` default do anything).
+
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  # Pinned images/tools: bump deliberately. Rust >= 1.95 (edition 2024).
+  RUST_IMAGE: "rust:1.99.0-trixie"
+  CARGO_ZIGBUILD_VERSION: "0.23.4"
+  ZIGLANG_VERSION: "0.17.0"           # PyPI `ziglang`: zig as a pip package
+
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo-home
+  CARGO_INCREMENTAL: "0"              # no use in throw-away build dirs
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  GIT_DEPTH: "1"
+
+default:
+  interruptible: true
+
+# One pipeline per change: MR pipeline while an MR is open, branch pipeline
+# otherwise, plus tags.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# ----------------------------------------------------------- templates ------
+
+# rust toolchain image + cargo download cache.
+.rust:
+  image: $RUST_IMAGE
+  cache:
+    - &cargo-cache
+      key:
+        files:
+          - Cargo.lock
+      paths:
+        - .cargo-home/registry/index/
+        - .cargo-home/registry/cache/
+        - .cargo-home/git/db/
+  before_script:
+    - rustc --version && cargo --version
+
+# ---------------------------------------------------------------- lint ------
+
+lint:clippy:
+  extends: .rust
+  stage: lint
+  needs: []
+  script:
+    - rustup component add clippy
+    - cargo clippy --workspace --all-targets --locked -- -D warnings
+
+# ---------------------------------------------------------------- test ------
+
+test:cargo:
+  extends: .rust
+  stage: test
+  needs: []
+  script:
+    # golden outputs of the original app live in tests/golden (committed)
+    - cargo test --workspace --locked --no-fail-fast
+
+# --------------------------------------------------------------- build ------
+
+build:appimage:
+  extends: .rust
+  stage: build
+  needs: ["lint:clippy", "test:cargo"]
+  cache:
+    - *cargo-cache
+    - key: "appimage-tools-zigbuild$CARGO_ZIGBUILD_VERSION-zig$ZIGLANG_VERSION"
+      paths:
+        - .cache/appimage/cargo/
+        - .cache/appimage/venv/
+        - .cache/appimage/appimagetool-x86_64.AppImage
+  script:
+    # python3-venv: zig via pip; binutils: objdump for the glibc check
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends python3 python3-venv binutils file >/dev/null
+    # pinned zig + cargo-zigbuild in the cache dir the build script puts on PATH
+    - |
+      T=.cache/appimage
+      [ -x "$T/venv/bin/python3" ] || python3 -m venv "$T/venv"
+      "$T/venv/bin/python3" -m ziglang version 2>/dev/null | grep -qx "$ZIGLANG_VERSION" \
+        || "$T/venv/bin/pip" install --quiet "ziglang==$ZIGLANG_VERSION"
+      "$T/cargo/bin/cargo-zigbuild" --version 2>/dev/null | grep -q " $CARGO_ZIGBUILD_VERSION\$" \
+        || cargo install --locked --root "$T/cargo" cargo-zigbuild --version "$CARGO_ZIGBUILD_VERSION"
+    - packaging/appimage/build-appimage.sh 2>&1 | tee build-appimage.log
+    # must be the portable zigbuild, never the native fallback
+    - |
+      if grep -q "WARNING: native build" build-appimage.log; then
+        echo "zigbuild not used: AppImage would not be portable" >&2; exit 1
+      fi
+      MAXG="$(objdump -T target/x86_64-unknown-linux-gnu/release/lasergrbl | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)"
+      echo "max GLIBC required: $MAXG"
+      [ "$(printf '%s\n2.28\n' "$MAXG" | sort -V | tail -1)" = "2.28" ] || { echo "binary needs glibc > 2.28" >&2; exit 1; }
+    # smoke test: the packed AppImage extracts and holds the binary + resources
+    - |
+      APP="$(ls dist/LaserGRBL-*-x86_64.AppImage)"
+      chmod +x "$APP"
+      (cd "$(mktemp -d)" && "$CI_PROJECT_DIR/$APP" --appimage-extract >/dev/null \
+        && test -x squashfs-root/usr/bin/lasergrbl \
+        && test -d squashfs-root/usr/share/lasergrbl/resources \
+        && test -x squashfs-root/AppRun)
+      sha256sum "$APP" | tee "$APP.sha256"
+  artifacts:
+    name: "LaserGRBL-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    expire_in: 1 month
+    paths:
+      - dist/LaserGRBL-*-x86_64.AppImage
+      - dist/LaserGRBL-*-x86_64.AppImage.sha256
