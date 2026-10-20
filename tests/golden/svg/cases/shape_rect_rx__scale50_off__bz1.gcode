@@ -1,0 +1,15 @@
+M3 S0
+S0 (1st shape)
+G0X12.5Y27(rect)
+S255 (rect a1)
+G1X27.5F1000(rect a1)
+G3X30Y29.5I0J2.5(rect)
+G1Y39.5(rect b1)
+G3X27.5Y42I-2.5J0(rect)
+G1X12.5(rect a2)
+G3X10Y39.5I0J-2.5(rect)
+G1Y29.5(rect b2)
+G3X12.5Y27I2.5J0(rect)
+G1(rect)
+S0 (rect)
+M5 S0

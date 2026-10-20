@@ -1,0 +1,33 @@
+DSL of the protocol scenarios (*.scn). One verb per line, '#' starts a comment line. Text arguments use the
+escapes \n \r \t \\ \xHH \uHHHH. Everything runs on the harness thread; the TX/RX thread bodies are stepped by hand.
+
+Setup (before 'fw'):
+  reset                      wipe settings
+  set bool|int|str|sm|tm|ts <key|"key with spaces"> <value>     settings (sm=StreamingMode, tm=ThreadingMode, ts=seconds)
+  conf <ver|none> [$n=v ...] stored Grbl configuration;   lastver <ver|none>  "Last GrblVersion known"
+  fw grbl|smoothie|marlin|vigo   create the core (new fake link, board auto-ok)
+  prog ... end               G-code loaded into the core's file (lines between)
+  newprog <escaped text>     same, one line
+Board script:
+  board auto on|off          answer "ok" to every written line (default on)
+  board rule [once] <match> => r1 | r2 | <none>     match "=text" exact, else substring; first hit wins
+  board clear
+Connection:
+  connect                    OpenCom without threads (status Connecting, link open, TX first run)
+  fastconnect [welcome]      connect, then status Idle without events, optional welcome line fed to RX
+  connectthreads             real OpenCom with free-running threads (replies go straight to the RX queue)
+  closecom user|auto
+Stepping:
+  tx [n]                     n ThreadTX bodies (prints TXSLEEP)      rx <line>   one ThreadRX body with a line
+  rxq <line> / rxstep        queue a line / run one ThreadRX body    rxio <n> <line>  n IOExceptions, then the line
+  rxfatal                    non-IO exception from the link
+  pump [n]                   deliver queued board replies via RX     run [max]  alternate tx / pump until quiet
+  sleep <ms>                 advance time (C#: real sleep; Rust: mocked clock)    rsleep <ms> real sleep in both
+  forcestatus <MacStatus>    set status silently                      trace queries on|off  show '?' 0x88 M114
+  async refreshconfig|refreshinfo|writeconfig k=v..|wifi ssid pwd ... join     blocking APIs on a helper thread
+  waitfor status <S> | txlines <n> | idleprog | inprogram | quiet     (thread mode)
+API: runprogram runfromstart [true] continue <pos> <homing> <setwco> abort feedhold [cooling] resume safetydoor
+  grblreset jogset <speed> <step> jog <Dir> <fast|speed> [step] jogpos <x> <y> <fast|speed> cjog <Dir> <speed>
+  cjogpos <x> <y> <speed> jogabort cjogabort hkov <Action> tov g1|g0|s <n> manageov custom <code> eval <expr>
+  unstuck auto|manual loopcount <n> enqueue <line> homing unlock zero sendhoming sendunlock imm <hex>
+Output: dump (state + sent list), dumpconf, EV/TX/TXB lines of each step. Events print before writes of the same step.

@@ -1,0 +1,28 @@
+lastver 1.1f
+conf 1.1 $22=1
+fw grbl
+fastconnect
+newprog G90\nG21\nG0 X5 Y5\nM4 S300\nG1 X10 Y10 F800\nG2 X20 Y10 I5 J0\nG1 X20 Y20\nG1 X0 Y0\nM5
+rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+continue 5 false false
+run
+dump
+fw grbl
+fastconnect
+newprog G90\nG21\nG0 X5 Y5\nM4 S300\nG1 X10 Y10 F800\nG1 X20 Y10\nG1 X20 Y20
+rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+continue 4 true true
+run
+dump
+fw grbl
+fastconnect
+newprog G91\nG1 X5\nX6 Y1\nG1 X7
+rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+continue 2 false true
+run
+continue 0 false false
+run
+dump
+continue 99 false false
+run
+dump

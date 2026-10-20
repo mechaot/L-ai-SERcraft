@@ -1,0 +1,27 @@
+G90
+G0 X20 Y0
+M3 S800
+F900
+(quadrant 1 -> 2 CCW partial)
+G3 X10 Y10 I-10 J0
+(1 -> 1 short CCW)
+G3 X15 Y13.66 I-5 J-3.66
+(2 -> 3 CCW)
+G0 X0 Y10
+G3 X-10 Y0 I0 J-10
+(3 -> 4 CCW)
+G0 X-10 Y-0
+G3 X0 Y-10 I10 J0
+(4 -> 1 CCW)
+G3 X10 Y0 I0 J10
+(CW variants)
+G0 X0 Y10
+G2 X10 Y0 I0 J-10
+G2 X0 Y-10 I-10 J0
+G2 X-10 Y0 I0 J10
+G2 X0 Y10 I10 J0
+(wide arcs)
+G0 X10 Y0
+G2 X0 Y10 I-10 J0
+G3 X-5 Y0 I-7.5 J5
+M5

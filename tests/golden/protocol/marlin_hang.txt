@@ -1,0 +1,29 @@
+> set tm "Threading Mode" Insane
+> lastver none
+> fw marlin
+> fastconnect
+  EV status Connecting
+  EV override
+> newprog G1 X1\nG1 X2
+> rx X:1.00 Y:2.00 Z:0.00 E:0.00
+> board auto off
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 1
+  TXSLEEP 1
+  TXSLEEP 1
+> forcestatus Run
+> sleep 6000
+> tx
+  TXSLEEP 1
+> dump
+  DUMP status=Run inprogram=True target=3 sent=1 executed=0 errors=0 lastissue=Unknown used=4 bsize=127 free=123 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=2 pending=1 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+> sleep 11000
+> tx
+  EV issue StopResponding
+  TXSLEEP 1
+> dump
+  DUMP status=Run inprogram=True target=3 sent=1 executed=0 errors=0 lastissue=StopResponding used=4 bsize=127 free=123 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=2 pending=1 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=True canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 

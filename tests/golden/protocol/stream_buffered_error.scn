@@ -1,0 +1,8 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board rule =G1X2 => error:20
+runprogram
+run
+dump

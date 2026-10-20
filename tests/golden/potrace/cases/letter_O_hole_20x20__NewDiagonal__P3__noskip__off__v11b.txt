@@ -1,0 +1,104 @@
+image=letter_O_hole_20x20.png
+width=20
+height=20
+dir=NewDiagonal
+UseSpotRemoval=true
+SpotRemoval=0
+UseSmoothing=true
+Smoothing=0.5
+UseOptimize=false
+Optimize=0.2
+useOptimizeFast=true
+res=10
+fres=3
+oX=5
+oY=5
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M4
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=true
+grbl_conf=v11b
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=70
+estimated_ticks=16430000
+drawing_range=xmin=5.2 xmax=6.8 ymin=5.2 ymax=6.8 valid=true
+moving_range=xmin=0 xmax=6.8 ymin=0 ymax=6.8 valid=true
+quadrant=I
+---
+M4 S0
+F1000
+G1 X5.743 Y5.2
+S1000
+G1 X5.2 Y5.743
+S0
+G1 X5.2 Y6.214
+S1000
+G1 X5.697 Y5.718
+S0
+G1 X5.914 Y5.5
+S1000
+G1 X6.214 Y5.2
+S0
+G1 X6.497 Y5.388
+S1000
+G1 X6.261 Y5.625
+S0
+G1 X6.409 Y5.948
+S1000
+G1 X6.733 Y5.624
+S0
+G1 X6.8 Y6.028
+S1000
+G1 X6.028 Y6.8
+S0
+G1 X5.624 Y6.733
+S1000
+G1 X5.857 Y6.5
+S0
+G1 X5.667 Y6.218
+S1000
+G1 X5.388 Y6.497
+S0
+F800
+G1 X6 Y5.2
+S1000
+G1 X5.691 Y5.2
+G1 X5.445 Y5.445
+G1 X5.2 Y5.691
+G1 X5.2 Y6
+G1 X5.2 Y6.309
+G1 X5.445 Y6.555
+G1 X5.691 Y6.8
+G1 X6 Y6.8
+G1 X6.309 Y6.8
+G1 X6.555 Y6.555
+G1 X6.8 Y6.309
+G1 X6.8 Y6
+G1 X6.8 Y5.691
+G1 X6.555 Y5.445
+G1 X6.309 Y5.2
+G1 X6 Y5.2
+S0
+G1 X6 Y5.5
+S1000
+G1 X6.204 Y5.5
+G1 X6.318 Y5.75
+G1 X6.432 Y6
+G1 X6.318 Y6.25
+G1 X6.204 Y6.5
+G1 X6 Y6.5
+G1 X5.796 Y6.5
+G1 X5.682 Y6.25
+G1 X5.568 Y6
+G1 X5.682 Y5.75
+G1 X5.796 Y5.5
+G1 X6 Y5.5
+S0
+M5

@@ -1,0 +1,16 @@
+program=quadrant_II.nc
+conf=default
+load_ok=true
+count=6
+estimated_ticks=48210000
+drawing_range=xmin=-5 xmax=0 ymin=0 ymax=5 valid=true
+moving_range=xmin=-5 xmax=0 ymin=0 ymax=5 valid=true
+spindle_range=smin=0 smax=100 valid=true
+quadrant=II
+---
+0	0	G90
+1	0	M3 S100
+2	210000	G0 X-1 Y1
+3	24210000	G1 X-5 Y1 F100
+4	48210000	G1 X-5 Y5
+5	48210000	M5

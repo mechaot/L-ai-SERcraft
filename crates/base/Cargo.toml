@@ -1,0 +1,19 @@
+[package]
+name = "lg-base"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lg-dotnet.workspace = true
+rust_decimal.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+dirs.workspace = true
+flate2.workspace = true
+base64.workspace = true
+chrono.workspace = true
+ureq.workspace = true
+log.workspace = true

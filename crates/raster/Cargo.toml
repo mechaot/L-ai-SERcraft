@@ -1,0 +1,11 @@
+[package]
+name = "lg-raster"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lg-dotnet.workspace = true
+image.workspace = true
+resvg.workspace = true

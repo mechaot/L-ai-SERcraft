@@ -1,0 +1,63 @@
+image=rect_20x12.png
+width=20
+height=12
+dir=Horizontal
+pwm=true
+firmwareType=Smoothie
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=10
+maxPower=200
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=35
+estimated_ticks=15630000
+drawing_range=xmin=12.774 xmax=14.966 ymin=-3.113 ymax=-1.88 valid=true
+moving_range=xmin=0 xmax=14.966 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G0 X12.5 Y-3.25 F1000
+M3 S0
+G0 X14.966 Y-3.113 S0
+G1 X12.774 S0.20
+G0 X12.774 Y-2.976 S0
+G1 X14.966 S0.20
+G0 X14.966 Y-2.839 S0
+G1 X14.692 S0.20
+X13.048 S0.78
+X12.774 S0.20
+G0 X12.774 Y-2.702 S0
+G1 X13.048 S0.20
+X14.692 S0.78
+X14.966 S0.20
+G0 X14.966 Y-2.565 S0
+G1 X14.692 S0.20
+X13.048 S0.78
+X12.774 S0.20
+G0 X12.774 Y-2.428 S0
+G1 X13.048 S0.20
+X14.692 S0.78
+X14.966 S0.20
+G0 X14.966 Y-2.291 S0
+G1 X14.692 S0.20
+X13.048 S0.78
+X12.774 S0.20
+G0 X12.774 Y-2.154 S0
+G1 X13.048 S0.20
+X14.692 S0.78
+X14.966 S0.20
+G0 X14.966 Y-2.017 S0
+G1 X12.774 S0.20
+G0 X12.774 Y-1.88 S0
+G1 X14.966 S0.20
+M5

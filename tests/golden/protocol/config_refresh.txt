@@ -1,0 +1,20 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:0.000,0.000,0.000>
+> board rule =$$ => $0=10 | $1=25 | $22=1 | $30=1000 | $32=1 | $130=300.000 | $131=200.000 | bad line | ok
+> async refreshconfig OnDialog
+> join
+  TX $$\n
+> dumpconf
+  CONF count=7 $0=10 $1=25 $22=1 $30=1000 $32=1 $130=300.000 $131=200.000
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> forcestatus Run
+> async refreshconfig OnRead
+> join
+> dump
+  DUMP status=Run inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True

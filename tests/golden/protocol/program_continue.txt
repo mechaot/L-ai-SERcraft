@@ -1,0 +1,141 @@
+> lastver 1.1f
+> conf 1.1 $22=1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G90\nG21\nG0 X5 Y5\nM4 S300\nG1 X10 Y10 F800\nG2 X20 Y10 I5 J0\nG1 X20 Y20\nG1 X0 Y0\nM5
+> rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+> continue 5 false false
+> run
+  TX G90\n
+  TX M5G0X10Y10Z0F800S300\n
+  TX G90M4\n
+  TX G2X20Y10I5J0\n
+  TX G1X20Y20\n
+  TX G1X0Y0\n
+  TX M5\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=9 sent=9 executed=9 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [resume from #6]
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD M5 G0 X10 Y10 Z0 F800 S300 | ResponseGood | OK
+  SENT[3] CMD G90 M4 | ResponseGood | OK
+  SENT[4] CMD G2 X20 Y10 I5 J0 | ResponseGood | OK
+  SENT[5] CMD G1 X20 Y20 | ResponseGood | OK
+  SENT[6] CMD G1 X0 Y0 | ResponseGood | OK
+  SENT[7] CMD M5 | ResponseGood | OK
+  SENT[8] MSG [9 lines, 0 errors, <time>]
+  SENT[9] CMD M5 | ResponseGood | OK
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G90\nG21\nG0 X5 Y5\nM4 S300\nG1 X10 Y10 F800\nG1 X20 Y10\nG1 X20 Y20
+> rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+> continue 4 true true
+> run
+  TX $H\n
+  TX G92X0Y0Z0\n
+  TX G90\n
+  TX M5G0X5Y5Z0F0S300\n
+  TX G90M4\n
+  TX G1X10Y10F800\n
+  TX G1X20Y10\n
+  TX G1X20Y20\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=7 sent=7 executed=7 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [resume from #5]
+  SENT[1] CMD $H | ResponseGood | OK
+  SENT[2] CMD G92 X0 Y0 Z0 | ResponseGood | OK
+  SENT[3] CMD G90 | ResponseGood | OK
+  SENT[4] CMD M5 G0 X5 Y5 Z0 F0 S300 | ResponseGood | OK
+  SENT[5] CMD G90 M4 | ResponseGood | OK
+  SENT[6] CMD G1 X10 Y10 F800 | ResponseGood | OK
+  SENT[7] CMD G1 X20 Y10 | ResponseGood | OK
+  SENT[8] CMD G1 X20 Y20 | ResponseGood | OK
+  SENT[9] MSG [7 lines, 0 errors, <time>]
+  SENT[10] CMD M5 | ResponseGood | OK
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G91\nG1 X5\nX6 Y1\nG1 X7
+> rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+> continue 2 false true
+> run
+  TX G92X3Y4Z0\n
+  TX G90\n
+  TX M5G0X5Y0Z0F0S0\n
+  TX G91\n
+  TX G1X6Y1\n
+  TX G1X7\n
+  EV programended
+  TX M5\n
+> continue 0 false false
+> run
+  TX G90\n
+  TX M5G0X0Y0Z0F0S0\n
+  TX \n
+  TX G91\n
+  TX G1X5\n
+  TX X6Y1\n
+  TX G1X7\n
+> dump
+  DUMP status=Idle inprogram=True target=4 sent=4 executed=3 errors=0 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [resume from #3]
+  SENT[1] CMD G92 X3 Y4 Z0 | ResponseGood | OK
+  SENT[2] CMD G90 | ResponseGood | OK
+  SENT[3] CMD M5 G0 X5 Y0 Z0 F0 S0 | ResponseGood | OK
+  SENT[4] CMD G91 | ResponseGood | OK
+  SENT[5] CMD G1 X6 Y1 | ResponseGood | OK
+  SENT[6] CMD G1 X7 | WaitingResponse | 
+  SENT[7] MSG [4 lines, 0 errors, <time>]
+  SENT[8] CMD M5 | ResponseGood | OK
+  SENT[9] MSG [resume from #1]
+  SENT[10] CMD G90 | ResponseGood | OK
+  SENT[11] CMD M5 G0 X0 Y0 Z0 F0 S0 | ResponseGood | OK
+  SENT[12] CMD  | ResponseGood | OK
+  SENT[13] CMD G91 | ResponseGood | OK
+  SENT[14] CMD G1 X5 | ResponseGood | OK
+  SENT[15] CMD X6 Y1 | ResponseGood | OK
+  SENT[16] CMD G1 X7 | WaitingResponse | 
+> continue 99 false false
+> run
+  TX G90\n
+  TX M5G0X18Y1Z0F0S0\n
+  TX G91\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=4 sent=7 executed=6 errors=0 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [resume from #3]
+  SENT[1] CMD G92 X3 Y4 Z0 | ResponseGood | OK
+  SENT[2] CMD G90 | ResponseGood | OK
+  SENT[3] CMD M5 G0 X5 Y0 Z0 F0 S0 | ResponseGood | OK
+  SENT[4] CMD G91 | ResponseGood | OK
+  SENT[5] CMD G1 X6 Y1 | ResponseGood | OK
+  SENT[6] CMD G1 X7 | WaitingResponse | 
+  SENT[7] MSG [4 lines, 0 errors, <time>]
+  SENT[8] CMD M5 | ResponseGood | OK
+  SENT[9] MSG [resume from #1]
+  SENT[10] CMD G90 | ResponseGood | OK
+  SENT[11] CMD M5 G0 X0 Y0 Z0 F0 S0 | ResponseGood | OK
+  SENT[12] CMD  | ResponseGood | OK
+  SENT[13] CMD G91 | ResponseGood | OK
+  SENT[14] CMD G1 X5 | ResponseGood | OK
+  SENT[15] CMD X6 Y1 | ResponseGood | OK
+  SENT[16] CMD G1 X7 | WaitingResponse | 
+  SENT[17] MSG [resume from #100]
+  SENT[18] CMD G90 | ResponseGood | OK
+  SENT[19] CMD M5 G0 X18 Y1 Z0 F0 S0 | ResponseGood | OK
+  SENT[20] CMD G91 | ResponseGood | OK
+  SENT[21] MSG [4 lines, 0 errors, <time>]
+  SENT[22] CMD M5 | ResponseGood | OK

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!-- top comment -->
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <!-- c1 --><?pi data?>
+  <path d="M 10 10 L 90 10"/>
+  <style><![CDATA[ .a { fill: red } ]]></style>
+  <!-- c2 -->
+  <path d="M 10 20 L 90 20"/>
+</svg>

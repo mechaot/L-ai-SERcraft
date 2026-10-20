@@ -1,0 +1,75 @@
+image=stripes_32x5.png
+width=32
+height=5
+dir=Horizontal
+pwm=false
+firmwareType=Grbl
+res=10
+fres=10
+oX=12.5
+oY=-3.25
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M4
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=true
+grbl_conf=v11a
+grbl_conf.MaxPWM=255
+grbl_conf.MaxRateX=3000
+exception=none
+count=47
+estimated_ticks=17590000
+drawing_range=xmin=12.5 xmax=15.7 ymin=-3.25 ymax=-2.85 valid=true
+moving_range=xmin=0 xmax=15.7 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G1 X12.5 Y-3.25 F1000
+M5 S255
+G1 X13 M4
+X13.5 M4
+X14 M4
+X14.5 M4
+X15 M4
+X15.5 M4
+X15.7 M4
+M5
+G1 X15.7 Y-3.15 M5
+G1 X12.5 M4
+M5
+G1 X12.5 Y-3.05 M5
+G1 X12.8 M4
+X13.1 M4
+X13.4 M4
+X13.7 M4
+X14 M4
+X14.3 M4
+X14.6 M4
+X14.9 M4
+X15.2 M4
+X15.5 M4
+X15.7 M4
+M5
+G1 X15.7 Y-2.95 M5
+G1 X15.5 M4
+X15.3 M4
+X15.1 M4
+X14.9 M4
+X14.7 M4
+X14.5 M4
+X14.3 M4
+X14.1 M4
+X13.9 M4
+X13.7 M4
+X13.5 M4
+X13.3 M4
+X13.1 M4
+X12.9 M4
+X12.7 M4
+X12.5 M4
+M5
+G1 X12.5 Y-2.85 M5
+G1 X15.7 M4
+M5

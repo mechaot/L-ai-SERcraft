@@ -1,0 +1,23 @@
+program=relative_g91.nc
+support_pwm=false
+conf=default
+count=18
+---
+i=0	cmd=G90	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=false	wco=0,0,0	settled=G90	arc=none
+i=1	cmd=G0 X5 Y5	delay=1060000	X=5/0	Y=5/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G0	abs=true	m3m4=false	wco=0,0,0	settled=G90	arc=none
+i=2	cmd=G91	delay=0	X=5/0	Y=5/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G0	abs=false	m3m4=false	wco=0,0,0	settled=G91	arc=none
+i=3	cmd=M3 S600	delay=0	X=5/0	Y=5/0	Z=0/0	F=0	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G0	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=4	cmd=G1 X10 F1000	delay=6000000	X=15/5	Y=5/5	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=5	cmd=G1 Y10	delay=6000000	X=15/15	Y=15/5	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=6	cmd=G1 X-10	delay=6000000	X=5/15	Y=15/15	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=7	cmd=G1 Y-10	delay=6000000	X=5/5	Y=5/15	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=8	cmd=G3 X0 Y0 I-2 J0	delay=7540000	X=5/5	Y=5/5	Z=0/0	F=1000	S=600	burn=true	G0G1=false	G2G3=true	true_move=true	motion=G3	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=fresh	arc.cx=3	arc.cy=5	arc.ray=2	arc.start=0	arc.end=0	arc.width=6.2831853071795862	arc.cw=false	arc.len=12.566370614359172	arc.abslen=12.566370614359172	arc.bbox=1,3,4,4	arc.bits=4008000000000000,4014000000000000,4000000000000000,0000000000000000,0000000000000000,401921fb54442d18,3ff0000000000000,4008000000000000,4010000000000000,4010000000000000
+i=9	cmd=G2 X4 Y0 I2 J0	delay=3770000	X=9/5	Y=5/5	Z=0/0	F=1000	S=600	burn=true	G0G1=false	G2G3=true	true_move=true	motion=G2	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=fresh	arc.cx=7	arc.cy=5	arc.ray=2	arc.start=3.1415926535897931	arc.end=0	arc.width=-3.1415926535897931	arc.cw=true	arc.len=-6.2831853071795862	arc.abslen=6.2831853071795862	arc.bbox=5,5,4,2	arc.bits=401c000000000000,4014000000000000,4000000000000000,400921fb54442d18,0000000000000000,c00921fb54442d18,4014000000000000,4014000000000000,4010000000000000,4000000000000000
+i=10	cmd=G0 X1.5 Y-2.25 Z1	delay=410000	X=10.5/9	Y=2.75/5	Z=1/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G0	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=11	cmd=G1 Z-1	delay=0	X=10.5/10.5	Y=2.75/2.75	Z=0/1	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=false	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=12	cmd=G90	delay=0	X=10.5/10.5	Y=2.75/2.75	Z=0/1	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=false	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=13	cmd=G1 X0 Y0	delay=6510000	X=0/10.5	Y=0/2.75	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=14	cmd=G91	delay=0	X=0/10.5	Y=0/2.75	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=15	cmd=G1 X-3 Y-3	delay=2550000	X=-3/0	Y=-3/0	Z=0/0	F=1000	S=600	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=true	wco=0,0,0	settled=G91 M3	arc=none
+i=16	cmd=M5	delay=0	X=-3/0	Y=-3/0	Z=0/0	F=1000	S=600	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=false	m3m4=false	wco=0,0,0	settled=G91 M5	arc=none
+i=17	cmd=G90	delay=0	X=-3/0	Y=-3/0	Z=0/0	F=1000	S=600	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=false	wco=0,0,0	settled=G90 M5	arc=none

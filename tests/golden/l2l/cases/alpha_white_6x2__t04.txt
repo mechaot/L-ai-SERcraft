@@ -1,0 +1,31 @@
+image=alpha_white_6x2.png
+width=6
+height=2
+dir=Vertical
+pwm=false
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M4
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=3
+estimated_ticks=0
+drawing_range=xmin=79228162514264337593543950335 xmax=-79228162514264337593543950335 ymin=79228162514264337593543950335 ymax=-79228162514264337593543950335 valid=false
+moving_range=xmin=0 xmax=0 ymin=0 ymax=0 valid=true
+quadrant=Unknown
+---
+G0 X0 Y0 F1000
+M5 S1000
+M5

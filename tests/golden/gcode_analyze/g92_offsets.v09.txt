@@ -1,0 +1,25 @@
+program=g92_offsets.nc
+conf=v09
+load_ok=true
+count=15
+estimated_ticks=22430000
+drawing_range=xmin=10 xmax=28 ymin=10 ymax=27 valid=true
+moving_range=xmin=0 xmax=28 ymin=0 ymax=27 valid=true
+spindle_range=smin=0 smax=400 valid=true
+quadrant=I
+---
+0	0	G90
+1	4240000	G0 X10 Y10
+2	4240000	G92 X0 Y0
+3	4240000	M3 S400
+4	8480000	G1 X5 Y5 F1000
+5	8480000	G92 X20
+6	12720000	G1 X25 Y10
+7	12720000	G92 Y-5
+8	16960000	G1 X30 Y0
+9	16960000	G92 X0 Y0 Z0
+10	17810000	G1 X1 Y1
+11	21580000	G2 X1 Y1 I1 J0
+12	21580000	G92.1
+13	22430000	G1 X2 Y2
+14	22430000	M5

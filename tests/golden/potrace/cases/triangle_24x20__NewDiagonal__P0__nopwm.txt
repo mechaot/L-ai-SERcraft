@@ -1,0 +1,66 @@
+image=triangle_24x20.png
+width=24
+height=20
+dir=NewDiagonal
+UseSpotRemoval=true
+SpotRemoval=2
+UseSmoothing=true
+Smoothing=1.0
+UseOptimize=true
+Optimize=0.2
+useOptimizeFast=false
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=false
+setting.Support Hardware PWM=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=32
+estimated_ticks=8110000
+drawing_range=xmin=0.2 xmax=2.136 ymin=0.193 ymax=1.806 valid=true
+moving_range=xmin=0 xmax=2.136 ymin=0 ymax=1.806 valid=true
+quadrant=I
+---
+M5 S1000
+F1000
+G0 X0.2 Y0.271
+M3
+G1 X0.276 Y0.195
+M5
+G0 X0.734 Y0.209
+M3
+G1 X0.2 Y0.743
+M5
+G0 X0.2 Y1.214
+M3
+G1 X1.192 Y0.222
+M5
+G0 X1.65 Y0.236
+M3
+G1 X0.2 Y1.686
+M5
+G0 X1.988 Y0.369
+M3
+G1 X2.108 Y0.249
+M5
+F800
+G0 X0.2 Y1
+M3
+G1 X0.2 Y1.806
+G1 X1.168 Y1.028
+G1 X2.136 Y0.25
+G1 X1.168 Y0.221
+G1 X0.2 Y0.193
+G1 X0.2 Y1
+M5

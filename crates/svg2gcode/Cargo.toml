@@ -1,0 +1,11 @@
+[package]
+name = "lg-svg2gcode"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lg-dotnet.workspace = true
+roxmltree.workspace = true
+regex.workspace = true

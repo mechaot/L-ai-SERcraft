@@ -1,0 +1,14 @@
+lastver 1.1f
+conf 1.1 $30=255
+fw grbl
+fastconnect
+rx <Idle|MPos:0.000,0.000,0.000>
+async writeconfig 30=1000 32=1 130=300
+join
+dump
+dumpconf
+board rule =$32=0 => error:3
+async writeconfig 32=0 31=5
+join
+dump
+dumpconf

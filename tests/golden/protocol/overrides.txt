@@ -1,0 +1,86 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> hkov PowerUp
+> hkov PowerUp
+> hkov LinearUp
+> hkov LinearDown
+> hkov RapidDown
+> hkov RapidDown
+> hkov RapidDown
+> hkov RapidUp
+> hkov RapidDefault
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,102 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> hkov PowerDown
+> hkov PowerDefault
+> hkov LinearDefault
+> hkov PowerUp
+> tov s 200
+> hkov PowerUp
+> tov s 10
+> hkov PowerDown
+> tov g1 200
+> hkov LinearUp
+> tov g1 10
+> hkov LinearDown
+> tov g0 100
+> hkov RapidUp
+> tov g0 25
+> hkov RapidDown
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=10,25,10 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> tov s 150
+> tov g1 130
+> tov g0 50
+> rx <Idle|Ov:100,100,100>
+  TXB 91
+  TXB 9A
+  TXB 96
+> rx <Idle|Ov:120,100,100>
+  EV override
+  TXB 91
+  TXB 9A
+  TXB 96
+> rx <Idle|Ov:131,100,100>
+  EV override
+  TXB 94
+  TXB 9A
+  TXB 96
+> rx <Idle|Ov:131,50,141>
+  EV override
+  TXB 94
+  TXB 9C
+> tov s 100
+> tov g1 100
+> tov g0 25
+> rx <Idle|Ov:100,50,100>
+  EV override
+  TXB 97
+> rx <Idle|Ov:100,25,100>
+  EV override
+> tov g0 100
+> rx <Idle|Ov:100,25,100>
+  TXB 95
+> tov g1 90
+> tov s 95
+> rx <Idle|Ov:100,100,100>
+  EV override
+  TXB 92
+  TXB 9D
+> manageov
+  TXB 92
+  TXB 9D
+> tov g1 98
+> tov s 103
+> manageov
+  TXB 94
+  TXB 9C
+> tov g1 105
+> tov s 99
+> rx <Idle|Ov:100,100,100>
+  TXB 93
+  TXB 9D

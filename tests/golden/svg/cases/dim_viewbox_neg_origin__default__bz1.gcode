@@ -1,0 +1,14 @@
+M3 S0
+S0 (1st shape)
+G0X95Y25(circle)
+S255 (circle)
+G3X95Y25I-10J0F1000(circle)
+S0 (circle)
+G0X60Y40(M)
+S255 (L)
+G1X110F1000(L)
+Y10(L)
+X60(L)
+Y40(Z)
+S0 (Z)
+M5 S0

@@ -1,0 +1,29 @@
+lastver 1.1f
+conf 1.1 $32=1
+fw grbl
+fastconnect
+feedhold
+resume
+forcestatus Run
+feedhold
+dump
+rx <Hold:0|MPos:0.000,0.000,0.000>
+dump
+resume
+dump
+rx <Run|MPos:0.000,0.000,0.000>
+feedhold cooling
+rx <Hold:0|MPos:0.000,0.000,0.000>
+dump
+rx <Idle|MPos:0.000,0.000,0.000>
+dump
+rx <Run|MPos:0.000,0.000,0.000>
+rx <Hold:0|MPos:0.000,0.000,0.000>
+dump
+safetydoor
+rx <Door:1|MPos:0.000,0.000,0.000>
+resume
+dump
+custom !
+dump
+custom ~

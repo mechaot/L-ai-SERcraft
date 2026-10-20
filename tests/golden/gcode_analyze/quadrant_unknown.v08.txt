@@ -1,0 +1,16 @@
+program=quadrant_unknown.nc
+conf=v08
+load_ok=true
+count=6
+estimated_ticks=49260000
+drawing_range=xmin=79228162514264337593543950335 xmax=-79228162514264337593543950335 ymin=79228162514264337593543950335 ymax=-79228162514264337593543950335 valid=false
+moving_range=xmin=-5 xmax=5 ymin=0 ymax=5 valid=true
+spindle_range=smin=0 smax=0 valid=false
+quadrant=Unknown
+---
+0	0	G90
+1	2830000	G0 X5 Y5
+2	6830000	G0 X-5 Y5
+3	6830000	M3 S0
+4	49260000	G1 X0 Y0 F100
+5	49260000	M5

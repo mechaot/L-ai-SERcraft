@@ -1,0 +1,58 @@
+> lastver 1.1f
+> conf 1.1 $32=1
+> set bool AutoCooling true
+> set ts "AutoCooling TOn" 2
+> set ts "AutoCooling TOff" 1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2\nG1 X3
+> board auto off
+> runprogram
+> forcestatus Run
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1\n
+  TXSLEEP 4
+  TX G1X2\n
+  TXSLEEP 4
+> sleep 2500
+> tx
+  TX G1X3\n
+  TXB 21
+  TXSLEEP 15
+> dump
+  DUMP status=Run inprogram=True target=4 sent=4 executed=0 errors=0 lastissue=Unknown used=19 bsize=127 free=108 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=True connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+  SENT[3] CMD G1 X3 | WaitingResponse | 
+> rx <Hold:0|MPos:0.000,0.000,0.000>
+  EV status Cooling
+> dump
+  DUMP status=Cooling inprogram=True target=4 sent=4 executed=0 errors=0 lastissue=Unknown used=19 bsize=127 free=108 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=True connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+  SENT[3] CMD G1 X3 | WaitingResponse | 
+> sleep 1000
+> tx
+  TXB 7E
+  TXSLEEP 15
+> dump
+  DUMP status=Cooling inprogram=True target=4 sent=4 executed=0 errors=0 lastissue=Unknown used=19 bsize=127 free=108 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+  SENT[3] CMD G1 X3 | WaitingResponse | 
+> rx <Run|MPos:0.000,0.000,0.000>
+  EV status Run
+> dump
+  DUMP status=Run inprogram=True target=4 sent=4 executed=0 errors=0 lastissue=Unknown used=19 bsize=127 free=108 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+  SENT[3] CMD G1 X3 | WaitingResponse | 

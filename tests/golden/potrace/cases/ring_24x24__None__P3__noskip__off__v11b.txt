@@ -1,0 +1,83 @@
+image=ring_24x24.png
+width=24
+height=24
+dir=None
+UseSpotRemoval=true
+SpotRemoval=0
+UseSmoothing=true
+Smoothing=0.5
+UseOptimize=false
+Optimize=0.2
+useOptimizeFast=true
+res=10
+fres=3
+oX=5
+oY=5
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M4
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=true
+grbl_conf=v11b
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=49
+estimated_ticks=13420000
+drawing_range=xmin=5.204 xmax=7.2 ymin=5.204 ymax=7.2 valid=true
+moving_range=xmin=0 xmax=7.2 ymin=0 ymax=7.2 valid=true
+quadrant=I
+---
+M4 S0
+F800
+G1 X6.18 Y5.204
+S1000
+G1 X5.958 Y5.237
+G1 X5.711 Y5.34
+G1 X5.499 Y5.499
+G1 X5.34 Y5.711
+G1 X5.237 Y5.958
+G1 X5.204 Y6.18
+G1 X5.232 Y6.402
+G1 X5.343 Y6.685
+G1 X5.52 Y6.925
+G1 X5.747 Y7.081
+G1 X6.015 Y7.176
+G1 X6.2 Y7.2
+G1 X6.385 Y7.176
+G1 X6.653 Y7.081
+G1 X6.88 Y6.925
+G1 X7.057 Y6.685
+G1 X7.172 Y6.403
+G1 X7.2 Y6.21
+G1 X7.175 Y6.015
+G1 X7.081 Y5.747
+G1 X6.925 Y5.52
+G1 X6.685 Y5.343
+G1 X6.402 Y5.232
+G1 X6.18 Y5.204
+S0
+G1 X6.2 Y5.7
+S1000
+G1 X6.37 Y5.737
+G1 X6.543 Y5.857
+G1 X6.663 Y6.03
+G1 X6.7 Y6.2
+G1 X6.663 Y6.37
+G1 X6.543 Y6.543
+G1 X6.37 Y6.663
+G1 X6.2 Y6.7
+G1 X6.03 Y6.663
+G1 X5.857 Y6.543
+G1 X5.737 Y6.37
+G1 X5.7 Y6.2
+G1 X5.737 Y6.03
+G1 X5.857 Y5.857
+G1 X6.03 Y5.737
+G1 X6.2 Y5.7
+S0
+M5

@@ -1,0 +1,12 @@
+lastver none
+fw grbl
+connect
+rx Ortur Laser Master 3 Ready!
+rx OLF: 1.7.1
+rx Grbl 1.1f ['$' for help]
+rx <Idle|MPos:0.000,0.000,0.000>
+forcestatus Idle
+board auto on
+async wifi MyNet secret
+join
+dump

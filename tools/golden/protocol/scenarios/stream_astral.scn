@@ -1,0 +1,11 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1 😀 Y2\nG1 X3
+board auto off
+runprogram
+tx 3
+dump
+rx ok
+rx ok
+dump

@@ -1,0 +1,115 @@
+image=triangle_24x20.png
+width=24
+height=20
+dir=NewZigZag
+UseSpotRemoval=true
+SpotRemoval=2
+UseSmoothing=true
+Smoothing=1.0
+UseOptimize=true
+Optimize=0.2
+useOptimizeFast=false
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=81
+estimated_ticks=9200000
+drawing_range=xmin=0.2 xmax=2.136 ymin=0.193 ymax=1.806 valid=true
+moving_range=xmin=0 xmax=2.136 ymin=0 ymax=1.806 valid=true
+quadrant=I
+---
+M3 S0
+F1000
+G0 X0.236 Y0.194
+S1000
+G1 X0.236 Y0.236
+G1 X0.2 Y0.236
+S0
+G0 X0.2 Y0.707
+S1000
+G1 X0.236 Y0.707
+G1 X0.236 Y0.471
+G1 X0.471 Y0.471
+G1 X0.471 Y0.236
+G1 X0.707 Y0.236
+G1 X0.707 Y0.208
+S0
+G0 X1.179 Y0.222
+S1000
+G1 X1.179 Y0.236
+G1 X0.943 Y0.236
+G1 X0.943 Y0.471
+G1 X0.707 Y0.471
+G1 X0.707 Y0.707
+G1 X0.471 Y0.707
+G1 X0.471 Y0.943
+G1 X0.236 Y0.943
+G1 X0.236 Y1.179
+G1 X0.2 Y1.179
+S0
+G0 X0.2 Y1.65
+S1000
+G1 X0.236 Y1.65
+G1 X0.236 Y1.414
+G1 X0.471 Y1.414
+G1 X0.471 Y1.179
+G1 X0.707 Y1.179
+G1 X0.707 Y0.943
+G1 X0.943 Y0.943
+G1 X0.943 Y0.707
+G1 X1.179 Y0.707
+G1 X1.179 Y0.471
+G1 X1.414 Y0.471
+G1 X1.414 Y0.236
+G1 X1.65 Y0.236
+G1 X1.65 Y0.236
+S0
+G0 X1.886 Y0.243
+S1000
+G1 X1.886 Y0.451
+S0
+G0 X1.861 Y0.471
+S1000
+G1 X1.65 Y0.471
+G1 X1.65 Y0.641
+S0
+G0 X1.567 Y0.707
+S1000
+G1 X1.414 Y0.707
+G1 X1.414 Y0.83
+S0
+G0 X1.274 Y0.943
+S1000
+G1 X1.179 Y0.943
+G1 X1.179 Y1.02
+S0
+G0 X0.981 Y1.179
+S1000
+G1 X0.943 Y1.179
+G1 X0.943 Y1.209
+S0
+F800
+G0 X0.2 Y1
+S1000
+G1 X0.2 Y1.806
+G1 X1.168 Y1.028
+G1 X2.136 Y0.25
+G1 X1.168 Y0.221
+G1 X0.2 Y0.193
+G1 X0.2 Y1
+S0
+M5

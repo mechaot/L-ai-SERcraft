@@ -1,0 +1,12 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2
+board auto off
+runprogram
+tx 3
+forcestatus Run
+tov s 150
+rx <Run|MPos:0.000,0.000,0.000|Ov:120,100,150>
+rx Grbl 1.1f ['$' for help]
+dump

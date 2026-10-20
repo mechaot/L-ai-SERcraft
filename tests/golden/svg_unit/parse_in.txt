@@ -1,0 +1,253 @@
+px	10
+px	10mm
+px	10cm
+px	10in
+px	10pt
+px	10pc
+px	10em
+px	10em 
+px	10px
+px	50%
+px	0.5
+px	.5
+px	-.5
+px	1e2
+px	1E2
+px	1e-2mm
+px	abc
+px	
+px	 
+px	mm
+px	10 mm
+px	10mm 
+px	 10
+px	1,5
+px	1,000
+px	+5
+px	-5
+px	5.
+px	NaN
+px	Infinity
+px	-Infinity
+px	1e400
+px	0x10
+px	1 2
+px	10in20
+px	10pt5
+px	in
+px	10%%
+px	10%mm
+px	1e5mm
+px	3.14159265358979
+px	0.1
+px	33.333333333
+px	16777217
+px	1e38
+px	1e39
+px	1e-46
+px	100%
+px	25.4mm
+px	2.54cm
+px	72pt
+px	6pc
+px	1e1in
+px	١٢
+px	5 
+px	10px20
+px	50%	100
+px	50%	123.456
+px	50%	0
+px	50%	-5
+px	12.5%	100
+px	12.5%	123.456
+px	12.5%	0
+px	12.5%	-5
+px	200%	100
+px	200%	123.456
+px	200%	0
+px	200%	-5
+px	10	100
+px	10	123.456
+px	10	0
+px	10	-5
+px	10mm	100
+px	10mm	123.456
+px	10mm	0
+px	10mm	-5
+tf	translate(10,20)
+tf	translate(10 20)
+tf	translate(10)
+tf	translate(10,)
+tf	translate(,10)
+tf	translate(1e1,2e1)
+tf	translate(5mm,1in)
+tf	translate(-5,-5)
+tf	translate( 10 , 20 )
+tf	translate(1.5.5,2)
+tf	translate
+tf	translatee
+tf	translate(
+tf	translate(abc)
+tf	translate(10,20))
+tf	translate(10;20)
+tf	translate(10,20) 
+tf	scale(2)
+tf	scale(2,3)
+tf	scale(2 3)
+tf	scale(-1,1)
+tf	scale()
+tf	scale(2,)
+tf	scale(,2)
+tf	scale
+tf	scale(0.5 0.25)
+tf	scale(1e1)
+tf	rotate(45)
+tf	rotate(45,5,5)
+tf	rotate(45 5 5)
+tf	rotate(45,5)
+tf	rotate(45,5,5,5)
+tf	rotate(-90)
+tf	rotate(360)
+tf	rotate(720.5)
+tf	rotate()
+tf	rotate
+tf	rotate(30 1e1 2e1)
+tf	matrix(1,0,0,1,0,0)
+tf	matrix(1 0 0 1 5 5)
+tf	matrix(0.5,0.5,-0.5,0.5,100,20)
+tf	matrix(1,2,3)
+tf	matrix(1,2,3,4,5)
+tf	matrix()
+tf	matrix
+tf	matrix(2 0 0 2 0 0) 
+tf	matrix(1e-1,0,0,1e-1,0,0)
+tf	trans
+tf	foo
+tf	
+tf	translatescale(2)
+tf	scaletranslate(1,2)
+tf	rotate(10)scale(2)
+tb	translate(10,20)	translate(
+tb	translate(10,20) scale(2)	translate(
+tb	translate(10	translate(
+tb	translate(	translate(
+tb	translate(1e1)	translate(
+tb	scale(2)x	scale(
+tb	scale(2)	scale(
+tb	xx	translate(
+tb	scale	scale(
+tb	matrix(1 2 3 4 5 6)	matrix(
+tb	rotate(45 1 2)end	rotate(
+tb	rotate(1)	rotate(
+tb	translate(1١,2)	translate(
+color	#ff0000
+color	#FF0000
+color	#f00
+color	#F00
+color	#ffff
+color	#ff00
+color	#ff
+color	#
+color	#12345678
+color	#ff00000
+color	#GGGGGG
+color	#ggg
+color	red
+color	Red
+color	RED
+color	 red 
+color	red 
+color	lime
+color	blue
+color	black
+color	white
+color	transparent
+color	lightgrey
+color	LightGrey
+color	lightgray
+color	gray
+color	grey
+color	darkgreen
+color	notacolor
+color	none
+color	currentColor
+color	rgb(255,0,0)
+color	rgb(255, 0, 0)
+color	255,0,0
+color	255, 0, 0
+color	 255,0,0 
+color	1,2,3,4
+color	1,2
+color	1,2,3,4,5
+color	256,0,0
+color	-1,0,0
+color	a,b,c
+color	0,0,0,0
+color	255,255,255,255
+color	128,0,0,0
+color	ff0000
+color	FF0000
+color	0xff0000
+color	0XFF0000
+color	&Hff0000
+color	&hFF0000
+color	16711680
+color	-1
+color	0
+color	12
+color	2147483647
+color	2147483648
+color	4294967295
+color	0xffffffff
+color	0x1ffffffff
+color	#fffffffff
+color	window
+color	Window
+color	buttonface
+color	threedface
+color	ButtonFace
+color	ThreeDShadow
+color	activeborder
+color	control
+color	Control
+color	controltext
+color	highlight
+color	infobackground
+color	menu
+color	scrollbar
+color	windowtext
+color	captiontext
+color	appworkspace
+color	background
+color	desktop
+color	
+color	 
+color	0x
+color	#12
+color	#12345
+color	-
+color	+5
+color	1,2,0x10
+color	1,2,#10
+color	1.5,2,3
+color	(1,2,3)
+color	red,green,blue
+color	ActiveCaption
+color	DarkSlateGray
+color	RebeccaPurple
+color	rebeccapurple
+color	orange
+color	OrangeRed
+color	gold
+color	aqua
+color	aquamarine
+color	fuchsia
+color	magenta
+color	navy
+color	silver
+color	teal
+color	maroon
+color	olive
+color	purple
+color	yellow
+color	cyan

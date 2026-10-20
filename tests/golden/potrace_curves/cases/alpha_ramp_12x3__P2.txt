@@ -1,0 +1,17 @@
+image=alpha_ramp_12x3.png
+width=12
+height=3
+turdsize=10
+alphamax=1.3333
+opttolerance=1
+curveoptimizing=true
+turnpolicy=minority
+Treshold=0.5
+exception=none
+paths=1
+---
+path 0 4
+Bezier 0,1.5 0,2.6666666666666665 1.3333333333333339,3 6,3
+Bezier 6,3 10.666666666666666,3 12,2.6666666666666665 12,1.5
+Bezier 12,1.5 12,0.33333333333333348 10.666666666666666,0 6,0
+Bezier 6,0 1.3333333333333339,0 0,0.33333333333333348 0,1.5

@@ -1,0 +1,90 @@
+[scenario s0_empty]
+program=<none>
+MPos=0,0,0
+WCO=0,0,0
+JogStep=10
+JogSpeed=1000
+grbl_conf=default
+
+[scenario s1_square_v11a]
+program=square.nc
+MPos=12.5,-3.25,1
+WCO=2.5,1.5,0.25
+JogStep=5.5
+JogSpeed=3000
+grbl_conf=v11a
+conf.line=$110=3000
+conf.line=$111=2500
+conf.line=$130=400
+conf.line=$131=300
+conf.line=$30=255
+conf.line=$31=0
+conf.line=$32=1
+conf.line=$100=250
+conf.line=$101=250
+conf.line=$120=100
+conf.line=$121=200
+conf.line=$22=1
+conf.line=$20=1
+drawing_range=xmin=0 xmax=10 ymin=0 ymax=10 valid=true
+
+[scenario s2_mix_v11b_garbage]
+program=arcs_quadrants.nc
+MPos=-5,-6,0.125
+WCO=-1,-2,3
+JogStep=0.1
+JogSpeed=500
+grbl_conf=v11b
+conf.line=$110=12000
+conf.line=$111=9000
+conf.line=$130=800
+conf.line=$131=600
+conf.line=$30=1000
+conf.line=$31=10
+conf.line=$32=0
+conf.line=$110=abc
+conf.line=$30=xyz
+conf.line=$130=12.5mm
+drawing_range=xmin=-10 xmax=20 ymin=-10 ymax=10 valid=true
+
+[scenario s3_unknown_range]
+program=quadrant_unknown.nc
+MPos=0.333333343,0.6666667,0
+WCO=0.0005,0,0
+JogStep=0.001
+JogSpeed=1
+grbl_conf=v09
+conf.line=$110=2000
+conf.line=$111=1800
+conf.line=$130=250
+conf.line=$131=180
+conf.line=$100=200
+conf.line=$101=200
+conf.line=$22=1
+conf.line=$30=2000
+drawing_range=xmin=79228162514264337593543950335 xmax=-79228162514264337593543950335 ymin=79228162514264337593543950335 ymax=-79228162514264337593543950335 valid=false
+
+[scenario s4_negq]
+program=quadrant_III.nc
+MPos=100,100,100
+WCO=-100,0,0
+JogStep=25
+JogSpeed=6000
+grbl_conf=v11a
+conf.line=$110=3000
+conf.line=$111=2500
+conf.line=$130=400
+conf.line=$131=300
+conf.line=$30=255
+conf.line=$31=0
+conf.line=$32=1
+conf.line=$100=250
+conf.line=$101=250
+conf.line=$120=100
+conf.line=$121=200
+conf.line=$22=1
+conf.line=$20=1
+conf.line=$32=0
+conf.line=$31=0.5
+drawing_range=xmin=-5 xmax=0 ymin=-5 ymax=0 valid=true
+

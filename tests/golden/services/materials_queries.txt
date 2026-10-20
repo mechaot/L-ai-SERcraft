@@ -1,0 +1,6 @@
+rows	906
+models	Algo ALM-22BD (22W)|Atomstack A5 20W (5W)|Atomstack A5 PRO|Atomstack M50 10W (A10/S10/X7)|Atomstack X20 Pro|Comgo Z1 10W|Comgo Z1 5W|LEON3D L40 (5.5W)|LEON3D L60 (10w)|Longer B1 30W|Longer B1 40W|Longer Nano|Longer Nano Pro|Longer RAY5 10W|Longer RAY5 5W|Longer RAY5 or B1 20W|MECOLOUR M10W|MECOLOUR M6W|NASUM A5 PRO|Ortur LU15W (4.5W)|Ortur LU20W (5.5W)|Ortur LU7W (1.5W)|SculpFun S9|ScuplFun S6|Two Trees TS2-10|Two Trees TS2-55|Two Trees TS3-10|Two Trees TS3-55|Two Trees TT-25|Two Trees TT-50|Two Trees TTS-25|Two Trees TTS-55|YoraHome 15 (6.5W optical)|YoraHome 3.5 (2.2W optical)|YoraHome 40 (7W optical)|YoraHome 5.5 (3.5W optical)|YoraHome 80 (10W optical)
+materials(Algo ALM-22BD (22W))	ABS|Acrylic|Bamboo|Basswood|Birch Plywood|Black Cardboard|Coated Duplex Board|Coated_Metal_Card|Cold Rolled Sheet|Colored_A4_Paper|Denim|Dry Leaves|Eucalyptus Plywood|Green Acrylic|Leather|MDF|Non_Woven_Fabrics|Non-Woven Fabrics (dark color)|Orange Acrylic|Paperboard|Paulownia Plank|Pine_Board|Poly_Vinyl_Chloride|Red Acrylic|Rubber|Stainless Steel|White Cardboard|Yellow Acrylic
+actions(Algo ALM-22BD (22W),ABS)	Cut|Engrave
+thickness	0,8|1|2|3|4|6
+result	d7279ae2-2b9f-4380-a106-916ce8596fa9	100	1200	1	There is an irritating odor when cutting, so cut with caution

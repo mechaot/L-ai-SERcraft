@@ -1,0 +1,102 @@
+[
+ {
+  "culture": "en",
+  "name": "English",
+  "flag": "flags-gb"
+ },
+ {
+  "culture": "it",
+  "name": "Italian",
+  "flag": "flags-it"
+ },
+ {
+  "culture": "es",
+  "name": "Spanish",
+  "flag": "flags-es"
+ },
+ {
+  "culture": "fr",
+  "name": "French",
+  "flag": "flags-fr"
+ },
+ {
+  "culture": "de",
+  "name": "German",
+  "flag": "flags-de"
+ },
+ {
+  "culture": "da",
+  "name": "Danish",
+  "flag": "flags-dk"
+ },
+ {
+  "culture": "pt-BR",
+  "name": "Portuguese",
+  "flag": "flags-br"
+ },
+ {
+  "culture": "ru",
+  "name": "Russian",
+  "flag": "flags-ru"
+ },
+ {
+  "culture": "zh-CN",
+  "name": "Chinese (simplified)",
+  "flag": "flags-cn"
+ },
+ {
+  "culture": "zh-TW",
+  "name": "Chinese (traditional)",
+  "flag": "flags-cn"
+ },
+ {
+  "culture": "sk-SK",
+  "name": "Slovak",
+  "flag": "flags-sk"
+ },
+ {
+  "culture": "hu-HU",
+  "name": "Hungarian",
+  "flag": "flags-hu"
+ },
+ {
+  "culture": "cs-CZ",
+  "name": "Czech",
+  "flag": "flags-cz"
+ },
+ {
+  "culture": "pl-PL",
+  "name": "Polish",
+  "flag": "flags-pl"
+ },
+ {
+  "culture": "el-GR",
+  "name": "Greek",
+  "flag": "flags-gr"
+ },
+ {
+  "culture": "tr-TR",
+  "name": "Turkish",
+  "flag": "flags-tr"
+ },
+ {
+  "culture": "ro-RO",
+  "name": "Romanian",
+  "flag": "flags-ro"
+ },
+ {
+  "culture": "nl-NL",
+  "name": "Dutch",
+  "flag": "flags-nl"
+ },
+ {
+  "culture": "uk",
+  "name": "Ukrainian",
+  "flag": "flags-ua"
+ },
+ {
+  "culture": "ja-JP",
+  "name": "Japanese",
+  "flag": "flags-jp"
+ }
+]

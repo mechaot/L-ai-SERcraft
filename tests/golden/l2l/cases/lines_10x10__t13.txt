@@ -1,0 +1,66 @@
+image=lines_10x10.png
+width=10
+height=10
+dir=Diagonal
+pwm=true
+firmwareType=Grbl
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=5
+maxPower=250
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=true
+setting.Disable G0 fast skip=true
+grbl_conf=v11b
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=12000
+exception=none
+count=38
+estimated_ticks=16380000
+drawing_range=xmin=12.637 xmax=13.87 ymin=-3.25 ymax=-2.017 valid=true
+moving_range=xmin=0 xmax=13.87 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G1 X12.5 Y-3.25 F1000
+M3 S0
+Y-3.113
+G1 X12.5 Y-2.291 S0
+G1 X12.637 Y-2.428 S250
+G1 X13.322 Y-3.113 S0
+G1 X13.459 Y-3.25 S250
+G1 X12.637 Y-2.291 S0
+G1 X12.774 Y-2.428 S250
+G1 X13.322 Y-2.976 S0
+G1 X13.459 Y-3.113 S250
+G1 X12.774 Y-2.291 S0
+G1 X12.911 Y-2.428 S250
+G1 X13.322 Y-2.839 S0
+G1 X13.459 Y-2.976 S250
+G1 X12.911 Y-2.291 S0
+G1 X13.048 Y-2.428 S250
+G1 X13.322 Y-2.702 S0
+G1 X13.459 Y-2.839 S250
+G1 X13.048 Y-2.291 S0
+G1 X13.185 Y-2.428 S250
+G1 X13.322 Y-2.565 S0
+G1 X13.459 Y-2.702 S250
+G1 X13.185 Y-2.291 S0
+G1 X13.459 Y-2.565 S250
+G1 X13.322 Y-2.291 S0
+G1 X13.459 Y-2.428 S250
+G1 X13.322 Y-2.154 S0
+G1 X13.596 Y-2.428 S250
+G1 X13.322 Y-2.017 S0
+G1 X13.459 Y-2.154 S250
+G1 X13.596 Y-2.291 S0
+G1 X13.733 Y-2.428 S250
+G1 X13.322 Y-1.88 S0
+G1 X13.459 Y-2.017 S250
+G1 X13.733 Y-2.291 S0
+G1 X13.87 Y-2.428 S250
+M5

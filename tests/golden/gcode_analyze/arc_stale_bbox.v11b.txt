@@ -1,0 +1,23 @@
+program=arc_stale_bbox.nc
+conf=v11b
+load_ok=true
+count=13
+estimated_ticks=41150000
+drawing_range=xmin=0 xmax=60 ymin=0 ymax=50 valid=true
+moving_range=xmin=0 xmax=70 ymin=0 ymax=70 valid=true
+spindle_range=smin=0 smax=200 valid=true
+quadrant=I
+---
+0	0	G90
+1	0	G0 X0 Y0
+2	0	M3 S0
+3	0	F1000
+4	9420000	G2 X10 Y0 I5 J0
+5	9420000	S100
+6	14850000	G1 X1 Y1
+7	14850000	S0
+8	18310000	G0 X50 Y50
+9	27730000	G3 X60 Y50 I5 J0
+10	27730000	M3 S200
+11	27730000	M5
+12	41150000	G1 X70 Y70

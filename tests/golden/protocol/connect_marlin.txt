@@ -1,0 +1,16 @@
+> lastver none
+> fw marlin
+> trace queries on
+> connect
+  EV status Connecting
+  EV override
+  TX M114\n
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+> rx X:10.00 Y:5.50 Z:0.00 E:0.00 Count X:1600 Y:880 Z:0
+  EV status Idle
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=10,5.5,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> tx 2
+  TXSLEEP 15
+  TXSLEEP 15

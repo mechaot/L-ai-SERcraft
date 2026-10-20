@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <path d="M10,10 20,20 30 30 z m 5 5 l 1 1 2 2 z"/>
+  <path d="M 10 10 H 20 V 30 h -5 v 5 Z M 50 50 h 10 v 10 h -10 z"/>
+  <path d="M 10 10 L 20 20 Z L 30 30"/>
+  <path d="m 10 10 20 20 l 5 5 m 10 10 20 20"/>
+  <path d="L 10 10 L 20 20"/>
+  <path d="M 10 10 M 20 20 M 30 30 L 40 40"/>
+  <path d="5 5 M 10 10 L 20 20"/>
+  <path d="M 10 10 Q 30 40 50 10 T 90 10 t 10 5"/>
+  <path d="M 10 10 q 10 20 20 0 t 20 0 t 20 0"/>
+  <path d="M 10 10 C 10 40 40 40 40 10 c 0 -30 30 -30 30 0 s 30 30 30 0"/>
+</svg>

@@ -1,0 +1,70 @@
+image=triangle_24x20.png
+width=24
+height=20
+dir=NewHorizontal
+UseSpotRemoval=true
+SpotRemoval=10
+UseSmoothing=true
+Smoothing=1.3333
+UseOptimize=true
+Optimize=1.0
+useOptimizeFast=true
+res=7.3
+fres=2
+oX=12.5
+oY=-3.25
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=255
+lOn=M4
+lOff=M5
+c.pwm=false
+setting.Support Hardware PWM=false
+setting.Disable G0 fast skip=false
+grbl_conf=v11a
+grbl_conf.MaxPWM=255
+harness_replica=false
+exception=none
+count=36
+estimated_ticks=11740000
+drawing_range=xmin=12.774 xmax=15.094 ymin=-2.95342738631193 ymax=-1.051 valid=true
+moving_range=xmin=0 xmax=15.094 ymin=-2.95342738631193 ymax=0 valid=true
+quadrant=IV
+---
+M5 S255
+F1000
+G0 X12.898 Y-2.75
+M4
+G1 X15.072 Y-2.75
+M5
+G0 X14.594 Y-2.25
+M4
+G1 X12.786 Y-2.25
+M5
+G0 X12.778 Y-1.75
+M4
+G1 X13.983 Y-1.75
+M5
+G0 X13.343 Y-1.25
+M4
+G1 X12.801 Y-1.25
+M5
+F800
+G0 X12.774 Y-1.881
+M4
+G1 X12.819 Y-1.163
+G1 X12.876 Y-1.067
+G1 X12.967 Y-1.051
+G1 X13.211 Y-1.16
+G1 X13.401 Y-1.293
+G2 X14.1 Y-1.842 I-23.827 J-31.058
+G2 X15.033 Y-2.649 I-10.656 J-13.256
+G1 X15.094 Y-2.767
+G1 X15.034 Y-2.849
+G2 X14.1 Y-2.947 I-1.119 J6.173
+G2 X13.317 Y-2.949 I-0.435 J14.717
+G1 X13.119 Y-2.924
+G1 X12.911 Y-2.733
+G1 X12.774 Y-1.881
+M5

@@ -1,0 +1,31 @@
+image=white_8x8.png
+width=8
+height=8
+dir=Horizontal
+pwm=true
+firmwareType=Smoothie
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=10
+maxPower=200
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=3
+estimated_ticks=1940000
+drawing_range=xmin=79228162514264337593543950335 xmax=-79228162514264337593543950335 ymin=79228162514264337593543950335 ymax=-79228162514264337593543950335 valid=false
+moving_range=xmin=0 xmax=12.5 ymin=-3.25 ymax=0 valid=true
+quadrant=Unknown
+---
+G0 X12.5 Y-3.25 F1000
+M3 S0
+M5

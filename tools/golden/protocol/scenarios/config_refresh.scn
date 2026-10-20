@@ -1,0 +1,13 @@
+lastver 1.1f
+fw grbl
+fastconnect
+rx <Idle|MPos:0.000,0.000,0.000>
+board rule =$$ => $0=10 | $1=25 | $22=1 | $30=1000 | $32=1 | $130=300.000 | $131=200.000 | bad line | ok
+async refreshconfig OnDialog
+join
+dumpconf
+dump
+forcestatus Run
+async refreshconfig OnRead
+join
+dump

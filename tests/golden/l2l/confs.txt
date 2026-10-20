@@ -1,0 +1,57 @@
+[conf default]
+version=none
+MaxRateX=4000
+MaxPWM=1000
+
+[conf v08]
+version=0.8
+line=$4=1500
+line=$5=1200
+line=$0=10
+line=$1=10
+line=$17=0
+MaxRateX=1500
+MaxPWM=1000
+
+[conf v09]
+version=0.9
+line=$110=2000
+line=$111=1800
+line=$130=250
+line=$131=180
+line=$100=200
+line=$101=200
+line=$22=1
+MaxRateX=2000
+MaxPWM=1000
+
+[conf v11a]
+version=1.1
+line=$110=3000
+line=$111=2500
+line=$130=400
+line=$131=300
+line=$30=255
+line=$31=0
+line=$32=1
+line=$100=250
+line=$101=250
+line=$120=100
+line=$121=200
+line=$22=1
+line=$20=1
+MaxRateX=3000
+MaxPWM=255
+
+[conf v11b]
+version=1.1f
+line=$110=12000
+line=$111=9000
+line=$130=800
+line=$131=600
+line=$30=1000
+line=$31=10
+line=$32=0
+MaxRateX=12000
+MaxPWM=1000
+

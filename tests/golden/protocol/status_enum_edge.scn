@@ -1,0 +1,12 @@
+lastver 1.1f
+fw grbl
+fastconnect
+rx <Idle |MPos:1.000,2.000,3.000>
+rx < Run|MPos:1.000,2.000,3.000>
+rx <3|MPos:1.000,2.000,3.000>
+rx <Hold,Door|MPos:1.000,2.000,3.000>
+rx <5|MPos:1.000,2.000,3.000>
+rx <Idle:x:y|MPos:1.000,2.000,3.000>
+rx <>
+rx <|>
+dump

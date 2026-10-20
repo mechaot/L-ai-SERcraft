@@ -1,0 +1,120 @@
+> lastver 1.1f
+> set sm "Streaming Mode" Buffered
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|Bf:15,128|FS:0,0>
+> newprog G1 X1 Y2 F1000 S101\nG1 X2 Y4 F1000 S102\nG1 X3 Y6 F1000 S103\nG1 X4 Y8 F1000 S104\nG1 X5 Y10 F1000 S105\nG1 X6 Y12 F1000 S106\nG1 X7 Y14 F1000 S107\nG1 X8 Y16 F1000 S108\nG1 X9 Y18 F1000 S109\nG1 X10 Y20 F1000 S110\nG1 X11 Y22 F1000 S111\nG1 X12 Y24 F1000 S112\nG1 X13 Y26 F1000 S113\nG1 X14 Y28 F1000 S114\nG1 X15 Y30 F1000 S115\nG1 X16 Y32 F1000 S116\nG1 X17 Y34 F1000 S117\nG1 X18 Y36 F1000 S118\nG1 X19 Y38 F1000 S119\nG1 X20 Y40 F1000 S120\nG1 X21 Y42 F1000 S121\nG1 X22 Y44 F1000 S122\nG1 X23 Y46 F1000 S123\nG1 X24 Y48 F1000 S124\nG1 X25 Y50 F1000 S125\nG1 X26 Y52 F1000 S126\nG1 X27 Y54 F1000 S127\nG1 X28 Y56 F1000 S128\nG1 X29 Y58 F1000 S129\nG1 X30 Y60 F1000 S130\nG1 X31 Y62 F1000 S131\nG1 X32 Y64 F1000 S132\nG1 X33 Y66 F1000 S133\nG1 X34 Y68 F1000 S134\nG1 X35 Y70 F1000 S135\nG1 X36 Y72 F1000 S136\nG1 X37 Y74 F1000 S137\nG1 X38 Y76 F1000 S138\nG1 X39 Y78 F1000 S139\nG1 X40 Y80 F1000 S140
+> board auto off
+> runprogram
+> tx 40
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1Y2F1000S101\n
+  TXSLEEP 4
+  TX G1X2Y4F1000S102\n
+  TXSLEEP 4
+  TX G1X3Y6F1000S103\n
+  TXSLEEP 4
+  TX G1X4Y8F1000S104\n
+  TXSLEEP 4
+  TX G1X5Y10F1000S105\n
+  TXSLEEP 4
+  TX G1X6Y12F1000S106\n
+  TXSLEEP 4
+  TX G1X7Y14F1000S107\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=41 sent=8 executed=0 errors=0 lastissue=Unknown used=119 bsize=128 free=9 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=33 pending=8 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 Y2 F1000 S101 | WaitingResponse | 
+  SENT[2] CMD G1 X2 Y4 F1000 S102 | WaitingResponse | 
+  SENT[3] CMD G1 X3 Y6 F1000 S103 | WaitingResponse | 
+  SENT[4] CMD G1 X4 Y8 F1000 S104 | WaitingResponse | 
+  SENT[5] CMD G1 X5 Y10 F1000 S105 | WaitingResponse | 
+  SENT[6] CMD G1 X6 Y12 F1000 S106 | WaitingResponse | 
+  SENT[7] CMD G1 X7 Y14 F1000 S107 | WaitingResponse | 
+> rx ok
+> tx 3
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> rx ok
+> rx ok
+> rx ok
+> tx 10
+  TX G1X8Y16F1000S108\n
+  TXSLEEP 4
+  TX G1X9Y18F1000S109\n
+  TXSLEEP 4
+  TX G1X10Y20F1000S110\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=41 sent=11 executed=4 errors=0 lastissue=Unknown used=119 bsize=128 free=9 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=30 pending=7 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y2 F1000 S101 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y4 F1000 S102 | ResponseGood | OK
+  SENT[3] CMD G1 X3 Y6 F1000 S103 | ResponseGood | OK
+  SENT[4] CMD G1 X4 Y8 F1000 S104 | WaitingResponse | 
+  SENT[5] CMD G1 X5 Y10 F1000 S105 | WaitingResponse | 
+  SENT[6] CMD G1 X6 Y12 F1000 S106 | WaitingResponse | 
+  SENT[7] CMD G1 X7 Y14 F1000 S107 | WaitingResponse | 
+  SENT[8] CMD G1 X8 Y16 F1000 S108 | WaitingResponse | 
+  SENT[9] CMD G1 X9 Y18 F1000 S109 | WaitingResponse | 
+  SENT[10] CMD G1 X10 Y20 F1000 S110 | WaitingResponse | 
+> board auto on
+> run
+> dump
+  DUMP status=Idle inprogram=True target=41 sent=11 executed=4 errors=0 lastissue=Unknown used=119 bsize=128 free=9 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=30 pending=7 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y2 F1000 S101 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y4 F1000 S102 | ResponseGood | OK
+  SENT[3] CMD G1 X3 Y6 F1000 S103 | ResponseGood | OK
+  SENT[4] CMD G1 X4 Y8 F1000 S104 | WaitingResponse | 
+  SENT[5] CMD G1 X5 Y10 F1000 S105 | WaitingResponse | 
+  SENT[6] CMD G1 X6 Y12 F1000 S106 | WaitingResponse | 
+  SENT[7] CMD G1 X7 Y14 F1000 S107 | WaitingResponse | 
+  SENT[8] CMD G1 X8 Y16 F1000 S108 | WaitingResponse | 
+  SENT[9] CMD G1 X9 Y18 F1000 S109 | WaitingResponse | 
+  SENT[10] CMD G1 X10 Y20 F1000 S110 | WaitingResponse | 

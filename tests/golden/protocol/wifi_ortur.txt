@@ -1,0 +1,27 @@
+> lastver none
+> fw grbl
+> connect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx Ortur Laser Master 3 Ready!
+> rx OLF: 1.7.1
+> rx Grbl 1.1f ['$' for help]
+  EV override
+> rx <Idle|MPos:0.000,0.000,0.000>
+  EV status Idle
+> forcestatus Idle
+> board auto on
+> async wifi MyNet secret
+> join
+  TX $74=MyNet\n
+  TX $75=secret\n
+  TX $WRS\n
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG Ortur Laser Master 3 Ready!
+  SENT[1] MSG OLF: 1.7.1
+  SENT[2] MSG Grbl 1.1f ['$' for help]
+  SENT[3] CMD $74=MyNet | ResponseGood | OK
+  SENT[4] CMD $75=secret | ResponseGood | OK
+  SENT[5] CMD $WRS | ResponseGood | OK

@@ -1,0 +1,27 @@
+> lastver 1.1f
+> conf 1.1 $30=255
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:0.000,0.000,0.000>
+> async writeconfig 30=1000 32=1 130=300
+> join
+  TX $30=1000\n
+  TX $32=1\n
+  TX $130=300\n
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> dumpconf
+  CONF count=3 $30=1000 $32=1 $130=300
+> board rule =$32=0 => error:3
+> async writeconfig 32=0 31=5
+> join
+  TX $32=0\n
+  TX $31=5\n
+  ASYNCERR WriteConfigException $32=0 Invalid statement
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> dumpconf
+  CONF count=4 $30=1000 $31=5 $32=1 $130=300

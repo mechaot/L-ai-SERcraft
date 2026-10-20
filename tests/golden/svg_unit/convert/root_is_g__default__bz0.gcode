@@ -1,0 +1,7 @@
+M3 S0
+S0 (M)
+G0X1Y1(M)
+S255 (L)
+G1X5Y5F1000(L)
+S0 (End path)
+M5 S0

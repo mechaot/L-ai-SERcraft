@@ -1,0 +1,22 @@
+program=arcs_r.nc
+conf=v11b
+load_ok=true
+count=12
+estimated_ticks=69060000
+drawing_range=xmin=-10 xmax=10 ymin=-0.5 ymax=20 valid=true
+moving_range=xmin=-10 xmax=10 ymin=-0.5 ymax=20 valid=true
+spindle_range=smin=0 smax=300 valid=true
+quadrant=Mix
+---
+0	0	G90
+1	0	G0 X0 Y0
+2	0	M3 S300
+3	0	F1000
+4	9420000	G2 X10 Y0 R5
+5	18840000	G3 X0 Y0 R5
+6	32170000	G2 X10 Y10 R7.5
+7	51020000	G3 X-10 Y10 R20
+8	64350000	G2 X0 Y0 R-5
+9	64350000	G2 X0 Y0 R5
+10	69060000	G3 X3 Y4 R2.5
+11	69060000	M5

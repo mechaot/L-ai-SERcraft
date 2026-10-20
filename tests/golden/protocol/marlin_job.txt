@@ -1,0 +1,62 @@
+> lastver none
+> fw marlin
+> fastconnect
+  EV status Connecting
+  EV override
+> newprog G1 X1 Y1\nG1 X2 Y2\nG4 P1\nG1 X3
+> rx X:1.00 Y:2.00 Z:0.00 E:0.00 Count X:80 Y:160 Z:0
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> runprogram
+> tx 2
+  TX G90\n
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=1 executed=0 errors=0 lastissue=Unknown used=4 bsize=127 free=123 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=4 pending=1 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+> run
+  TX G1X1Y1\n
+  TX G1X2Y2\n
+  TX G4P1\n
+  TX G1X3\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[3] CMD G4 P1 | ResponseGood | OK
+  SENT[4] CMD G1 X3 | ResponseGood | OK
+  SENT[5] MSG [4 lines, 0 errors, <time>]
+  SENT[6] CMD M5 | ResponseGood | OK
+> rx X:3.00 Y:3.00 Z:0.00 E:0.00 Count X:80 Y:160 Z:0
+> rx X:3.00
+> rx X:a Y:b Z:c
+> rx X:1.00 Y:2.00 Z:0.00
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[3] CMD G4 P1 | ResponseGood | OK
+  SENT[4] CMD G1 X3 | ResponseGood | OK
+  SENT[5] MSG [4 lines, 0 errors, <time>]
+  SENT[6] CMD M5 | ResponseGood | OK
+> jog N 1000
+> homing
+> sendunlock
+> sendhoming
+> grblreset
+  EV override
+> unlock
+> run
+  TX $X\n
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $X | ResponseGood | OK
+> async refreshconfig
+> join
+> async refreshinfo
+> join

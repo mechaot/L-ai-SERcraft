@@ -1,0 +1,17 @@
+program=dwell.nc
+support_pwm=false
+conf=default
+count=12
+---
+i=0	cmd=G90	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=false	wco=0,0,0	settled=G90	arc=none
+i=1	cmd=G0 X0 Y0	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=false	wco=0,0,0	settled=G90	arc=none
+i=2	cmd=M3 S500	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=500	burn=true	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=3	cmd=G4 P1.5	delay=15000000	X=0/0	Y=0/0	Z=0/0	F=0	S=500	burn=true	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=4	cmd=G1 X10 F1000	delay=6000000	X=10/0	Y=0/0	Z=0/0	F=1000	S=500	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=5	cmd=G4 P0.25	delay=2500000	X=10/0	Y=0/0	Z=0/0	F=1000	S=500	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=6	cmd=G4 S2	delay=20000000	X=10/0	Y=0/0	Z=0/0	F=1000	S=2	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=7	cmd=G4 P3 S9	delay=30000000	X=10/0	Y=0/0	Z=0/0	F=1000	S=9	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=8	cmd=G4	delay=0	X=10/0	Y=0/0	Z=0/0	F=1000	S=9	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=9	cmd=G1 X20	delay=6000000	X=20/10	Y=0/0	Z=0/0	F=1000	S=9	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=10	cmd=G4 P0	delay=0	X=20/10	Y=0/0	Z=0/0	F=1000	S=9	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=11	cmd=M5	delay=0	X=20/10	Y=0/0	Z=0/0	F=1000	S=9	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=false	wco=0,0,0	settled=G90 M5	arc=none

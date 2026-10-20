@@ -1,0 +1,53 @@
+image=black_8x8.png
+width=8
+height=8
+dir=Vertical
+pwm=true
+firmwareType=Grbl
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=20
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=true
+grbl_conf=v11a
+grbl_conf.MaxPWM=255
+grbl_conf.MaxRateX=3000
+exception=none
+count=25
+estimated_ticks=13590000
+drawing_range=xmin=12.5 xmax=13.459 ymin=-3.25 ymax=-2.154 valid=true
+moving_range=xmin=0 xmax=13.459 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G1 X12.5 Y-3.25 F1000
+M3 S0
+G1 Y-2.154 S255
+S0
+G1 X12.637 Y-2.154 S0
+G1 Y-3.25 S255
+S0
+G1 X12.774 Y-3.25 S0
+G1 Y-2.154 S255
+S0
+G1 X12.911 Y-2.154 S0
+G1 Y-3.25 S255
+S0
+G1 X13.048 Y-3.25 S0
+G1 Y-2.154 S255
+S0
+G1 X13.185 Y-2.154 S0
+G1 Y-3.25 S255
+S0
+G1 X13.322 Y-3.25 S0
+G1 Y-2.154 S255
+S0
+G1 X13.459 Y-2.154 S0
+G1 Y-3.25 S255
+M5

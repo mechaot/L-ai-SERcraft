@@ -1,0 +1,21 @@
+image=square_16x16.png
+width=16
+height=16
+turdsize=0
+alphamax=0.5
+opttolerance=0.2
+curveoptimizing=false
+turnpolicy=minority
+Treshold=0.5
+exception=none
+paths=1
+---
+path 0 8
+Line 8,3 8,3 3,3 3,3
+Line 3,3 3,3 3,8 3,8
+Line 3,8 3,8 3,13 3,13
+Line 3,13 3,13 8,13 8,13
+Line 8,13 8,13 13,13 13,13
+Line 13,13 13,13 13,8 13,8
+Line 13,8 13,8 13,3 13,3
+Line 13,3 13,3 8,3 8,3

@@ -1,0 +1,17 @@
+program=quadrant_mix.nc
+conf=v11a
+load_ok=true
+count=7
+estimated_ticks=108850000
+drawing_range=xmin=-3 xmax=3 ymin=-3 ymax=3 valid=true
+moving_range=xmin=-3 xmax=3 ymin=-3 ymax=3 valid=true
+spindle_range=smin=0 smax=100 valid=true
+quadrant=Mix
+---
+0	0	G90
+1	0	M3 S100
+2	850000	G0 X-3 Y-3
+3	36850000	G1 X3 Y-3 F100
+4	72850000	G1 X3 Y3
+5	108850000	G1 X-3 Y3
+6	108850000	M5

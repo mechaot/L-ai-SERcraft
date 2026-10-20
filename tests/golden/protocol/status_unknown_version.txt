@@ -1,0 +1,15 @@
+> lastver none
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:1.000,2.000,3.000|FS:0,0>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Idle,MPos:1.000,2.000,3.000,WPos:0.000,0.000,0.000>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=1,2,3 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Idle,MPos:1.000,2.000,3.000,WPos:0.000,0.000,0.000|Pin:XY>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=1,2,3 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True

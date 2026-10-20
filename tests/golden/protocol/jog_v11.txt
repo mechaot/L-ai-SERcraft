@@ -1,0 +1,82 @@
+> lastver 1.1f
+> conf 1.1 $130=300 $131=200
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> jogset 1500 10
+> jog N 1500
+> jog NE 2000.5 0.5
+> jog E fast
+> jog SE fast 0.25
+> jog S 100 100
+> jog SW 3000 1
+> jog W 3000 0.1
+> jog NW 500 25
+> jog Zup 300 0.05
+> jog Zdown 300 2
+> jog Home 1200
+> jog Home fast
+> jog Abort 100
+  ERR ArgumentException
+> jog Position 100
+  ERR ArgumentException
+> jogpos 10.456 -5.255 1000
+> jogpos 0.004 1 fast
+> jogpos 1234.5678 99.995 2500.25
+> tx 40
+  TX $J=G91Y10.0F1500\n
+  TXSLEEP 4
+  TX $J=G91X0.5Y0.5F2000.5\n
+  TXSLEEP 4
+  TX $J=G91X10.0F100000\n
+  TXSLEEP 4
+  TX $J=G91X0.3Y-0.3F100000\n
+  TXSLEEP 4
+  TX $J=G91Y-100.0F100\n
+  TXSLEEP 4
+  TX $J=G91X-1.0Y-1.0F3000\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=121 bsize=127 free=6 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=9 pending=6 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $J=G91Y10.0F1500 | WaitingResponse | 
+  SENT[1] CMD $J=G91X0.5Y0.5F2000.5 | WaitingResponse | 
+  SENT[2] CMD $J=G91X10.0F100000 | WaitingResponse | 
+  SENT[3] CMD $J=G91X0.3Y-0.3F100000 | WaitingResponse | 
+  SENT[4] CMD $J=G91Y-100.0F100 | WaitingResponse | 
+  SENT[5] CMD $J=G91X-1.0Y-1.0F3000 | WaitingResponse | 

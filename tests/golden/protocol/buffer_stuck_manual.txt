@@ -1,0 +1,33 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2
+> board auto off
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1\n
+  TXSLEEP 4
+  TX G1X2\n
+  TXSLEEP 15
+> forcestatus Run
+> unstuck manual
+> dump
+  DUMP status=Run inprogram=True target=3 sent=3 executed=0 errors=0 lastissue=Unknown used=14 bsize=127 free=113 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=3 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+> sleep 10300
+> unstuck manual
+  EV programended
+> dump
+  DUMP status=Run inprogram=False target=3 sent=3 executed=3 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=1 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 | ResponseGood | OK
+  SENT[2] CMD G1 X2 | ResponseGood | OK
+  SENT[3] MSG Unlock from buffer stuck!
+  SENT[4] MSG [2 lines, 0 errors, <time>]

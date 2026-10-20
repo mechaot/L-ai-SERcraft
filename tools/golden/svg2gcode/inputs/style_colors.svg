@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <path d="M 10 10 L 20 10" style="stroke:#ff0000"/>
+  <path d="M 10 20 L 20 20" style="stroke:#f00;fill:none"/>
+  <path d="M 10 30 L 20 30" style="stroke:red"/>
+  <path d="M 10 40 L 20 40" style="stroke:RED"/>
+  <path d="M 10 50 L 20 50" style="stroke:#00ff00"/>
+  <path d="M 10 60 L 20 60" style="stroke:lime"/>
+  <path d="M 10 70 L 20 70" style="stroke:#0000ff"/>
+  <path d="M 10 80 L 20 80" style="stroke:#000000"/>
+  <path d="M 10 90 L 20 90" style="stroke:black"/>
+  <path d="M 30 10 L 40 10" style="stroke:none;fill:#ff0000"/>
+  <path d="M 30 20 L 40 20" style="fill:#0000ff"/>
+  <path d="M 30 30 L 40 30" style="stroke:255,0,0"/>
+  <path d="M 30 40 L 40 40" style="stroke:#7f0000"/>
+  <path d="M 30 50 L 40 50" style="stroke:#800000"/>
+  <path d="M 30 60 L 40 60" style="stroke:#141414"/>
+  <path d="M 30 70 L 40 70" style="stroke:#151515"/>
+  <path d="M 30 80 L 40 80" style="stroke:transparent"/>
+  <path d="M 30 90 L 40 90" style="stroke:buttonface"/>
+  <path d="M 50 10 L 60 10" style="stroke:lightgrey"/>
+  <path d="M 50 20 L 60 20" style="stroke:16711680"/>
+  <path d="M 50 30 L 60 30" style="stroke:0xff0000"/>
+  <path d="M 50 40 L 60 40" style="stroke:#ff00"/>
+  <path d="M 50 50 L 60 50" style="stroke:1,2,3,4"/>
+  <path d="M 50 60 L 60 60" style="fill:;stroke:"/>
+  <path d="M 50 70 L 60 70" style="color:red"/>
+  <rect x="70" y="10" width="10" height="10" style="stroke:#ff0000"/>
+  <rect x="70" y="30" width="10" height="10" style="stroke:#00ff00"/>
+  <circle cx="75" cy="60" r="5" style="stroke:#0000ff"/>
+  <line x1="70" y1="80" x2="90" y2="80" style="stroke:#000"/>
+  <polygon points="85,10 95,10 90,20" style="stroke:#f00"/>
+</svg>

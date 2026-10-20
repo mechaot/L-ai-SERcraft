@@ -1,0 +1,9 @@
+lastver none
+fw grbl
+fastconnect
+rx <Idle|MPos:1.000,2.000,3.000|FS:0,0>
+dump
+rx <Idle,MPos:1.000,2.000,3.000,WPos:0.000,0.000,0.000>
+dump
+rx <Idle,MPos:1.000,2.000,3.000,WPos:0.000,0.000,0.000|Pin:XY>
+dump

@@ -1,0 +1,1 @@
+b1 no image; b2 4x4 bitmap, empty strings

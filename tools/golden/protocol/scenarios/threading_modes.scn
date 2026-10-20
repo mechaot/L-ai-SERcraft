@@ -1,0 +1,66 @@
+lastver 1.1f
+set tm "Threading Mode" Slow
+fw grbl
+fastconnect
+tx
+board auto off
+enqueue G1 X1
+tx
+rxq a
+rxq b
+rxstep
+rxstep
+rxq ok
+rxstep
+set tm "Threading Mode" Quiet
+fw grbl
+fastconnect
+tx
+board auto off
+enqueue G1 X1
+tx
+rxq a
+rxq b
+rxstep
+rxstep
+rxq ok
+rxstep
+set tm "Threading Mode" Fast
+fw grbl
+fastconnect
+tx
+board auto off
+enqueue G1 X1
+tx
+rxq a
+rxq b
+rxstep
+rxstep
+rxq ok
+rxstep
+set tm "Threading Mode" UltraFast
+fw grbl
+fastconnect
+tx
+board auto off
+enqueue G1 X1
+tx
+rxq a
+rxq b
+rxstep
+rxstep
+rxq ok
+rxstep
+set tm "Threading Mode" Insane
+fw grbl
+fastconnect
+tx
+board auto off
+enqueue G1 X1
+tx
+rxq a
+rxq b
+rxstep
+rxstep
+rxq ok
+rxstep

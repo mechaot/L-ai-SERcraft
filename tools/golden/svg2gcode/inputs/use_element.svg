@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <defs><path id="p" d="M 0 0 L 10 10"/></defs>
+  <use xlink:href="#p" x="20" y="20"/>
+  <path d="M 5 5 L 50 5"/>
+</svg>

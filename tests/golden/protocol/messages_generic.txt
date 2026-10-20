@@ -1,0 +1,27 @@
+> lastver 1.1f
+> conf 1.1 $30=1000 $32=1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx ALARM:1
+> rx [MSG:Reset to continue]
+> rx $30=1000
+> rx [GC:G0 G54 G17 G21 G90 G94 M5 M9 T0 F0 S0]
+> rx foo ok bar
+> rx   spaced line   
+> rx error:20
+> rx OK
+> rx okay
+> rx Ok then
+> rx [PRB:0.000,0.000,0.000:1]
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG Hard limit
+  SENT[1] MSG [MSG:Reset to continue]
+  SENT[2] MSG $30=1000 (Maximum spindle speed)
+  SENT[3] MSG [GC:G0 G54 G17 G21 G90 G94 M5 M9 T0 F0 S0]
+  SENT[4] MSG Handle broken ok!
+  SENT[5] MSG spaced line
+  SENT[6] MSG [PRB:0.000,0.000,0.000:1]

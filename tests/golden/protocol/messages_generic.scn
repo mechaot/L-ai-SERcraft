@@ -1,0 +1,16 @@
+lastver 1.1f
+conf 1.1 $30=1000 $32=1
+fw grbl
+fastconnect
+rx ALARM:1
+rx [MSG:Reset to continue]
+rx $30=1000
+rx [GC:G0 G54 G17 G21 G90 G94 M5 M9 T0 F0 S0]
+rx foo ok bar
+rx   spaced line   
+rx error:20
+rx OK
+rx okay
+rx Ok then
+rx [PRB:0.000,0.000,0.000:1]
+dump

@@ -1,0 +1,89 @@
+> lastver none
+> fw grbl
+> connect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx Grbl 1.1h ['$' for help]
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1h ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+> rx GrblHAL 1.1f ['$' or '$HELP' for help]
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+> rx Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+> rx Ortur Laser Master 3 Ready!
+> rx OLF: 1.7.1
+> rx Grbl 1.1f ['$' for help]
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[3] MSG Ortur Laser Master 3 Ready!
+  SENT[4] MSG OLF: 1.7.1
+  SENT[5] MSG Grbl 1.1f ['$' for help]
+> rx Aufero Laser 1 Ready!
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[3] MSG Ortur Laser Master 3 Ready!
+  SENT[4] MSG OLF: 1.7.1
+  SENT[5] MSG Grbl 1.1f ['$' for help]
+  SENT[6] MSG Aufero Laser 1 Ready!
+> rx [Machine: Longer Nano]
+> rx [Software: V1.2.3]
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[3] MSG Ortur Laser Master 3 Ready!
+  SENT[4] MSG OLF: 1.7.1
+  SENT[5] MSG Grbl 1.1f ['$' for help]
+  SENT[6] MSG Aufero Laser 1 Ready!
+  SENT[7] MSG [Machine: Longer Nano]
+  SENT[8] MSG [Software: V1.2.3]
+> rx SimpleLaser 1.1f ['$' for help]
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[3] MSG Ortur Laser Master 3 Ready!
+  SENT[4] MSG OLF: 1.7.1
+  SENT[5] MSG Grbl 1.1f ['$' for help]
+  SENT[6] MSG Aufero Laser 1 Ready!
+  SENT[7] MSG [Machine: Longer Nano]
+  SENT[8] MSG [Software: V1.2.3]
+  SENT[9] MSG SimpleLaser 1.1f ['$' for help]
+> rx [MSG:Get IP 192.168.1.182]
+> rx [MSG:Connected with 10.0.0.7]
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=10.0.0.7 failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Grbl 1.1h ['$' for help]
+  SENT[1] MSG GrblHAL 1.1f ['$' or '$HELP' for help]
+  SENT[2] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[3] MSG Ortur Laser Master 3 Ready!
+  SENT[4] MSG OLF: 1.7.1
+  SENT[5] MSG Grbl 1.1f ['$' for help]
+  SENT[6] MSG Aufero Laser 1 Ready!
+  SENT[7] MSG [Machine: Longer Nano]
+  SENT[8] MSG [Software: V1.2.3]
+  SENT[9] MSG SimpleLaser 1.1f ['$' for help]
+  SENT[10] MSG [MSG:Get IP 192.168.1.182]
+  SENT[11] MSG [MSG:Connected with 10.0.0.7]

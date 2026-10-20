@@ -1,0 +1,119 @@
+image=nested_squares_24x24.png
+width=24
+height=24
+dir=None
+UseSpotRemoval=true
+SpotRemoval=10
+UseSmoothing=true
+Smoothing=1.3333
+UseOptimize=true
+Optimize=1.0
+useOptimizeFast=true
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=85
+estimated_ticks=19820000
+drawing_range=xmin=0.1 xmax=2.3 ymin=0.0995591288538904 ymax=2.30043660215617 valid=true
+moving_range=xmin=0 xmax=2.3 ymin=0 ymax=2.30043660215617 valid=true
+quadrant=I
+---
+M3 S0
+F800
+G0 X0.1 Y1.2
+S1000
+G1 X0.188 Y2.052
+G1 X0.313 Y2.218
+G1 X0.477 Y2.267
+G2 X1.2 Y2.3 I0.723 J-7.8
+G2 X2.052 Y2.212 I0 J-4.153
+G1 X2.218 Y2.087
+G1 X2.267 Y1.923
+G1 X2.3 Y1.2
+G1 X2.212 Y0.348
+G1 X2.087 Y0.182
+G1 X1.923 Y0.133
+G2 X1.2 Y0.1 I-0.723 J7.799
+G2 X0.348 Y0.188 I0 J4.153
+G1 X0.182 Y0.313
+G1 X0.133 Y0.477
+G1 X0.1 Y1.2
+S0
+G0 X0.5 Y1.2
+S1000
+G1 X0.705 Y1.695
+G1 X1.2 Y1.9
+G1 X1.695 Y1.695
+G1 X1.9 Y1.2
+G1 X1.695 Y0.705
+G1 X1.2 Y0.5
+G1 X0.705 Y0.705
+G1 X0.5 Y1.2
+S0
+G0 X0.9 Y1.2
+S1000
+G1 X0.988 Y1.412
+G1 X1.2 Y1.5
+G1 X1.412 Y1.412
+G1 X1.5 Y1.2
+G1 X1.412 Y0.988
+G1 X1.2 Y0.9
+G1 X0.988 Y0.988
+G1 X0.9 Y1.2
+S0
+G0 X1.4 Y1.2
+S1000
+G1 X1.341 Y1.341
+G1 X1.2 Y1.4
+G1 X1.059 Y1.341
+G1 X1 Y1.2
+G1 X1.059 Y1.059
+G1 X1.2 Y1
+G1 X1.341 Y1.059
+G1 X1.4 Y1.2
+S0
+G0 X1.8 Y1.2
+S1000
+G1 X1.624 Y1.624
+G1 X1.2 Y1.8
+G1 X0.776 Y1.624
+G1 X0.6 Y1.2
+G1 X0.776 Y0.776
+G1 X1.2 Y0.6
+G1 X1.624 Y0.776
+G1 X1.8 Y1.2
+S0
+G0 X2.2 Y1.2
+S1000
+G1 X2.095 Y1.991
+G1 X1.942 Y2.152
+G1 X1.792 Y2.181
+G3 X1.2 Y2.2 I-0.592 J-9.15
+G3 X0.409 Y2.095 I0 J-3.026
+G1 X0.248 Y1.942
+G1 X0.219 Y1.792
+G1 X0.2 Y1.2
+G1 X0.305 Y0.409
+G1 X0.458 Y0.248
+G1 X0.608 Y0.219
+G3 X1.2 Y0.2 I0.592 J9.15
+G3 X1.991 Y0.305 I0 J3.026
+G1 X2.152 Y0.458
+G1 X2.181 Y0.608
+G1 X2.2 Y1.2
+S0
+M5

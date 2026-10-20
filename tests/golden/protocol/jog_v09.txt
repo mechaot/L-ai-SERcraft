@@ -1,0 +1,68 @@
+> lastver 1.0c
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> jogset 1500 10
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.0c ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> jog N 1500
+> jog NE 2000.5 0.5
+> jog E fast
+> jog SW 3000 1
+> jog Zup 300 0.05
+> jog Zdown 300 2
+> jog Home 1200
+> jogpos 10.456 -5.255 1000
+> cjog N 100
+> cjogpos 1 1 100
+> jogabort
+> cjogabort
+> run
+  TX G91\n
+  TX G1Y10.0F1500\n
+  TX G90\n
+  TX G91\n
+  TX G1X0.5Y0.5F2000.5\n
+  TX G90\n
+  TX G91\n
+  TX G1X10.0F100000\n
+  TX G90\n
+  TX G91\n
+  TX G1X-1.0Y-1.0F3000\n
+  TX G90\n
+  TX G91\n
+  TX G1Z0.1F300\n
+  TX G90\n
+  TX G91\n
+  TX G1Z-2.0F300\n
+  TX G90\n
+  TX G90\n
+  TX G1X0Y0F1200\n
+  TX G90\n
+  TX G1X10.46Y-5.26F1000\n
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.0c ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G91 | ResponseGood | OK
+  SENT[1] CMD G1Y10.0F1500 | ResponseGood | OK
+  SENT[2] CMD G90 | ResponseGood | OK
+  SENT[3] CMD G91 | ResponseGood | OK
+  SENT[4] CMD G1X0.5Y0.5F2000.5 | ResponseGood | OK
+  SENT[5] CMD G90 | ResponseGood | OK
+  SENT[6] CMD G91 | ResponseGood | OK
+  SENT[7] CMD G1X10.0F100000 | ResponseGood | OK
+  SENT[8] CMD G90 | ResponseGood | OK
+  SENT[9] CMD G91 | ResponseGood | OK
+  SENT[10] CMD G1X-1.0Y-1.0F3000 | ResponseGood | OK
+  SENT[11] CMD G90 | ResponseGood | OK
+  SENT[12] CMD G91 | ResponseGood | OK
+  SENT[13] CMD G1Z0.1F300 | ResponseGood | OK
+  SENT[14] CMD G90 | ResponseGood | OK
+  SENT[15] CMD G91 | ResponseGood | OK
+  SENT[16] CMD G1Z-2.0F300 | ResponseGood | OK
+  SENT[17] CMD G90 | ResponseGood | OK
+  SENT[18] CMD G90 | ResponseGood | OK
+  SENT[19] CMD G1X0Y0F1200 | ResponseGood | OK
+  SENT[20] CMD G90 | ResponseGood | OK
+  SENT[21] CMD G1X10.46Y-5.26F1000 | ResponseGood | OK

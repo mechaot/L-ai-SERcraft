@@ -1,0 +1,22 @@
+lastver 1.1f
+conf 1.1 $32=1
+set bool AutoCooling true
+set ts "AutoCooling TOn" 2
+set ts "AutoCooling TOff" 1
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board auto off
+runprogram
+forcestatus Run
+tx 3
+sleep 2500
+tx
+dump
+rx <Hold:0|MPos:0.000,0.000,0.000>
+dump
+sleep 1000
+tx
+dump
+rx <Run|MPos:0.000,0.000,0.000>
+dump

@@ -1,0 +1,6 @@
+set bool "Reset Grbl On Connect" false
+lastver none
+fw grbl
+trace queries on
+connect
+dump

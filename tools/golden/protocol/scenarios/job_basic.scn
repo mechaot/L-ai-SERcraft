@@ -1,0 +1,19 @@
+# Basic buffered job on Grbl 1.1f: connect, header/body/footer, ok per line, program end.
+lastver 1.1f
+fw grbl
+prog
+G0 X0 Y0
+G1 X10 Y0 F1000 S500
+G1 X10 Y10
+G1 X0 Y10
+G1 X0 Y0
+end
+trace queries on
+fastconnect
+trace queries off
+dump
+runprogram
+tx
+dump
+run
+dump

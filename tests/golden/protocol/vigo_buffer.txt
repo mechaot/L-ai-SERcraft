@@ -1,0 +1,29 @@
+> lastver 1.1f
+> fw vigo
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|Bf:15,254>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=15 grblbuffer=254 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <VSta:1|SBuf:0,0,0>
+> newprog G1 X1\nG1 X2
+> runprogram
+> tx 6
+  TX >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf\n
+  TXSLEEP 4
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1\n
+  TXSLEEP 4
+  TX G1X2\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=4 sent=4 executed=0 errors=0 lastissue=Unknown used=54 bsize=127 free=73 grblblock=15 grblbuffer=254 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | WaitingResponse | 
+  SENT[1] CMD G90 | WaitingResponse | 
+  SENT[2] CMD G1 X1 | WaitingResponse | 
+  SENT[3] CMD G1 X2 | WaitingResponse | 

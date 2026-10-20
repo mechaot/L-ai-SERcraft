@@ -1,0 +1,24 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board auto off
+runprogram
+tx 3
+forcestatus Run
+closecom auto
+dump
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board auto off
+runprogram
+tx 3
+forcestatus Run
+closecom user
+dump
+fw grbl
+fastconnect
+rx <Idle|MPos:1.000,2.000,3.000|FS:100,200>
+closecom user
+dump

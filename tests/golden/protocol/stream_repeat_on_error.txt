@@ -1,0 +1,38 @@
+> lastver 1.1f
+> set sm "Streaming Mode" RepeatOnError
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2\nG1 X3\nG1 X4\nG1 X5
+> board rule once =G1X2 => error:20
+> board rule =G1X4 => error:33
+> runprogram
+> run
+  TX G90\n
+  TX G1X1\n
+  TX G1X2\n
+  TX G1X2\n
+  TX G1X3\n
+  TX G1X4\n
+  TX G1X4\n
+  TX G1X4\n
+  TX G1X4\n
+  TX G1X5\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=6 sent=10 executed=6 errors=5 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 | ResponseGood | OK
+  SENT[2] CMD G1 X2 | ResponseBad | ERROR:20
+  SENT[3] CMD G1 X2 | ResponseGood | OK
+  SENT[4] CMD G1 X3 | ResponseGood | OK
+  SENT[5] CMD G1 X4 | ResponseBad | ERROR:33
+  SENT[6] CMD G1 X4 | ResponseBad | ERROR:33
+  SENT[7] CMD G1 X4 | ResponseBad | ERROR:33
+  SENT[8] CMD G1 X4 | ResponseBad | ERROR:33
+  SENT[9] CMD G1 X5 | ResponseGood | OK
+  SENT[10] MSG [5 lines, 5 errors, <time>]
+  SENT[11] CMD M5 | ResponseGood | OK

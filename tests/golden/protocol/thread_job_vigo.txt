@@ -1,0 +1,59 @@
+> set tm "Threading Mode" Insane
+> set bool "Query MachineInfo ($I) at connect" false
+> lastver none
+> fw vigo
+> newprog G1 X1 Y1 F500\nG1 X2 Y2\nG4 P0\nG1 X3 Y3\nG0 X0 Y0
+> connectthreads
+  EV status Connecting
+> waitfor txlines 1
+  EV override
+  TXB 18
+> rxq Grbl 1.1f ['$' for help]
+> rxq <Idle|MPos:0.000,0.000,0.000|Bf:15,128|FS:0,0>
+> waitfor status Idle
+  EV override
+  EV status Idle
+> waitfor txtext $$
+  TX $$\n
+> waitfor refreshdone
+> runprogram
+> waitfor idleprog
+  EV programended
+  TX >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf\n
+  TX G90\n
+  TX G1X1Y1F500\n
+  TX G1X2Y2\n
+  TX G4P0\n
+  TX G1X3Y3\n
+  TX G0X0Y0\n
+  TX M5\n
+  TX G0X0Y0M5\n
+  TX >NPredMjdFaeaJajf6OHy:hkRUygcpBXwtV\n
+> dump
+  DUMP status=Idle inprogram=False target=7 sent=7 executed=7 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | ResponseGood | OK
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD G1 X1 Y1 F500 | ResponseGood | OK
+  SENT[3] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[4] CMD G4 P0 | ResponseGood | OK
+  SENT[5] CMD G1 X3 Y3 | ResponseGood | OK
+  SENT[6] CMD G0 X0 Y0 | ResponseGood | OK
+  SENT[7] MSG [5 lines, 0 errors, <time>]
+  SENT[8] CMD M5 | ResponseGood | OK
+  SENT[9] CMD G0X0Y0M5 | ResponseGood | OK
+  SENT[10] CMD >NPredMjdFaeaJajf6OHy:hkRUygcpBXwtV | ResponseGood | OK
+> closecom user
+  EV status Disconnected
+> dump
+  DUMP status=Disconnected inprogram=False target=7 sent=7 executed=7 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=False
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | ResponseGood | OK
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD G1 X1 Y1 F500 | ResponseGood | OK
+  SENT[3] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[4] CMD G4 P0 | ResponseGood | OK
+  SENT[5] CMD G1 X3 Y3 | ResponseGood | OK
+  SENT[6] CMD G0 X0 Y0 | ResponseGood | OK
+  SENT[7] MSG [5 lines, 0 errors, <time>]
+  SENT[8] CMD M5 | ResponseGood | OK
+  SENT[9] CMD G0X0Y0M5 | ResponseGood | OK
+  SENT[10] CMD >NPredMjdFaeaJajf6OHy:hkRUygcpBXwtV | ResponseGood | OK

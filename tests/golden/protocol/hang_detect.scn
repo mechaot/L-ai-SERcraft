@@ -1,0 +1,17 @@
+set tm "Threading Mode" Insane
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+rx <Idle|MPos:0.000,0.000,0.000>
+board auto off
+runprogram
+tx 4
+rx <Run|MPos:0.000,0.000,0.000>
+sleep 3000
+tx
+sleep 3000
+tx
+dump
+tx
+dump

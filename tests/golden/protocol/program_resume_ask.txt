@@ -1,0 +1,46 @@
+> lastver 1.1f
+> conf 1.1 $22=1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G0 X0 Y0\nG1 X10 Y10 F500\nG1 X20 Y10\nG1 X20 Y20
+> rx <Idle|MPos:0.000,0.000,0.000|WCO:5.000,5.000,0.000>
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G0X0Y0\n
+  TXSLEEP 4
+  TX G1X10Y10F500\n
+  TXSLEEP 4
+> rx ok
+> rx ok
+> abort
+> tx
+  TX M5\n
+  TXSLEEP 15
+> run
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=3 executed=2 errors=0 lastissue=ManualAbort used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=5,5,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G0 X0 Y0 | ResponseGood | OK
+  SENT[2] CMD G1 X10 Y10 F500 | ResponseGood | OK
+  SENT[3] CMD M5 | ResponseGood | OK
+> rx <Idle|MPos:0.000,0.000,0.000|WCO:0.000,0.000,0.000>
+> runprogram
+  ASKRESUME executed=2 sent=3 target=5 issue=ManualAbort homingenabled=True sughoming=False sugwco=False lastwco=0,0,0
+> runfromstart true
+> tx 3
+  TX $H\n
+  TXSLEEP 4
+  TX G0X0Y0\n
+  TXSLEEP 4
+  TX G1X10Y10F500\n
+  TXSLEEP 4
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=3 executed=0 errors=0 lastissue=Unknown used=23 bsize=127 free=104 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=2 pending=3 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $H | WaitingResponse | 
+  SENT[1] CMD G0 X0 Y0 | WaitingResponse | 
+  SENT[2] CMD G1 X10 Y10 F500 | WaitingResponse | 

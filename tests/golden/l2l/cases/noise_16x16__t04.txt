@@ -1,0 +1,185 @@
+image=noise_16x16.png
+width=16
+height=16
+dir=Vertical
+pwm=false
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M4
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=157
+estimated_ticks=7690000
+drawing_range=xmin=0 xmax=1.5 ymin=0 ymax=1.6 valid=true
+moving_range=xmin=0 xmax=1.5 ymin=0 ymax=1.6 valid=true
+quadrant=I
+---
+G0 X0 Y0 F1000
+M5 S1000
+G0 X0 Y0.3 M5
+G1 Y0.4 M4
+Y0.5 M4
+G0 X0 Y0.6 M5
+G1 Y0.7 M4
+G0 X0.1 Y1.6 M5
+G1 Y1.5 M4
+G0 X0.1 Y1.4 M5
+G1 Y1.3 M4
+G0 X0.1 Y1.2 M5
+G1 Y1.1 M4
+G0 X0.1 Y1 M5
+G1 Y0.9 M4
+Y0.8 M4
+Y0.7 M4
+G0 X0.1 Y0.1 M5
+G1 Y0 M4
+M5
+G0 X0.2 Y0.1 M5
+G1 Y0.2 M4
+Y0.3 M4
+G0 X0.2 Y0.4 M5
+G1 Y0.5 M4
+G0 X0.2 Y1.1 M5
+G1 Y1.2 M4
+G0 X0.2 Y1.3 M5
+G1 Y1.4 M4
+Y1.5 M4
+G0 X0.3 Y1.5 M5
+G1 Y1.4 M4
+G0 X0.3 Y1.3 M5
+G1 Y1.2 M4
+G0 X0.3 Y0.5 M5
+G1 Y0.4 M4
+G0 X0.3 Y0.3 M5
+G1 Y0.2 M4
+G0 X0.4 Y0.2 M5
+G1 Y0.3 M4
+G0 X0.4 Y0.5 M5
+G1 Y0.6 M4
+Y0.7 M4
+G0 X0.4 Y1.2 M5
+G1 Y1.3 M4
+Y1.4 M4
+G0 X0.4 Y1.5 M5
+G1 Y1.6 M4
+M5
+G0 X0.5 Y1.5 M5
+G1 Y1.4 M4
+Y1.3 M4
+G0 X0.5 Y0.8 M5
+G1 Y0.7 M4
+Y0.6 M4
+Y0.5 M4
+Y0.4 M4
+Y0.3 M4
+G0 X0.5 Y0.1 M5
+G1 Y0 M4
+M5
+G0 X0.6 Y0.1 M5
+G1 Y0.2 M4
+G0 X0.6 Y0.3 M5
+G1 Y0.4 M4
+Y0.5 M4
+G0 X0.6 Y0.7 M5
+G1 Y0.8 M4
+Y0.9 M4
+Y1 M4
+G0 X0.6 Y1.1 M5
+G1 Y1.2 M4
+G0 X0.6 Y1.3 M5
+G1 Y1.4 M4
+G0 X0.7 Y1.6 M5
+G1 Y1.5 M4
+G0 X0.7 Y1.3 M5
+G1 Y1.2 M4
+G0 X0.7 Y1 M5
+G1 Y0.9 M4
+G0 X0.7 Y0.6 M5
+G1 Y0.5 M4
+G0 X0.7 Y0.4 M5
+G1 Y0.3 M4
+Y0.2 M4
+G0 X0.7 Y0.1 M5
+G1 Y0 M4
+M5
+G0 X0.8 Y0.6 M5
+G1 Y0.7 M4
+Y0.8 M4
+G0 X0.8 Y1 M5
+G1 Y1.1 M4
+G0 X0.8 Y1.2 M5
+G1 Y1.3 M4
+G0 X0.9 Y0.8 M5
+G1 Y0.7 M4
+G0 X0.9 Y0.5 M5
+G1 Y0.4 M4
+Y0.3 M4
+Y0.2 M4
+Y0.1 M4
+G0 X1 Y0.2 M5
+G1 Y0.3 M4
+G0 X1 Y0.5 M5
+G1 Y0.6 M4
+Y0.7 M4
+G0 X1 Y1.2 M5
+G1 Y1.3 M4
+Y1.4 M4
+G0 X1.1 Y1.4 M5
+G1 Y1.3 M4
+G0 X1.1 Y1.2 M5
+G1 Y1.1 M4
+G0 X1.1 Y0.5 M5
+G1 Y0.4 M4
+G0 X1.2 Y0 M5
+G1 Y0.1 M4
+G0 X1.2 Y0.5 M5
+G1 Y0.6 M4
+G0 X1.2 Y1 M5
+G1 Y1.1 M4
+G0 X1.2 Y1.3 M5
+G1 Y1.4 M4
+G0 X1.3 Y1.5 M5
+G1 Y1.4 M4
+Y1.3 M4
+G0 X1.3 Y1.1 M5
+G1 Y1 M4
+G0 X1.3 Y0.7 M5
+G1 Y0.6 M4
+G0 X1.3 Y0.4 M5
+G1 Y0.3 M4
+G0 X1.4 Y0.2 M5
+G1 Y0.3 M4
+G0 X1.4 Y0.5 M5
+G1 Y0.6 M4
+G0 X1.4 Y0.9 M5
+G1 Y1 M4
+G0 X1.4 Y1.2 M5
+G1 Y1.3 M4
+G0 X1.4 Y1.4 M5
+G1 Y1.5 M4
+G0 X1.5 Y1.5 M5
+G1 Y1.4 M4
+G0 X1.5 Y1.3 M5
+G1 Y1.2 M4
+Y1.1 M4
+Y1 M4
+Y0.9 M4
+Y0.8 M4
+Y0.7 M4
+G0 X1.5 Y0.5 M5
+G1 Y0.4 M4
+G0 X1.5 Y0.2 M5
+G1 Y0.1 M4
+M5

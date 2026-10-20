@@ -1,0 +1,91 @@
+image=col_1x20.png
+width=1
+height=20
+dir=Diagonal
+pwm=true
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=63
+estimated_ticks=2000000
+drawing_range=xmin=0 xmax=0.1 ymin=0 ymax=2 valid=true
+moving_range=xmin=0 xmax=0.1 ymin=0 ymax=2 valid=true
+quadrant=I
+---
+G0 X0 Y0 F1000
+M3 S0
+Y0.1
+G1 X0.1 Y0 S64
+S0
+G0 X0.1 Y0.1 S0
+G1 X0 Y0.2 S101
+S0
+G0 X0 Y0.3 S0
+G1 X0.1 Y0.2 S138
+S0
+G0 X0.1 Y0.3 S0
+G1 X0 Y0.4 S175
+S0
+G0 X0 Y0.5 S0
+G1 X0.1 Y0.4 S212
+S0
+G0 X0.1 Y0.5 S0
+G1 X0 Y0.6 S249
+S0
+G0 X0 Y0.7 S0
+G1 X0.1 Y0.6 S30
+S0
+G0 X0.1 Y0.7 S0
+G1 X0 Y0.8 S67
+S0
+G0 X0 Y0.9 S0
+G1 X0.1 Y0.8 S104
+S0
+G0 X0.1 Y0.9 S0
+G1 X0 Y1 S141
+S0
+G0 X0 Y1.1 S0
+G1 X0.1 Y1 S178
+S0
+G0 X0.1 Y1.1 S0
+G1 X0 Y1.2 S215
+S0
+G0 X0 Y1.3 S0
+G1 X0.1 Y1.2 S252
+S0
+G0 X0.1 Y1.3 S0
+G1 X0 Y1.4 S33
+S0
+G0 X0 Y1.5 S0
+G1 X0.1 Y1.4 S70
+S0
+G0 X0.1 Y1.5 S0
+G1 X0 Y1.6 S107
+S0
+G0 X0 Y1.7 S0
+G1 X0.1 Y1.6 S144
+S0
+G0 X0.1 Y1.7 S0
+G1 X0 Y1.8 S181
+S0
+G0 X0 Y1.9 S0
+G1 X0.1 Y1.8 S218
+S0
+G0 X0.1 Y1.9 S0
+G1 X0 Y2 S255
+S0
+M5

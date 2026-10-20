@@ -1,0 +1,47 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> conf 1.1 $30=255
+> board auto off
+> enqueue $100=250
+> enqueue G1 X1
+> enqueue $101=251
+> tx 4
+  TX $100=250\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=9 bsize=127 free=118 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=2 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $100=250 | WaitingResponse | 
+> rx ok
+> tx 2
+  TX G1X1\n
+  TXSLEEP 4
+  TX $101=251\n
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=14 bsize=127 free=113 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=2 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $100=250 | ResponseGood | OK
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD $101=251 | WaitingResponse | 
+> rx ok
+> tx 2
+  TXSLEEP 15
+  TXSLEEP 15
+> rx ok
+> tx 2
+  TXSLEEP 15
+  TXSLEEP 15
+> rx ok
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $100=250 | ResponseGood | OK
+  SENT[1] CMD G1 X1 | ResponseGood | OK
+  SENT[2] CMD $101=251 | ResponseGood | OK
+> dumpconf
+  CONF count=3 $30=255 $100=250 $101=251

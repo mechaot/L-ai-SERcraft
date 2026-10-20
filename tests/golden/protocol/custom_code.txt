@@ -1,0 +1,77 @@
+> lastver 1.1f
+> conf 1.1 $30=255 $110=3000 $130=300
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G0 X10 Y20\nG1 X50 Y80 F500\nG1 X30 Y40
+> rx <Idle|MPos:12.500,-3.250,1.000|WCO:2.500,1.500,0.250>
+> jogset 3000 5.5
+> custom G0 X[left] Y[bottom]\nG0 X[right] Y[top]\nG1 X[width/2] Y[height*2]
+> custom M3 S[$30*0.5]\n\n   \nG1 F[jogspeed] X[jogstep]
+> custom G0 X[MPos.X+WCO.X] Y[WPos.Y]
+> custom G0 X[nope] Y[1/0] Z[1+]
+> custom $H
+> custom ?
+> custom !
+  TXB 21
+> custom ~
+  TXB 7E
+> custom 0x85
+  TXB 85
+> custom 0X18
+  TXB 18
+> custom ctrl-x
+  TXB 18
+> custom CTRL-X
+  TXB 18
+> custom 0xZZ
+> custom 0x123
+> custom 0x
+> custom G1 X[$130]  (comment)
+> custom [$31]
+> custom G91\r\nG1 X1\r\nG90
+> eval G0 X[left] Y[bottom] F[$110]
+  EVAL G0 X0.000 Y0.000 F3000.000
+> eval  [1+2] [3*4.123456]  
+  EVAL 3.000 12.370
+> eval [0.0005] [-0.0004] [1/3]
+  EVAL 0.001 0.000 0.333
+> eval [Round(2.5)] [Sqrt(2)]
+  EVAL [Round(2.5)] [Sqrt(2)]
+> tx 12
+  TX G0X0.000Y0.000\n
+  TXSLEEP 4
+  TX G0X0.000Y0.000\n
+  TXSLEEP 4
+  TX G1X0.000Y0.000\n
+  TXSLEEP 4
+  TX M3S127.500\n
+  TXSLEEP 4
+  TX G1F3000.000X5.500\n
+  TXSLEEP 4
+  TX G0X15.000Y-3.250\n
+  TXSLEEP 4
+  TX G0X[nope]Y[1/0]Z[1+]\n
+  TXSLEEP 4
+  TX $H\n
+  TXSLEEP 4
+  TX 0xZZ\n
+  TXSLEEP 4
+  TX 0x123\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=126 bsize=127 free=1 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=12.5,-3.25,1 wco=2.5,1.5,0.25 lastwco=0,0,0 queue=6 pending=10 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=True holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G0 X0.000 Y0.000 | WaitingResponse | 
+  SENT[1] CMD G0 X0.000 Y0.000 | WaitingResponse | 
+  SENT[2] CMD G1 X0.000 Y0.000 | WaitingResponse | 
+  SENT[3] CMD M3 S127.500 | WaitingResponse | 
+  SENT[4] CMD G1 F3000.000 X5.500 | WaitingResponse | 
+  SENT[5] CMD G0 X15.000 Y-3.250 | WaitingResponse | 
+  SENT[6] CMD G0 X[nope] Y[1/0] Z[1+] | WaitingResponse | 
+  SENT[7] CMD $H | WaitingResponse | 
+  SENT[8] CMD 0xZZ | WaitingResponse | 
+  SENT[9] CMD 0x123 | WaitingResponse | 

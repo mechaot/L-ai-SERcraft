@@ -1,0 +1,28 @@
+lastver none
+fw marlin
+fastconnect
+newprog G1 X1 Y1\nG1 X2 Y2\nG4 P1\nG1 X3
+rx X:1.00 Y:2.00 Z:0.00 E:0.00 Count X:80 Y:160 Z:0
+dump
+runprogram
+tx 2
+dump
+run
+dump
+rx X:3.00 Y:3.00 Z:0.00 E:0.00 Count X:80 Y:160 Z:0
+rx X:3.00
+rx X:a Y:b Z:c
+rx X:1.00 Y:2.00 Z:0.00
+dump
+jog N 1000
+homing
+sendunlock
+sendhoming
+grblreset
+unlock
+run
+dump
+async refreshconfig
+join
+async refreshinfo
+join

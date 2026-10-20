@@ -1,0 +1,52 @@
+ConnectDisconnect	10	123	F12
+Connect	11	0	
+Disconnect	12	0	
+OpenFile	20	131151	Ctrl+O
+ReopenLastFile	21	131154	Ctrl+R
+SaveFile	22	131155	Ctrl+S
+ExecuteFile	23	116	F5
+AbortFile	24	131188	Ctrl+F5
+HelpOnline	30	131184	Ctrl+F1
+AutoSizeDrawing	40	131137	Ctrl+A
+ZoomInDrawing	41	131179	Ctrl+Add
+ZoomOutDrawing	42	131181	Ctrl+Subtract
+Reset	100	131160	Ctrl+X
+Homing	101	131144	Ctrl+H
+Unlock	102	131157	Ctrl+U
+PauseJob	103	117	F6
+ResumeJob	104	118	F7
+SetNewZero	105	131162	Ctrl+Z
+JogHome	1000	101	NumPad5
+JogN	1001	104	NumPad8
+JogNE	1002	105	NumPad9
+JogE	1003	102	NumPad6
+JogSE	1004	99	NumPad3
+JogS	1005	98	NumPad2
+JogSW	1006	97	NumPad1
+JogW	1007	100	NumPad4
+JogNW	1008	103	NumPad7
+JogUp	1009	107	Add
+JogDown	1010	109	Subtract
+JogStepIncrease	1020	106	Multiply
+JogStepDecrease	1021	111	Divide
+JogSpeedIncrease	1030	0	
+JogSpeedDecrease	1031	0	
+OverridePowerDefault	1100	0	
+OverridePowerUp	1101	0	
+OverridePowerDown	1102	0	
+OverrideLinearDefault	1110	0	
+OverrideLinearUp	1111	0	
+OverrideLinearDown	1112	0	
+OverrideRapidDefault	1120	0	
+OverrideRapidUp	1121	0	
+OverrideRapidDown	1122	0	
+CustomButton1	2000	131121	Ctrl+D1
+CustomButton2	2001	131122	Ctrl+D2
+CustomButton3	2002	131123	Ctrl+D3
+CustomButton4	2003	131124	Ctrl+D4
+CustomButton5	2004	131125	Ctrl+D5
+CustomButton6	2005	131126	Ctrl+D6
+CustomButton7	2006	131127	Ctrl+D7
+CustomButton8	2007	131128	Ctrl+D8
+CustomButton9	2008	131129	Ctrl+D9
+CustomButton10	2009	131120	Ctrl+D0

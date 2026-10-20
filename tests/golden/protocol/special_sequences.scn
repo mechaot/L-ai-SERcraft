@@ -1,0 +1,21 @@
+lastver 1.1f
+conf 1.1 $22=1 $32=1
+fw grbl
+fastconnect
+rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+homing
+unlock
+zero
+sendhoming
+sendunlock
+imm 85
+imm 18
+dump
+forcestatus Alarm
+homing
+unlock
+zero
+dump
+rx <Idle|MPos:0.000,0.000,0.000|WCO:0.000,0.000,0.000>
+zero
+dump

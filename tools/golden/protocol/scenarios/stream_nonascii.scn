@@ -1,0 +1,8 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1 (größe é)\n(emoji \U0001F600 test)\nG1 X2é Y3
+board auto off
+runprogram
+tx 6
+dump

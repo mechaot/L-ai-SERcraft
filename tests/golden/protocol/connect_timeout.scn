@@ -1,0 +1,8 @@
+lastver none
+fw grbl
+connect
+sleep 10300
+tx
+dump
+rxfatal
+dump

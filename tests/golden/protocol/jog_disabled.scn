@@ -1,0 +1,24 @@
+lastver 1.1f
+fw grbl
+fastconnect
+jogset 1500 10
+forcestatus Run
+jog N 1500
+forcestatus Hold
+jog N 1500
+forcestatus Jog
+jog N 1500
+forcestatus Disconnected
+jog N 1500
+jogpos 1 1 100
+dump
+lastver 1.0c
+fw grbl
+fastconnect
+jogset 1500 10
+forcestatus Run
+jog N 1500
+newprog G1 X1
+runprogram
+jog N 1500
+dump

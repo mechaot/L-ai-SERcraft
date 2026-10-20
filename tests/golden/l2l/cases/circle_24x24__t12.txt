@@ -1,0 +1,111 @@
+image=circle_24x24.png
+width=24
+height=24
+dir=Horizontal
+pwm=false
+firmwareType=Grbl
+res=10
+fres=10
+oX=12.5
+oY=-3.25
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M4
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=true
+grbl_conf=v11a
+grbl_conf.MaxPWM=255
+grbl_conf.MaxRateX=3000
+exception=none
+count=83
+estimated_ticks=25350000
+drawing_range=xmin=12.8 xmax=14.6 ymin=-2.95 ymax=-1.25 valid=true
+moving_range=xmin=0 xmax=14.6 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G1 X12.5 Y-3.25 F1000
+M5 S255
+G1 X14 Y-2.95 M5
+G1 X13.9 M4
+X13.8 M4
+X13.6 M4
+X13.5 M4
+X13.4 M4
+G1 X13.2 Y-2.85 M5
+G1 X13.3 M4
+X13.4 M4
+X14 M4
+X14.1 M4
+X14.2 M4
+G1 X14.3 Y-2.75 M5
+G1 X14.2 M4
+X13.2 M4
+X13.1 M4
+G1 X13 Y-2.65 M5
+G1 X13.1 M4
+X14.3 M4
+X14.4 M4
+G1 X14.5 Y-2.55 M5
+G1 X14.4 M4
+X13 M4
+X12.9 M4
+G1 X12.9 Y-2.45 M5
+G1 X13 M4
+X14.4 M4
+X14.5 M4
+G1 X14.6 Y-2.35 M5
+G1 X14.5 M4
+X12.9 M4
+X12.8 M4
+G1 X12.8 Y-2.25 M5
+G1 X12.9 M4
+X14.5 M4
+X14.6 M4
+G1 X14.6 Y-2.15 M5
+G1 X14.5 M4
+X12.9 M4
+X12.8 M4
+G1 X12.8 Y-2.05 M5
+G1 X12.9 M4
+X14.5 M4
+X14.6 M4
+G1 X14.6 Y-1.95 M5
+G1 X14.5 M4
+X12.9 M4
+X12.8 M4
+G1 X12.8 Y-1.85 M5
+G1 X12.9 M4
+X14.5 M4
+X14.6 M4
+G1 X14.5 Y-1.75 M5
+G1 X14.4 M4
+X13 M4
+X12.9 M4
+G1 X12.9 Y-1.65 M5
+G1 X13 M4
+X14.4 M4
+X14.5 M4
+G1 X14.4 Y-1.55 M5
+G1 X14.3 M4
+X13.1 M4
+X13 M4
+G1 X13.1 Y-1.45 M5
+G1 X13.2 M4
+X14.2 M4
+X14.3 M4
+G1 X14.2 Y-1.35 M5
+G1 X14.1 M4
+X14 M4
+X13.4 M4
+X13.3 M4
+X13.2 M4
+G1 X13.4 Y-1.25 M5
+G1 X13.5 M4
+X13.6 M4
+X13.8 M4
+X13.9 M4
+X14 M4
+M5

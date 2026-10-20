@@ -1,0 +1,15 @@
+# Full connect flow of a Grbl 1.1f board incl. the delayed $$ and $I refresh (background thread, real time).
+lastver none
+fw grbl
+trace queries on
+connect
+dump
+rx Grbl 1.1f ['$' for help]
+rx <Idle|MPos:0.000,0.000,0.000|Bf:15,128|FS:0,0>
+trace queries off
+board rule =$$ => $0=10 | $1=25 | $30=1000 | $32=1 | $130=300.000 | $131=200.000 | ok
+board rule =$I => [VER:1.1f.20170801:] | [OPT:V,15,254] | ok
+rununtil $I
+rundone
+dump
+dumpconf

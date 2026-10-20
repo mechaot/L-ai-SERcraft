@@ -1,0 +1,23 @@
+lastver 1.1f
+fw grbl
+fastconnect
+board rule =$I => [VER:1.1f.20170801:] | [OPT:V,15,254] | ok
+async refreshinfo
+join
+dump
+board clear
+board rule =$I => [VER:1.1f.20170801:] | [OPT:V,15,1000] | ok
+async refreshinfo
+join
+dump
+board clear
+board rule =$I => [OPT:V,15,xx] | [OPT:V] | ok
+fw grbl
+fastconnect
+async refreshinfo
+join
+dump
+set bool "Query MachineInfo ($I) at connect" false
+async refreshinfo
+join
+dump

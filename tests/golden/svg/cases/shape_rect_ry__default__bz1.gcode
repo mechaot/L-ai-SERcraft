@@ -1,0 +1,15 @@
+M3 S0
+S0 (1st shape)
+G0X16Y60(rect)
+S255 (rect a1)
+G1X44F1000(rect a1)
+G3X50Y66I0J6(rect)
+G1Y84(rect b1)
+G3X44Y90I-6J0(rect)
+G1X16(rect a2)
+G3X10Y84I0J-6(rect)
+G1Y66(rect b2)
+G3X16Y60I6J0(rect)
+G1(rect)
+S0 (rect)
+M5 S0

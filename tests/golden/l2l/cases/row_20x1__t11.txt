@@ -1,0 +1,91 @@
+image=row_20x1.png
+width=20
+height=1
+dir=Diagonal
+pwm=true
+firmwareType=Smoothie
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=0
+maxPower=100
+markSpeed=1000
+borderSpeed=1000
+lOn=M4
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=63
+estimated_ticks=4740000
+drawing_range=xmin=12.637 xmax=15.103 ymin=-3.25 ymax=-3.113 valid=true
+moving_range=xmin=0 xmax=15.24 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G0 X12.5 Y-3.25 F1000
+M4 S0
+Y-3.113
+G1 X12.637 Y-3.25 S0.39
+S0
+G0 X12.774 Y-3.25 S0
+G1 X12.637 Y-3.113 S0.31
+S0
+G0 X12.774 Y-3.113 S0
+G1 X12.911 Y-3.25 S0.23
+S0
+G0 X13.048 Y-3.25 S0
+G1 X12.911 Y-3.113 S0.15
+S0
+G0 X13.048 Y-3.113 S0
+G1 X13.185 Y-3.25 S0.06
+S0
+G0 X13.322 Y-3.25 S0
+G1 X13.185 Y-3.113 S0.38
+S0
+G0 X13.322 Y-3.113 S0
+G1 X13.459 Y-3.25 S0.29
+S0
+G0 X13.596 Y-3.25 S0
+G1 X13.459 Y-3.113 S0.21
+S0
+G0 X13.596 Y-3.113 S0
+G1 X13.733 Y-3.25 S0.13
+S0
+G0 X13.87 Y-3.25 S0
+G1 X13.733 Y-3.113 S0.05
+S0
+G0 X13.87 Y-3.113 S0
+G1 X14.007 Y-3.25 S0.36
+S0
+G0 X14.144 Y-3.25 S0
+G1 X14.007 Y-3.113 S0.28
+S0
+G0 X14.144 Y-3.113 S0
+G1 X14.281 Y-3.25 S0.20
+S0
+G0 X14.418 Y-3.25 S0
+G1 X14.281 Y-3.113 S0.12
+S0
+G0 X14.418 Y-3.113 S0
+G1 X14.555 Y-3.25 S0.04
+S0
+G0 X14.692 Y-3.25 S0
+G1 X14.555 Y-3.113 S0.35
+S0
+G0 X14.692 Y-3.113 S0
+G1 X14.829 Y-3.25 S0.27
+S0
+G0 X14.966 Y-3.25 S0
+G1 X14.829 Y-3.113 S0.18
+S0
+G0 X14.966 Y-3.113 S0
+G1 X15.103 Y-3.25 S0.11
+S0
+G0 X15.24 Y-3.25 S0
+G1 X15.103 Y-3.113 S0.02
+S0
+M5

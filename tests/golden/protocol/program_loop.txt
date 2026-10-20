@@ -1,0 +1,37 @@
+> lastver 1.1f
+> set str GCode.CustomPasses ;(sink)\nG91\nG0 Z-1\nG90
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2
+> loopcount 3
+  EV loop 3
+> runprogram
+> run
+  TX G90\n
+  TX G1X1\n
+  TX G1X2\n
+  EV programended
+  EV loop 2
+  TX \n
+  TX G91\n
+  TX G0\n
+  TX G1X1\n
+  TX G1X2\n
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=5 executed=4 errors=0 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=2 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD  | ResponseGood | OK
+  SENT[1] CMD G91 | ResponseGood | OK
+  SENT[2] CMD G0 | ResponseGood | OK
+  SENT[3] CMD G1 X1 | ResponseGood | OK
+  SENT[4] CMD G1 X2 | WaitingResponse | 
+> run
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=5 executed=4 errors=0 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=2 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD  | ResponseGood | OK
+  SENT[1] CMD G91 | ResponseGood | OK
+  SENT[2] CMD G0 | ResponseGood | OK
+  SENT[3] CMD G1 X1 | ResponseGood | OK
+  SENT[4] CMD G1 X2 | WaitingResponse | 

@@ -1,0 +1,24 @@
+lastver 1.1f
+conf 1.1 $130=300 $131=200
+fw grbl
+fastconnect
+jogset 1500 10
+jog N 1500
+jog NE 2000.5 0.5
+jog E fast
+jog SE fast 0.25
+jog S 100 100
+jog SW 3000 1
+jog W 3000 0.1
+jog NW 500 25
+jog Zup 300 0.05
+jog Zdown 300 2
+jog Home 1200
+jog Home fast
+jog Abort 100
+jog Position 100
+jogpos 10.456 -5.255 1000
+jogpos 0.004 1 fast
+jogpos 1234.5678 99.995 2500.25
+tx 40
+dump

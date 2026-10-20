@@ -1,0 +1,14 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3\nG1 X4
+board auto off
+runprogram
+tx 3
+forcestatus Run
+abort
+dump
+tx 3
+rx ok
+rx ok
+dump

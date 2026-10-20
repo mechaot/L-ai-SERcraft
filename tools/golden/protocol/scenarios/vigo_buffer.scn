@@ -1,0 +1,10 @@
+lastver 1.1f
+fw vigo
+fastconnect
+rx <Idle|Bf:15,254>
+dump
+rx <VSta:1|SBuf:0,0,0>
+newprog G1 X1\nG1 X2
+runprogram
+tx 6
+dump

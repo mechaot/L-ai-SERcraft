@@ -1,0 +1,61 @@
+> set tm "Threading Mode" Insane
+> set bool "Query MachineInfo ($I) at connect" false
+> set sm "Streaming Mode" RepeatOnError
+> lastver none
+> fw grbl
+> board rule =G1X2Y2 => error:9
+> newprog G1 X1 Y1 F500\nG1 X2 Y2\nG4 P0\nG1 X3 Y3\nG0 X0 Y0
+> connectthreads
+  EV status Connecting
+> waitfor txlines 1
+  EV override
+  TXB 18
+> rxq Grbl 1.1f ['$' for help]
+> rxq <Idle|MPos:0.000,0.000,0.000|Bf:15,128|FS:0,0>
+> waitfor status Idle
+  EV override
+  EV status Idle
+> waitfor txtext $$
+  TX $$\n
+> waitfor refreshdone
+> runprogram
+> waitfor idleprog
+  EV programended
+  TX G90\n
+  TX G1X1Y1F500\n
+  TX G1X2Y2\n
+  TX G1X2Y2\n
+  TX G1X2Y2\n
+  TX G1X2Y2\n
+  TX G4P0\n
+  TX G1X3Y3\n
+  TX G0X0Y0\n
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=6 sent=9 executed=6 errors=4 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 F500 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[3] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[4] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[5] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[6] CMD G4 P0 | ResponseGood | OK
+  SENT[7] CMD G1 X3 Y3 | ResponseGood | OK
+  SENT[8] CMD G0 X0 Y0 | ResponseGood | OK
+  SENT[9] MSG [5 lines, 4 errors, <time>]
+  SENT[10] CMD M5 | ResponseGood | OK
+> closecom user
+  EV status Disconnected
+> dump
+  DUMP status=Disconnected inprogram=False target=6 sent=9 executed=6 errors=4 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=False
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 F500 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[3] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[4] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[5] CMD G1 X2 Y2 | ResponseBad | ERROR:9
+  SENT[6] CMD G4 P0 | ResponseGood | OK
+  SENT[7] CMD G1 X3 Y3 | ResponseGood | OK
+  SENT[8] CMD G0 X0 Y0 | ResponseGood | OK
+  SENT[9] MSG [5 lines, 4 errors, <time>]
+  SENT[10] CMD M5 | ResponseGood | OK

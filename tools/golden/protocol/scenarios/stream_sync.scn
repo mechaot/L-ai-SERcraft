@@ -1,0 +1,10 @@
+lastver 1.1f
+set sm "Streaming Mode" Synchronous
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3\nG1 X4
+runprogram
+tx 3
+dump
+run
+dump

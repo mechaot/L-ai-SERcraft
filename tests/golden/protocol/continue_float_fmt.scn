@@ -1,0 +1,13 @@
+# float formatting in generated commands: setwco G92 (float.ToString) and jog speed (float.ToString)
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G90\nG1 X5 Y5 F800\nG1 X6 Y6
+rx <Idle|MPos:3.300,4.400,0.100|WCO:1.100,2.200,0.050>
+continue 1 false true
+jogset 1234 0.1
+jog N 1234.56
+jog E 0.1
+jogpos 1.005 2.675 33.333
+run
+dump

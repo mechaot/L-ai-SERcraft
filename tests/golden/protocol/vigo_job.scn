@@ -1,0 +1,21 @@
+lastver 1.1f
+fw vigo
+fastconnect
+rx Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+newprog G1 X1 Y1\nG1 X2 Y2\nG1 X3
+enqueue G1 X0
+tx
+dump
+board auto off
+runprogram
+tx 20
+dump
+rx <VSta:2|SBuf:3,1,0>
+rx <VSta:2|SBuf:7,3,1>
+dump
+rx <VSta:2|SBuf:7,5,1>
+rx <VSta:0|SBuf:1,0,0>
+dump
+rx <VSta:x|SBuf:1>
+run
+dump

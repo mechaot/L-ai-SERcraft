@@ -1,0 +1,60 @@
+image=letter_O_hole_20x20.png
+width=20
+height=20
+dir=NewInsetFilling
+UseSpotRemoval=true
+SpotRemoval=2
+UseSmoothing=true
+Smoothing=1.0
+UseOptimize=true
+Optimize=0.2
+useOptimizeFast=false
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=26
+estimated_ticks=6010000
+drawing_range=xmin=0.271 xmax=1.8 ymin=0.2 ymax=1.80055634719047 valid=true
+moving_range=xmin=0 xmax=1.8 ymin=0 ymax=1.80055634719047 valid=true
+quadrant=I
+---
+M3 S0
+F1000
+F800
+G0 X1.318 Y0.75
+S1000
+G1 X1.325 Y1.285
+G1 X1 Y1.5
+G1 X0.675 Y1.285
+G1 X0.682 Y0.75
+G1 X1 Y0.545
+G1 X1.318 Y0.75
+S0
+G0 X0.445 Y0.445
+S1000
+G1 X0.271 Y1.311
+G2 X1 Y1.8 I0.729 J-0.298
+G2 X1.566 Y1.566 I0 J-0.8
+G1 X1.8 Y1
+G1 X1.74 Y0.716
+G1 X1.555 Y0.445
+G1 X1.284 Y0.26
+G1 X1 Y0.2
+G1 X0.716 Y0.26
+G1 X0.445 Y0.445
+S0
+M5

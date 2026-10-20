@@ -1,0 +1,12 @@
+lastver none
+fw grbl
+connect
+rx [Machine: Longer Nano]
+rx [Software: V1.2.3]
+forcestatus Idle
+async wifi MyNet secret
+awaitasync
+tx 6
+dump
+run
+dump

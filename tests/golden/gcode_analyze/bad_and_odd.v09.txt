@@ -1,0 +1,26 @@
+program=bad_and_odd.nc
+conf=v09
+load_ok=true
+count=16
+estimated_ticks=13770000
+drawing_range=xmin=4 xmax=9 ymin=4 ymax=9 valid=true
+moving_range=xmin=0 xmax=9 ymin=0 ymax=9 valid=true
+spindle_range=smin=0 smax=100 valid=true
+quadrant=I
+---
+0	0	G90 G21
+1	0	G1 X1 Y1 X2
+2	3390000	G1 X3 Y3 F500
+3	3390000	
+4	3390000	
+5	5090000	G1 X4 Y4
+6	5090000	M3 S100 M4
+7	6790000	G1 X5 Y5
+8	6790000	G1 X
+9	6790000	$H
+10	8490000	G1 X6 Y6 S100
+11	8490000	M3 S100
+12	10190000	G1 X7 Y7
+13	12070000	G2 X8 Y8 I1
+14	13770000	G1 Z1 X9 Y9
+15	13770000	M5

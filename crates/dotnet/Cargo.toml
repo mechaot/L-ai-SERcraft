@@ -1,0 +1,9 @@
+[package]
+name = "lg-dotnet"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rust_decimal.workspace = true

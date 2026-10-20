@@ -1,0 +1,58 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2\nG1 X3
+> board auto off
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1\n
+  TXSLEEP 4
+  TX G1X2\n
+  TXSLEEP 4
+> forcestatus Run
+> closecom auto
+  EV issue UnexpectedDisconnect
+  EV status Disconnected
+> dump
+  DUMP status=Disconnected inprogram=False target=4 sent=3 executed=0 errors=0 lastissue=UnexpectedDisconnect used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=False
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2\nG1 X3
+> board auto off
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1\n
+  TXSLEEP 4
+  TX G1X2\n
+  TXSLEEP 4
+> forcestatus Run
+> closecom user
+  EV status Disconnected
+> dump
+  DUMP status=Disconnected inprogram=False target=4 sent=3 executed=0 errors=0 lastissue=ManualDisconnect used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=False
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 | WaitingResponse | 
+  SENT[2] CMD G1 X2 | WaitingResponse | 
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:1.000,2.000,3.000|FS:100,200>
+> closecom user
+  EV status Disconnected
+> dump
+  DUMP status=Disconnected inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=False

@@ -1,0 +1,17 @@
+M3 S0
+S0 (1st shape)
+G0X37.795Y24.409(rect)
+S255 (rect a1)
+G1X113.386F1000(rect a1)
+Y62.205(rect b1)
+X37.795(rect a2)
+Y24.409(rect b2)
+S0 (rect)
+G0X48Y-108(rect)
+S255 (rect a1)
+G1X61.333F1000(rect a1)
+Y52(rect b1)
+X48(rect a2)
+Y-108(rect b2)
+S0 (rect)
+M5 S0

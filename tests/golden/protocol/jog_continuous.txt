@@ -1,0 +1,57 @@
+> lastver 1.1f
+> conf 1.1 $130=300 $131=200
+> set bool "Enable Continuous Jog" true
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> jogset 1500 10
+> jog E 1500
+> tx
+  TX $J=G53X300.0F1500\n
+  TXSLEEP 15
+> jog N 1500
+> tx
+  TXSLEEP 15
+> jog Zup 1500 1
+> tx
+  TX $J=G91Z1.0F1500\n
+  TXSLEEP 15
+> jogabort
+> tx
+  TXSLEEP 15
+> jog NE 800
+> tx
+  TXSLEEP 15
+> cjogpos 12.5 7.25 900
+> tx
+  TXSLEEP 15
+> jogpos 1 2 300
+> tx
+  TXSLEEP 15
+> jog Home 400
+> tx
+  TXSLEEP 15
+> cjog SW 100
+> tx
+  TXSLEEP 15
+> cjogabort
+> tx
+  TXSLEEP 15
+> jog W 100
+> board auto off
+> tx
+  TXSLEEP 15
+> jog W 100
+> cjog S 100
+> tx
+  TXSLEEP 15
+> cjog Zup 100
+  ERR ArgumentException
+> cjog Position 100
+  ERR ArgumentException
+> cjog Abort 100
+  ERR ArgumentException
+> tx
+  TXSLEEP 15

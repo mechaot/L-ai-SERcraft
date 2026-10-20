@@ -1,0 +1,15 @@
+M3 S0
+S0 (m)
+G0X10Y90(m)
+S255 (m)
+G1X30Y70F1000(m)
+X40Y80(m)
+X50Y70(m)
+X55Y65(l)
+X60Y70(l)
+X65(h)
+X70(h)
+Y65(v)
+Y60(v)
+S0 (End path)
+M5 S0

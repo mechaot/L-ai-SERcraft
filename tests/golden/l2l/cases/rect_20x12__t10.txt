@@ -1,0 +1,87 @@
+image=rect_20x12.png
+width=20
+height=12
+dir=Vertical
+pwm=true
+firmwareType=Grbl
+res=7.3
+fres=7.3
+oX=12.5
+oY=-3.25
+minPower=20
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=true
+grbl_conf=v11a
+grbl_conf.MaxPWM=255
+grbl_conf.MaxRateX=3000
+exception=none
+count=59
+estimated_ticks=22130000
+drawing_range=xmin=12.774 xmax=14.829 ymin=-3.113 ymax=-1.743 valid=true
+moving_range=xmin=0 xmax=14.829 ymin=-3.25 ymax=0 valid=true
+quadrant=IV
+---
+G1 X12.5 Y-3.25 F1000
+M3 S0
+G1 X12.774 Y-3.113 S0
+G1 Y-1.743 S70
+G1 X12.911 Y-1.743 S0
+G1 Y-3.113 S70
+G1 X13.048 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X13.185 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X13.322 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X13.459 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X13.596 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X13.733 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X13.87 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X14.007 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X14.144 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X14.281 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X14.418 Y-3.113 S0
+G1 Y-2.839 S70
+Y-2.017 S255
+Y-1.743 S70
+G1 X14.555 Y-1.743 S0
+G1 Y-2.017 S70
+Y-2.839 S255
+Y-3.113 S70
+G1 X14.692 Y-3.113 S0
+G1 Y-1.743 S70
+G1 X14.829 Y-1.743 S0
+G1 Y-3.113 S70
+M5

@@ -1,0 +1,20 @@
+lastver 1.1f
+fw grbl
+fastconnect
+conf 1.1 $30=255
+board auto off
+enqueue $100=250
+enqueue G1 X1
+enqueue $101=251
+tx 4
+dump
+rx ok
+tx 2
+dump
+rx ok
+tx 2
+rx ok
+tx 2
+rx ok
+dump
+dumpconf

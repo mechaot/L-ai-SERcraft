@@ -1,0 +1,36 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> runprogram
+  NOTALLOWED
+> newprog G1 X1\nG1 X2
+> forcestatus Run
+> runprogram
+  NOTALLOWED
+> forcestatus Idle
+> enqueue G4 P0
+> runprogram
+  NOTALLOWED
+> tx 2
+  TX G4P0\n
+  TXSLEEP 15
+  TXSLEEP 15
+> runprogram
+> abort
+> dump
+  DUMP status=Idle inprogram=False target=3 sent=0 executed=0 errors=0 lastissue=ManualAbort used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=1 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> forcestatus Hold
+> abort
+> dump
+  DUMP status=Hold inprogram=False target=3 sent=0 executed=0 errors=0 lastissue=ManualAbort used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=1 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+> forcestatus Disconnected
+> runprogram
+  NOTALLOWED
+> grblreset
+> feedhold
+> resume
+> dump
+  DUMP status=Disconnected inprogram=False target=3 sent=0 executed=0 errors=0 lastissue=ManualAbort used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=1 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True

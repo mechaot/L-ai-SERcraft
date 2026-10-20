@@ -1,0 +1,216 @@
+gs_grad_rgb_f0_p0 gs grad_rgb 0 0 0 0 0 1
+gs_grad_rgb_f0_p1 gs grad_rgb 0 1 1 1 0.2 1
+gs_grad_rgb_f0_p2 gs grad_rgb 0 0.5 1.5 0.8 0 1.3
+gs_grad_rgb_f0_p3 gs grad_rgb 0 1 1 1 -0.25 1.1
+gs_grad_rgb_f0_p4 gs grad_rgb 0 1.2 0.4 1 0.1 0.7
+gs_grad_rgb_f1_p0 gs grad_rgb 1 0 0 0 0 1
+gs_grad_rgb_f1_p1 gs grad_rgb 1 1 1 1 0.2 1
+gs_grad_rgb_f1_p2 gs grad_rgb 1 0.5 1.5 0.8 0 1.3
+gs_grad_rgb_f1_p3 gs grad_rgb 1 1 1 1 -0.25 1.1
+gs_grad_rgb_f1_p4 gs grad_rgb 1 1.2 0.4 1 0.1 0.7
+gs_grad_rgb_f2_p0 gs grad_rgb 2 0 0 0 0 1
+gs_grad_rgb_f2_p1 gs grad_rgb 2 1 1 1 0.2 1
+gs_grad_rgb_f2_p2 gs grad_rgb 2 0.5 1.5 0.8 0 1.3
+gs_grad_rgb_f2_p3 gs grad_rgb 2 1 1 1 -0.25 1.1
+gs_grad_rgb_f2_p4 gs grad_rgb 2 1.2 0.4 1 0.1 0.7
+gs_grad_rgb_f3_p0 gs grad_rgb 3 0 0 0 0 1
+gs_grad_rgb_f3_p1 gs grad_rgb 3 1 1 1 0.2 1
+gs_grad_rgb_f3_p2 gs grad_rgb 3 0.5 1.5 0.8 0 1.3
+gs_grad_rgb_f3_p3 gs grad_rgb 3 1 1 1 -0.25 1.1
+gs_grad_rgb_f3_p4 gs grad_rgb 3 1.2 0.4 1 0.1 0.7
+gs_noise_f0_p0 gs noise 0 0 0 0 0 1
+gs_noise_f0_p1 gs noise 0 1 1 1 0.2 1
+gs_noise_f0_p2 gs noise 0 0.5 1.5 0.8 0 1.3
+gs_noise_f0_p3 gs noise 0 1 1 1 -0.25 1.1
+gs_noise_f0_p4 gs noise 0 1.2 0.4 1 0.1 0.7
+gs_noise_f1_p0 gs noise 1 0 0 0 0 1
+gs_noise_f1_p1 gs noise 1 1 1 1 0.2 1
+gs_noise_f1_p2 gs noise 1 0.5 1.5 0.8 0 1.3
+gs_noise_f1_p3 gs noise 1 1 1 1 -0.25 1.1
+gs_noise_f1_p4 gs noise 1 1.2 0.4 1 0.1 0.7
+gs_noise_f2_p0 gs noise 2 0 0 0 0 1
+gs_noise_f2_p1 gs noise 2 1 1 1 0.2 1
+gs_noise_f2_p2 gs noise 2 0.5 1.5 0.8 0 1.3
+gs_noise_f2_p3 gs noise 2 1 1 1 -0.25 1.1
+gs_noise_f2_p4 gs noise 2 1.2 0.4 1 0.1 0.7
+gs_noise_f3_p0 gs noise 3 0 0 0 0 1
+gs_noise_f3_p1 gs noise 3 1 1 1 0.2 1
+gs_noise_f3_p2 gs noise 3 0.5 1.5 0.8 0 1.3
+gs_noise_f3_p3 gs noise 3 1 1 1 -0.25 1.1
+gs_noise_f3_p4 gs noise 3 1.2 0.4 1 0.1 0.7
+gs_gray_ramp_f0_p0 gs gray_ramp 0 0 0 0 0 1
+gs_gray_ramp_f0_p1 gs gray_ramp 0 1 1 1 0.2 1
+gs_gray_ramp_f0_p2 gs gray_ramp 0 0.5 1.5 0.8 0 1.3
+gs_gray_ramp_f0_p3 gs gray_ramp 0 1 1 1 -0.25 1.1
+gs_gray_ramp_f0_p4 gs gray_ramp 0 1.2 0.4 1 0.1 0.7
+gs_gray_ramp_f1_p0 gs gray_ramp 1 0 0 0 0 1
+gs_gray_ramp_f1_p1 gs gray_ramp 1 1 1 1 0.2 1
+gs_gray_ramp_f1_p2 gs gray_ramp 1 0.5 1.5 0.8 0 1.3
+gs_gray_ramp_f1_p3 gs gray_ramp 1 1 1 1 -0.25 1.1
+gs_gray_ramp_f1_p4 gs gray_ramp 1 1.2 0.4 1 0.1 0.7
+gs_gray_ramp_f2_p0 gs gray_ramp 2 0 0 0 0 1
+gs_gray_ramp_f2_p1 gs gray_ramp 2 1 1 1 0.2 1
+gs_gray_ramp_f2_p2 gs gray_ramp 2 0.5 1.5 0.8 0 1.3
+gs_gray_ramp_f2_p3 gs gray_ramp 2 1 1 1 -0.25 1.1
+gs_gray_ramp_f2_p4 gs gray_ramp 2 1.2 0.4 1 0.1 0.7
+gs_gray_ramp_f3_p0 gs gray_ramp 3 0 0 0 0 1
+gs_gray_ramp_f3_p1 gs gray_ramp 3 1 1 1 0.2 1
+gs_gray_ramp_f3_p2 gs gray_ramp 3 0.5 1.5 0.8 0 1.3
+gs_gray_ramp_f3_p3 gs gray_ramp 3 1 1 1 -0.25 1.1
+gs_gray_ramp_f3_p4 gs gray_ramp 3 1.2 0.4 1 0.1 0.7
+gs_alpha_ramp_f0_p0 gs alpha_ramp 0 0 0 0 0 1
+gs_alpha_ramp_f0_p1 gs alpha_ramp 0 1 1 1 0.2 1
+gs_alpha_ramp_f0_p2 gs alpha_ramp 0 0.5 1.5 0.8 0 1.3
+gs_alpha_ramp_f0_p3 gs alpha_ramp 0 1 1 1 -0.25 1.1
+gs_alpha_ramp_f0_p4 gs alpha_ramp 0 1.2 0.4 1 0.1 0.7
+gs_alpha_ramp_f1_p0 gs alpha_ramp 1 0 0 0 0 1
+gs_alpha_ramp_f1_p1 gs alpha_ramp 1 1 1 1 0.2 1
+gs_alpha_ramp_f1_p2 gs alpha_ramp 1 0.5 1.5 0.8 0 1.3
+gs_alpha_ramp_f1_p3 gs alpha_ramp 1 1 1 1 -0.25 1.1
+gs_alpha_ramp_f1_p4 gs alpha_ramp 1 1.2 0.4 1 0.1 0.7
+gs_alpha_ramp_f2_p0 gs alpha_ramp 2 0 0 0 0 1
+gs_alpha_ramp_f2_p1 gs alpha_ramp 2 1 1 1 0.2 1
+gs_alpha_ramp_f2_p2 gs alpha_ramp 2 0.5 1.5 0.8 0 1.3
+gs_alpha_ramp_f2_p3 gs alpha_ramp 2 1 1 1 -0.25 1.1
+gs_alpha_ramp_f2_p4 gs alpha_ramp 2 1.2 0.4 1 0.1 0.7
+gs_alpha_ramp_f3_p0 gs alpha_ramp 3 0 0 0 0 1
+gs_alpha_ramp_f3_p1 gs alpha_ramp 3 1 1 1 0.2 1
+gs_alpha_ramp_f3_p2 gs alpha_ramp 3 0.5 1.5 0.8 0 1.3
+gs_alpha_ramp_f3_p3 gs alpha_ramp 3 1 1 1 -0.25 1.1
+gs_alpha_ramp_f3_p4 gs alpha_ramp 3 1.2 0.4 1 0.1 0.7
+whiten_t0_clear whiten nearwhite 0 0
+whiten_t0_demo whiten nearwhite 0 1
+whiten_t10_clear whiten nearwhite 10 0
+whiten_t10_demo whiten nearwhite 10 1
+whiten_t30_clear whiten nearwhite 30 0
+whiten_t30_demo whiten nearwhite 30 1
+whiten_t128_clear whiten nearwhite 128 0
+whiten_t128_demo whiten nearwhite 128 1
+thr_grad_rgb_0_1 thr grad_rgb 0 1
+thr_grad_rgb_0p3_1 thr grad_rgb 0.3 1
+thr_grad_rgb_0p5_1 thr grad_rgb 0.5 1
+thr_grad_rgb_0p5_0 thr grad_rgb 0.5 0
+thr_grad_rgb_0p77_1 thr grad_rgb 0.77 1
+thr_grad_rgb_1_1 thr grad_rgb 1 1
+thr_noise_0_1 thr noise 0 1
+thr_noise_0p3_1 thr noise 0.3 1
+thr_noise_0p5_1 thr noise 0.5 1
+thr_noise_0p5_0 thr noise 0.5 0
+thr_noise_0p77_1 thr noise 0.77 1
+thr_noise_1_1 thr noise 1 1
+thr_gray_ramp_0_1 thr gray_ramp 0 1
+thr_gray_ramp_0p3_1 thr gray_ramp 0.3 1
+thr_gray_ramp_0p5_1 thr gray_ramp 0.5 1
+thr_gray_ramp_0p5_0 thr gray_ramp 0.5 0
+thr_gray_ramp_0p77_1 thr gray_ramp 0.77 1
+thr_gray_ramp_1_1 thr gray_ramp 1 1
+thr_alpha_ramp_0_1 thr alpha_ramp 0 1
+thr_alpha_ramp_0p3_1 thr alpha_ramp 0.3 1
+thr_alpha_ramp_0p5_1 thr alpha_ramp 0.5 1
+thr_alpha_ramp_0p5_0 thr alpha_ramp 0.5 0
+thr_alpha_ramp_0p77_1 thr alpha_ramp 0.77 1
+thr_alpha_ramp_1_1 thr alpha_ramp 1 1
+inv_grad_rgb inv grad_rgb
+inv_noise inv noise
+inv_gray_ramp inv gray_ramp
+inv_alpha_ramp inv alpha_ramp
+dith_grad_rgb_m0 dither grad_rgb 0 12345
+dith_grad_rgb_m1 dither grad_rgb 1 12345
+dith_grad_rgb_m2 dither grad_rgb 2 12345
+dith_grad_rgb_m3 dither grad_rgb 3 12345
+dith_grad_rgb_m4 dither grad_rgb 4 12345
+dith_grad_rgb_m5 dither grad_rgb 5 12345
+dith_grad_rgb_m6 dither grad_rgb 6 12345
+dith_grad_rgb_m7 dither grad_rgb 7 12345
+dith_grad_rgb_m8 dither grad_rgb 8 12345
+dith_noise_m0 dither noise 0 12345
+dith_noise_m1 dither noise 1 12345
+dith_noise_m2 dither noise 2 12345
+dith_noise_m3 dither noise 3 12345
+dith_noise_m4 dither noise 4 12345
+dith_noise_m5 dither noise 5 12345
+dith_noise_m6 dither noise 6 12345
+dith_noise_m7 dither noise 7 12345
+dith_noise_m8 dither noise 8 12345
+dith_gray_ramp_m0 dither gray_ramp 0 12345
+dith_gray_ramp_m1 dither gray_ramp 1 12345
+dith_gray_ramp_m2 dither gray_ramp 2 12345
+dith_gray_ramp_m3 dither gray_ramp 3 12345
+dith_gray_ramp_m4 dither gray_ramp 4 12345
+dith_gray_ramp_m5 dither gray_ramp 5 12345
+dith_gray_ramp_m6 dither gray_ramp 6 12345
+dith_gray_ramp_m7 dither gray_ramp 7 12345
+dith_gray_ramp_m8 dither gray_ramp 8 12345
+dith_alpha_ramp_m0 dither alpha_ramp 0 12345
+dith_alpha_ramp_m1 dither alpha_ramp 1 12345
+dith_alpha_ramp_m2 dither alpha_ramp 2 12345
+dith_alpha_ramp_m3 dither alpha_ramp 3 12345
+dith_alpha_ramp_m4 dither alpha_ramp 4 12345
+dith_alpha_ramp_m5 dither alpha_ramp 5 12345
+dith_alpha_ramp_m6 dither alpha_ramp 6 12345
+dith_alpha_ramp_m7 dither alpha_ramp 7 12345
+dith_alpha_ramp_m8 dither alpha_ramp 8 12345
+fill_2_2_v1 fill blocks 2 2 FFFF0000 1
+fill_2_2_v20 fill blocks 2 2 FF0AC81E 20
+fill_2_2_v60 fill blocks 2 2 FFFF0000 60
+fill_2_2_v127 fill blocks 2 2 FF0AC81E 127
+fill_8_8_v1 fill blocks 8 8 FFFF0000 1
+fill_8_8_v20 fill blocks 8 8 FF0AC81E 20
+fill_8_8_v60 fill blocks 8 8 FFFF0000 60
+fill_8_8_v127 fill blocks 8 8 FF0AC81E 127
+fill_26_12_v1 fill blocks 26 12 FFFF0000 1
+fill_26_12_v20 fill blocks 26 12 FF0AC81E 20
+fill_26_12_v60 fill blocks 26 12 FFFF0000 60
+fill_26_12_v127 fill blocks 26 12 FF0AC81E 127
+fill_10_19_v1 fill blocks 10 19 FFFF0000 1
+fill_10_19_v20 fill blocks 10 19 FF0AC81E 20
+fill_10_19_v60 fill blocks 10 19 FFFF0000 60
+fill_10_19_v127 fill blocks 10 19 FF0AC81E 127
+outl_blocks_2_2 outline blocks 2 2
+outl_blocks_8_8 outline blocks 8 8
+outl_blocks_26_12 outline blocks 26 12
+outl_blocks_10_19 outline blocks 10 19
+outl_gray_ramp_2_2 outline gray_ramp 2 2
+outl_gray_ramp_8_8 outline gray_ramp 8 8
+outl_gray_ramp_26_12 outline gray_ramp 26 12
+outl_gray_ramp_10_19 outline gray_ramp 10 19
+outl_noise_2_2 outline noise 2 2
+outl_noise_8_8 outline noise 8 8
+outl_noise_26_12 outline noise 26 12
+outl_noise_10_19 outline noise 10 19
+rf_alpha_ramp_1 rotflip alpha_ramp 1
+rf_alpha_ramp_3 rotflip alpha_ramp 3
+rf_alpha_ramp_4 rotflip alpha_ramp 4
+rf_alpha_ramp_6 rotflip alpha_ramp 6
+rf_alpha_ramp_2 rotflip alpha_ramp 2
+rf_alpha_ramp_5 rotflip alpha_ramp 5
+rf_grad_rgb_1 rotflip grad_rgb 1
+rf_grad_rgb_3 rotflip grad_rgb 3
+rf_grad_rgb_4 rotflip grad_rgb 4
+rf_grad_rgb_6 rotflip grad_rgb 6
+rf_grad_rgb_2 rotflip grad_rgb 2
+rf_grad_rgb_5 rotflip grad_rgb 5
+rs_NearestNeighbor_40x30 resize big_pattern NearestNeighbor 40 30
+rs_NearestNeighbor_100x70 resize big_pattern NearestNeighbor 100 70
+rs_NearestNeighbor_21x17 resize big_pattern NearestNeighbor 21 17
+rs_Bilinear_40x30 resize big_pattern Bilinear 40 30
+rs_Bilinear_100x70 resize big_pattern Bilinear 100 70
+rs_Bilinear_21x17 resize big_pattern Bilinear 21 17
+rs_Bicubic_40x30 resize big_pattern Bicubic 40 30
+rs_Bicubic_100x70 resize big_pattern Bicubic 100 70
+rs_Bicubic_21x17 resize big_pattern Bicubic 21 17
+rs_HighQualityBilinear_40x30 resize big_pattern HighQualityBilinear 40 30
+rs_HighQualityBilinear_100x70 resize big_pattern HighQualityBilinear 100 70
+rs_HighQualityBilinear_21x17 resize big_pattern HighQualityBilinear 21 17
+rs_HighQualityBicubic_40x30 resize big_pattern HighQualityBicubic 40 30
+rs_HighQualityBicubic_100x70 resize big_pattern HighQualityBicubic 100 70
+rs_HighQualityBicubic_21x17 resize big_pattern HighQualityBicubic 21 17
+rs_Default_40x30 resize big_pattern Default 40 30
+rs_Default_100x70 resize big_pattern Default 100 70
+rs_Default_21x17 resize big_pattern Default 21 17
+rs_Low_40x30 resize big_pattern Low 40 30
+rs_Low_100x70 resize big_pattern Low 100 70
+rs_Low_21x17 resize big_pattern Low 21 17
+rs_High_40x30 resize big_pattern High 40 30
+rs_High_100x70 resize big_pattern High 100 70
+rs_High_21x17 resize big_pattern High 21 17

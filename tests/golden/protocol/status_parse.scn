@@ -1,0 +1,27 @@
+lastver 1.1f
+fw grbl
+fastconnect
+rx <Idle|MPos:1.000,2.000,3.000|Bf:15,128|FS:0,0>
+dump
+rx <Idle|WPos:1.000,2.000,3.000|WCO:10.000,20.000,0.000|FS:500,12000>
+dump
+rx <Idle|MPos:1.000,2.000,3.000|F:777>
+dump
+rx <Jog|MPos:1.000,2.000,3.000|Ov:120,50,80>
+dump
+rx <Door:1|MPos:1.000,2.000,3.000>
+rx <Hold:0|MPos:1.000,2.000,3.000>
+rx <Hold:1|MPos:1.000,2.000,3.000>
+rx <Alarm|MPos:1.000,2.000,3.000>
+rx <Check|MPos:1.000,2.000,3.000>
+rx <Home|MPos:1.000,2.000,3.000>
+rx <Tool|MPos:1.000,2.000,3.000>
+rx <Sleep|MPos:1.000,2.000,3.000>
+rx <idle|MPos:1.000,2.000,3.000>
+rx <Idle|MPos:1,2|Bf:15|FS:1>
+rx <Idle|Ov:1,2>
+rx <Idle|MPos:1.000,2.000,3.000|Pn:XYZ|A:SFM>
+rx <Idle|Bf:15,255>
+dump
+rx <Idle|Bf:15,5000>
+dump

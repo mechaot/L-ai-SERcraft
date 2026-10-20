@@ -1,0 +1,28 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1 😀 Y2\nG1 X3
+> board auto off
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1😀Y2\n
+  TXSLEEP 4
+  TX G1X3\n
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=3 sent=3 executed=0 errors=0 lastissue=Unknown used=18 bsize=127 free=109 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=3 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+  SENT[1] CMD G1 X1 😀 Y2 | WaitingResponse | 
+  SENT[2] CMD G1 X3 | WaitingResponse | 
+> rx ok
+> rx ok
+> dump
+  DUMP status=Idle inprogram=True target=3 sent=3 executed=2 errors=0 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 😀 Y2 | ResponseGood | OK
+  SENT[2] CMD G1 X3 | WaitingResponse | 

@@ -1,0 +1,50 @@
+image=alpha_ramp_12x3.png
+width=12
+height=3
+dir=Diagonal
+pwm=false
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=22
+estimated_ticks=860000
+drawing_range=xmin=0.7 xmax=1.2 ymin=0.1 ymax=0.3 valid=true
+moving_range=xmin=0 xmax=1.2 ymin=0 ymax=0.3 valid=true
+quadrant=I
+---
+G0 X0 Y0 F1000
+M5 S1000
+Y0.1
+G0 X0.6 Y0.3 M5
+G1 X0.7 Y0.2 M3
+G0 X0.8 Y0.2 M5
+G1 X0.7 Y0.3 M3
+M5
+G0 X0.8 Y0.3 M5
+G1 X0.9 Y0.2 M3
+G0 X1.1 Y0.1 M5
+G1 X1 Y0.2 M3
+X0.9 Y0.3 M3
+M5
+G0 X1 Y0.3 M5
+G1 X1.1 Y0.2 M3
+X1.2 Y0.1 M3
+M5
+G0 X1.2 Y0.2 M5
+G1 X1.1 Y0.3 M3
+M5
+M5

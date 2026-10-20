@@ -1,0 +1,28 @@
+program=relative_g91.nc
+conf=default
+load_ok=true
+count=18
+estimated_ticks=45840000
+drawing_range=xmin=-3 xmax=15 ymin=-3 ymax=15 valid=true
+moving_range=xmin=-3 xmax=15 ymin=-3 ymax=15 valid=true
+spindle_range=smin=0 smax=600 valid=true
+quadrant=Mix
+---
+0	0	G90
+1	1060000	G0 X5 Y5
+2	1060000	G91
+3	1060000	M3 S600
+4	7060000	G1 X10 F1000
+5	13060000	G1 Y10
+6	19060000	G1 X-10
+7	25060000	G1 Y-10
+8	32600000	G3 X0 Y0 I-2 J0
+9	36370000	G2 X4 Y0 I2 J0
+10	36780000	G0 X1.5 Y-2.25 Z1
+11	36780000	G1 Z-1
+12	36780000	G90
+13	43290000	G1 X0 Y0
+14	43290000	G91
+15	45840000	G1 X-3 Y-3
+16	45840000	M5
+17	45840000	G90

@@ -1,0 +1,45 @@
+> lastver 1.1f
+> fw smoothie
+> fastconnect
+  EV status Connecting
+  TXB 0A
+> newprog G1 X1 Y1 F100\nG1 X2 Y2\nG1 X3
+> runprogram
+> run
+  TX G90\n
+  TX G1X1Y1F100\n
+  TX G1X2Y2\n
+  TX G1X3\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=4 sent=4 executed=4 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 F100 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[3] CMD G1 X3 | ResponseGood | OK
+  SENT[4] MSG [3 lines, 0 errors, <time>]
+  SENT[5] CMD M5 | ResponseGood | OK
+> rx <Run|MPos:1.000,2.000,3.000|F:500,300>
+  EV status Run
+> rx <Run|MPos:1.000,2.000,3.000|F:500>
+> dump
+  DUMP status=Run inprogram=False target=4 sent=4 executed=4 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=500 curs=300 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 Y1 F100 | ResponseGood | OK
+  SENT[2] CMD G1 X2 Y2 | ResponseGood | OK
+  SENT[3] CMD G1 X3 | ResponseGood | OK
+  SENT[4] MSG [3 lines, 0 errors, <time>]
+  SENT[5] CMD M5 | ResponseGood | OK
+> jog N 1000
+> grblreset
+  EV override
+  TX reset\r\n
+> sendunlock
+> sendhoming
+> tx
+  TX $H\n
+  TXSLEEP 15
+> dump
+  DUMP status=Run inprogram=False target=4 sent=4 executed=4 errors=0 lastissue=Unknown used=3 bsize=127 free=124 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=1 curf=500 curs=300 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD $H | WaitingResponse | 

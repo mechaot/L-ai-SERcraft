@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <path d="M 10 10 L 20 20"/>
+  <path xmlns="" d="M 30 30 L 40 40"/>
+  <g xmlns="http://example.com/other"><path d="M 50 50 L 60 60"/></g>
+  <svg:path xmlns:svg="http://www.w3.org/2000/svg" d="M 70 70 L 80 80"/>
+  <g><path d="M 15 85 L 25 95"/></g>
+</svg>

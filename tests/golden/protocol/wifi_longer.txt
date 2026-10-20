@@ -1,0 +1,39 @@
+> lastver none
+> fw grbl
+> connect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx [Machine: Longer Nano]
+> rx [Software: V1.2.3]
+> forcestatus Idle
+> async wifi MyNet secret
+> awaitasync
+> tx 6
+  TX $radio/mode=sta\n
+  TXSLEEP 4
+  TX $sta/ssid=MyNet\n
+  TXSLEEP 4
+  TX $sta/password=secret\n
+  TXSLEEP 4
+  TX $wifi/begin\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=65 bsize=127 free=62 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=4 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [Machine: Longer Nano]
+  SENT[1] MSG [Software: V1.2.3]
+  SENT[2] CMD $radio/mode=sta | WaitingResponse | 
+  SENT[3] CMD $sta/ssid=MyNet | WaitingResponse | 
+  SENT[4] CMD $sta/password=secret | WaitingResponse | 
+  SENT[5] CMD $wifi/begin | WaitingResponse | 
+> run
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [Machine: Longer Nano]
+  SENT[1] MSG [Software: V1.2.3]
+  SENT[2] CMD $radio/mode=sta | ResponseGood | OK
+  SENT[3] CMD $sta/ssid=MyNet | ResponseGood | OK
+  SENT[4] CMD $sta/password=secret | ResponseGood | OK
+  SENT[5] CMD $wifi/begin | ResponseGood | OK

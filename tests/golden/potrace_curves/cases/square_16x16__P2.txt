@@ -1,0 +1,17 @@
+image=square_16x16.png
+width=16
+height=16
+turdsize=10
+alphamax=1.3333
+opttolerance=1
+curveoptimizing=true
+turnpolicy=minority
+Treshold=0.5
+exception=none
+paths=1
+---
+path 0 4
+Bezier 3,8 3,13 3,13 8,13
+Bezier 8,13 13,13 13,13 13,8
+Bezier 13,8 13,3 13,3 8,3
+Bezier 8,3 3,3 3,3 3,8

@@ -1,0 +1,10 @@
+lastver none
+fw grbl
+connect
+rx Grbl 0.9j ['$' for help]
+rx <Idle,MPos:5.000,6.000,7.000,WPos:1.000,2.000,3.000>
+rx <Run,MPos:5.500,6.000,7.000,WPos:1.500,2.000,3.000>
+dump
+rx <Idle,MPos:1.000>
+rx <Idle,MPos:a,b,c,WPos:1,2,3>
+dump

@@ -1,0 +1,11 @@
+program=quadrant_I.nc
+support_pwm=false
+conf=default
+count=6
+---
+i=0	cmd=G90	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=0	burn=false	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=false	wco=0,0,0	settled=G90	arc=none
+i=1	cmd=M3 S100	delay=0	X=0/0	Y=0/0	Z=0/0	F=0	S=100	burn=true	G0G1=true	G2G3=false	true_move=false	motion=G0	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=2	cmd=G0 X1 Y1	delay=210000	X=1/0	Y=1/0	Z=0/0	F=0	S=100	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G0	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=3	cmd=G1 X5 Y1 F100	delay=24000000	X=5/1	Y=1/1	Z=0/0	F=100	S=100	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=4	cmd=G1 X5 Y5	delay=24000000	X=5/5	Y=5/1	Z=0/0	F=100	S=100	burn=true	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=true	wco=0,0,0	settled=G90 M3	arc=none
+i=5	cmd=M5	delay=0	X=5/5	Y=5/1	Z=0/0	F=100	S=100	burn=false	G0G1=true	G2G3=false	true_move=true	motion=G1	abs=true	m3m4=false	wco=0,0,0	settled=G90 M5	arc=none

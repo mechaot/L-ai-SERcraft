@@ -1,0 +1,23 @@
+lastver 1.1f
+fw grbl
+fastconnect
+runprogram
+newprog G1 X1\nG1 X2
+forcestatus Run
+runprogram
+forcestatus Idle
+enqueue G4 P0
+runprogram
+tx 2
+runprogram
+abort
+dump
+forcestatus Hold
+abort
+dump
+forcestatus Disconnected
+runprogram
+grblreset
+feedhold
+resume
+dump

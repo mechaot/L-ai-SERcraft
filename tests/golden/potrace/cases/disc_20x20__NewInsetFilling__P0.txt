@@ -1,0 +1,87 @@
+image=disc_20x20.png
+width=20
+height=20
+dir=NewInsetFilling
+UseSpotRemoval=true
+SpotRemoval=2
+UseSmoothing=true
+Smoothing=1.0
+UseOptimize=true
+Optimize=0.2
+useOptimizeFast=false
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=53
+estimated_ticks=6180000
+drawing_range=xmin=0.271 xmax=1.8 ymin=0.2 ymax=1.80055634719047 valid=true
+moving_range=xmin=0 xmax=1.8 ymin=0 ymax=1.80055634719047 valid=true
+quadrant=I
+---
+M3 S0
+F1000
+G0 X1.157 Y0.576
+S1000
+G1 X1.315 Y0.685
+G1 X1.424 Y0.843
+G1 X1.459 Y0.999
+G1 X1.422 Y1.161
+G1 X1.315 Y1.315
+G1 X1.161 Y1.422
+G1 X0.988 Y1.461
+G1 X0.858 Y1.441
+G1 X0.765 Y1.394
+G1 X0.595 Y1.177
+G1 X0.564 Y0.902
+G1 X0.598 Y0.801
+G1 X0.681 Y0.688
+G1 X0.843 Y0.576
+G1 X1 Y0.541
+G1 X1.157 Y0.576
+S0
+G0 X1.021 Y0.888
+S1000
+G1 X1.075 Y0.925
+G1 X1.112 Y0.979
+G1 X1.117 Y0.999
+G1 X1.111 Y1.024
+G1 X1.075 Y1.075
+G1 X1.024 Y1.111
+G1 X0.977 Y1.122
+G1 X0.975 Y1.122
+G1 X0.916 Y1.046
+G1 X0.905 Y0.947
+G1 X0.916 Y0.93
+G1 X0.979 Y0.888
+G1 X1 Y0.883
+G1 X1.021 Y0.888
+S0
+F800
+G0 X0.445 Y0.445
+S1000
+G1 X0.271 Y1.311
+G2 X1 Y1.8 I0.729 J-0.298
+G2 X1.566 Y1.566 I0 J-0.8
+G1 X1.8 Y1
+G1 X1.74 Y0.716
+G1 X1.555 Y0.445
+G1 X1.284 Y0.26
+G1 X1 Y0.2
+G1 X0.716 Y0.26
+G1 X0.445 Y0.445
+S0
+M5

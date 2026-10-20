@@ -1,0 +1,111 @@
+> lastver 1.1f
+> set tm "Threading Mode" Slow
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> tx
+  TXSLEEP 15
+> board auto off
+> enqueue G1 X1
+> tx
+  TX G1X1\n
+  TXSLEEP 15
+> rxq a
+> rxq b
+> rxstep
+  RXSLEEP 1
+> rxstep
+  RXSLEEP 2
+> rxq ok
+> rxstep
+  RXSLEEP 2
+> set tm "Threading Mode" Quiet
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> tx
+  TXSLEEP 10
+> board auto off
+> enqueue G1 X1
+> tx
+  TX G1X1\n
+  TXSLEEP 10
+> rxq a
+> rxq b
+> rxstep
+  RXSLEEP 1
+> rxstep
+  RXSLEEP 1
+> rxq ok
+> rxstep
+  RXSLEEP 1
+> set tm "Threading Mode" Fast
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> tx
+  TXSLEEP 5
+> board auto off
+> enqueue G1 X1
+> tx
+  TX G1X1\n
+  TXSLEEP 5
+> rxq a
+> rxq b
+> rxstep
+  RXSLEEP 0
+> rxstep
+  RXSLEEP 1
+> rxq ok
+> rxstep
+  RXSLEEP 1
+> set tm "Threading Mode" UltraFast
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> tx
+  TXSLEEP 1
+> board auto off
+> enqueue G1 X1
+> tx
+  TX G1X1\n
+  TXSLEEP 1
+> rxq a
+> rxq b
+> rxstep
+  RXSLEEP 0
+> rxstep
+  RXSLEEP 0
+> rxq ok
+> rxstep
+  RXSLEEP 0
+> set tm "Threading Mode" Insane
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> tx
+  TXSLEEP 1
+> board auto off
+> enqueue G1 X1
+> tx
+  TX G1X1\n
+  TXSLEEP 1
+> rxq a
+> rxq b
+> rxstep
+  RXSLEEP 0
+> rxstep
+  RXSLEEP 0
+> rxq ok
+> rxstep
+  RXSLEEP 0

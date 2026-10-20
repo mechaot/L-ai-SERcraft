@@ -1,0 +1,63 @@
+image=rect_20x12.png
+width=20
+height=12
+dir=Horizontal
+pwm=true
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=false
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=35
+estimated_ticks=10050000
+drawing_range=xmin=0.2 xmax=1.8 ymin=0.1 ymax=1 valid=true
+moving_range=xmin=0 xmax=1.8 ymin=0 ymax=1 valid=true
+quadrant=I
+---
+G0 X0 Y0 F1000
+M3 S0
+G0 X1.8 Y0.1 S0
+G1 X0.2 S55
+G0 X0.2 Y0.2 S0
+G1 X1.8 S55
+G0 X1.8 Y0.3 S0
+G1 X1.6 S55
+X0.4 S255
+X0.2 S55
+G0 X0.2 Y0.4 S0
+G1 X0.4 S55
+X1.6 S255
+X1.8 S55
+G0 X1.8 Y0.5 S0
+G1 X1.6 S55
+X0.4 S255
+X0.2 S55
+G0 X0.2 Y0.6 S0
+G1 X0.4 S55
+X1.6 S255
+X1.8 S55
+G0 X1.8 Y0.7 S0
+G1 X1.6 S55
+X0.4 S255
+X0.2 S55
+G0 X0.2 Y0.8 S0
+G1 X0.4 S55
+X1.6 S255
+X1.8 S55
+G0 X1.8 Y0.9 S0
+G1 X0.2 S55
+G0 X0.2 Y1 S0
+G1 X1.8 S55
+M5

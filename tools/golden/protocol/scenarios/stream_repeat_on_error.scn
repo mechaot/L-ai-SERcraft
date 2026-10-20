@@ -1,0 +1,10 @@
+lastver 1.1f
+set sm "Streaming Mode" RepeatOnError
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3\nG1 X4\nG1 X5
+board rule once =G1X2 => error:20
+board rule =G1X4 => error:33
+runprogram
+run
+dump

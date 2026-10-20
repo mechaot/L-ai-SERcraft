@@ -1,0 +1,17 @@
+image=gray_ramp_16x4.png
+width=16
+height=4
+turdsize=2
+alphamax=1
+opttolerance=0.2
+curveoptimizing=true
+turnpolicy=minority
+Treshold=0.5
+exception=none
+paths=1
+---
+path 0 4
+Bezier 0,2 0,3.666666666666667 0.66666666666666607,4 4,4
+Bezier 4,4 7.3333333333333339,4 8,3.666666666666667 8,2
+Bezier 8,2 8,0.33333333333333304 7.3333333333333339,0 4,0
+Bezier 4,0 0.66666666666666607,0 0,0.33333333333333304 0,2

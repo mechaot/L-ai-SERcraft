@@ -1,0 +1,19 @@
+lastver 1.1f
+conf 1.1 $22=1
+fw grbl
+fastconnect
+newprog G0 X0 Y0\nG1 X10 Y10 F500\nG1 X20 Y10\nG1 X20 Y20
+rx <Idle|MPos:0.000,0.000,0.000|WCO:5.000,5.000,0.000>
+runprogram
+tx 3
+rx ok
+rx ok
+abort
+tx
+run
+dump
+rx <Idle|MPos:0.000,0.000,0.000|WCO:0.000,0.000,0.000>
+runprogram
+runfromstart true
+tx 3
+dump

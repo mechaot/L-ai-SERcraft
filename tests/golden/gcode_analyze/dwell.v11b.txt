@@ -1,0 +1,22 @@
+program=dwell.nc
+conf=v11b
+load_ok=true
+count=12
+estimated_ticks=79500000
+drawing_range=xmin=0 xmax=20 ymin=0 ymax=0 valid=true
+moving_range=xmin=0 xmax=20 ymin=0 ymax=0 valid=true
+spindle_range=smin=0 smax=500 valid=true
+quadrant=I
+---
+0	0	G90
+1	0	G0 X0 Y0
+2	0	M3 S500
+3	15000000	G4 P1.5
+4	21000000	G1 X10 F1000
+5	23500000	G4 P0.25
+6	43500000	G4 S2
+7	73500000	G4 P3 S9
+8	73500000	G4
+9	79500000	G1 X20
+10	79500000	G4 P0
+11	79500000	M5

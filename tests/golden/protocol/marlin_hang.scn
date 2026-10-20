@@ -1,0 +1,16 @@
+set tm "Threading Mode" Insane
+lastver none
+fw marlin
+fastconnect
+newprog G1 X1\nG1 X2
+rx X:1.00 Y:2.00 Z:0.00 E:0.00
+board auto off
+runprogram
+tx 3
+forcestatus Run
+sleep 6000
+tx
+dump
+sleep 11000
+tx
+dump

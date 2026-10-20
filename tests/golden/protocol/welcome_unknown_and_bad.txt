@@ -1,0 +1,30 @@
+> lastver none
+> fw grbl
+> connect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx Foo 2.3x
+  EV override
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=2.3x ip=none failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Foo 2.3x
+> rx Bar 1.1f
+> rx Grbl 
+> rx Grbl x.1f
+> rx GrblHAL 1
+> rx SimpleLaser 1
+> rx Grbl-Vigo:1
+> rx [MSG:Get IP ]
+> rx [MSG:Get IP 1]
+> dump
+  DUMP status=Connecting inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=2.3x ip=1 failed=0 holduser=False holdcool=False connected=False stuck=False canjog=False comopen=True
+  SENT[0] MSG Foo 2.3x
+  SENT[1] MSG Bar 1.1f
+  SENT[2] MSG Grbl
+  SENT[3] MSG Grbl x.1f
+  SENT[4] MSG GrblHAL 1
+  SENT[5] MSG SimpleLaser 1
+  SENT[6] MSG Grbl-Vigo:1
+  SENT[7] MSG [MSG:Get IP ]
+  SENT[8] MSG [MSG:Get IP 1]

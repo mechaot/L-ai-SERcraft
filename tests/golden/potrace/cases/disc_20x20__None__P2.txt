@@ -1,0 +1,48 @@
+image=disc_20x20.png
+width=20
+height=20
+dir=None
+UseSpotRemoval=true
+SpotRemoval=10
+UseSmoothing=true
+Smoothing=1.3333
+UseOptimize=true
+Optimize=1.0
+useOptimizeFast=true
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=14
+estimated_ticks=3750000
+drawing_range=xmin=0.271 xmax=1.72848501830593 ymin=0.2 ymax=1.80055634719047 valid=true
+moving_range=xmin=0 xmax=1.72848501830593 ymin=0 ymax=1.80055634719047 valid=true
+quadrant=I
+---
+M3 S0
+F800
+G0 X0.445 Y0.445
+S1000
+G1 X0.271 Y1.311
+G2 X1 Y1.8 I0.729 J-0.298
+G2 X1.729 Y1.311 I0 J-0.787
+G1 X1.555 Y0.445
+G1 X1.284 Y0.26
+G1 X1 Y0.2
+G1 X0.716 Y0.26
+G1 X0.445 Y0.445
+S0
+M5

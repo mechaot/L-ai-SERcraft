@@ -1,0 +1,28 @@
+lastver 1.1f
+fw grbl
+fastconnect
+rx <Idle|Bf:15,254>
+dump
+rx <Idle|Bf:15,128>
+dump
+fw grbl
+fastconnect
+rx <Idle|Bf:15,256>
+dump
+fw grbl
+fastconnect
+rx <Idle|Bf:15,255>
+dump
+fw grbl
+fastconnect
+rx <Idle|Bf:15,10240>
+dump
+fw grbl
+fastconnect
+rx <Idle|Bf:15,200>
+dump
+fw grbl
+fastconnect
+rx <Idle|Bf:15,128>
+rx <Idle|Bf:15,255>
+dump

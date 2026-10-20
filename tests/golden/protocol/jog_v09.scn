@@ -1,0 +1,19 @@
+lastver 1.0c
+fw grbl
+fastconnect
+jogset 1500 10
+dump
+jog N 1500
+jog NE 2000.5 0.5
+jog E fast
+jog SW 3000 1
+jog Zup 300 0.05
+jog Zdown 300 2
+jog Home 1200
+jogpos 10.456 -5.255 1000
+cjog N 100
+cjogpos 1 1 100
+jogabort
+cjogabort
+run
+dump

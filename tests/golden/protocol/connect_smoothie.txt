@@ -1,0 +1,16 @@
+> lastver none
+> fw smoothie
+> trace queries on
+> connect
+  EV status Connecting
+  TXB 0A
+  TXB 3F
+> rx Smoothie
+> rx <Idle,MPos:1.000,2.000,3.000,WPos:0.000,0.000,0.000>
+  EV status Idle
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=1,2,3 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=none ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG Smoothie
+> grblreset
+  EV override
+  TX reset\r\n

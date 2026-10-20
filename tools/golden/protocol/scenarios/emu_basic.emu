@@ -1,0 +1,35 @@
+open
+send $110=1000000
+send $111=1000000
+send $112=1000000
+send $$\n
+send $I\n
+byte 3F
+send G1 X10 Y5 F600000\n
+byte 3F
+send G92 X2 Y1\n
+byte 3F
+send $C\n
+send G1 X20 F600000\n
+byte 3F
+send $C\n
+send $10=2\n
+send $999=1\n
+send $30=500\n
+send $$\n
+send $J=G91X5F600000\n
+byte 3F
+send G4 P0.01\n
+byte 21
+byte 3F
+byte 7E
+byte 3F
+byte 18
+byte 3F
+send G2 X30 Y5 I5 J0 F600000\n
+byte 3F
+send bogus\n
+send \n
+send version\n
+send {fb:n}\n
+close

@@ -1,0 +1,33 @@
+[package]
+name = "lasergrbl-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lg-dotnet.workspace = true
+lg-base.workspace = true
+lg-gcode.workspace = true
+lg-clipper.workspace = true
+lg-potrace.workspace = true
+lg-expr.workspace = true
+lg-hershey.workspace = true
+lg-svg2gcode.workspace = true
+lg-raster.workspace = true
+rust_decimal.workspace = true
+roxmltree.workspace = true
+image.workspace = true
+resvg.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+crossbeam-channel.workspace = true
+serialport.workspace = true
+tungstenite.workspace = true
+ureq.workspace = true
+dirs.workspace = true
+flate2.workspace = true
+base64.workspace = true
+chrono.workspace = true
+log.workspace = true

@@ -1,0 +1,16 @@
+lastver 1.1f
+fw smoothie
+fastconnect
+newprog G1 X1 Y1 F100\nG1 X2 Y2\nG1 X3
+runprogram
+run
+dump
+rx <Run|MPos:1.000,2.000,3.000|F:500,300>
+rx <Run|MPos:1.000,2.000,3.000|F:500>
+dump
+jog N 1000
+grblreset
+sendunlock
+sendhoming
+tx
+dump

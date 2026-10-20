@@ -1,0 +1,30 @@
+> lastver 1.1f
+> conf 1.1 $22=1 $32=1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:3.000,4.000,0.000|WCO:1.000,2.000,0.000>
+> homing
+> unlock
+> zero
+> sendhoming
+> sendunlock
+> imm 85
+  TXB 85
+> imm 18
+  TXB 18
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=5 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> forcestatus Alarm
+> homing
+> unlock
+> zero
+> dump
+  DUMP status=Alarm inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3,4,0 wco=1,2,0 lastwco=0,0,0 queue=7 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+> rx <Idle|MPos:0.000,0.000,0.000|WCO:0.000,0.000,0.000>
+  EV status Idle
+> zero
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=7 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True

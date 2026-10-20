@@ -1,0 +1,8 @@
+open
+send $110=1000000
+send $111=1000000
+send G0 X15 Y15 F600000\n
+byte 3F
+settle 2600
+send $H\n
+byte 3F

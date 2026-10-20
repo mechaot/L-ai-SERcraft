@@ -1,0 +1,13 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board auto off
+runprogram
+tx 2
+forcestatus Run
+tov g1 150
+tov s 80
+grblreset
+dump
+runprogram

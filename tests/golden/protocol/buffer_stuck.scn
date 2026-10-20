@@ -1,0 +1,19 @@
+lastver 1.1f
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2\nG1 X3
+board auto off
+runprogram
+tx 4
+rx <Run|MPos:0.000,0.000,0.000|Bf:15,127>
+dump
+sleep 10300
+rx <Run|MPos:0.000,0.000,0.000|Bf:15,100>
+dump
+rx <Run|MPos:0.000,0.000,0.000|Bf:15,127>
+dump
+rx ok
+rx ok
+dump
+run
+dump

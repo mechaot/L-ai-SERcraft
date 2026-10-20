@@ -1,0 +1,33 @@
+> lastver 1.1f
+> set sm "Streaming Mode" Synchronous
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G1 X1\nG1 X2\nG1 X3\nG1 X4
+> runprogram
+> tx 3
+  TX G90\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=1 executed=0 errors=0 lastissue=Unknown used=4 bsize=127 free=123 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=4 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | WaitingResponse | 
+> run
+  TX G1X1\n
+  TX G1X2\n
+  TX G1X3\n
+  TX G1X4\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD G90 | ResponseGood | OK
+  SENT[1] CMD G1 X1 | ResponseGood | OK
+  SENT[2] CMD G1 X2 | ResponseGood | OK
+  SENT[3] CMD G1 X3 | ResponseGood | OK
+  SENT[4] CMD G1 X4 | ResponseGood | OK
+  SENT[5] MSG [4 lines, 0 errors, <time>]
+  SENT[6] CMD M5 | ResponseGood | OK

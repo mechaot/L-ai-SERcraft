@@ -1,0 +1,186 @@
+id	svg	legacyBezier	variant	status
+arcs_misc__default__bz0	arcs_misc.svg	false	default	ok
+arcs_misc__default__bz1	arcs_misc.svg	true	default	ok
+comments_pi_cdata__default__bz0	comments_pi_cdata.svg	false	default	ok
+comments_pi_cdata__default__bz1	comments_pi_cdata.svg	true	default	ok
+curves_few_args__default__bz0	curves_few_args.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+curves_few_args__default__bz1	curves_few_args.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+curves_misc__default__bz0	curves_misc.svg	false	default	ok
+curves_misc__default__bz1	curves_misc.svg	true	default	ok
+d_entities__default__bz0	d_entities.svg	false	default	ok
+d_entities__default__bz1	d_entities.svg	true	default	ok
+deep_groups_10__default__bz0	deep_groups_10.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+deep_groups_10__default__bz1	deep_groups_10.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+deep_groups_11__default__bz0	deep_groups_11.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+deep_groups_11__default__bz1	deep_groups_11.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+deep_groups_8__default__bz0	deep_groups_8.svg	false	default	ok
+deep_groups_8__default__bz1	deep_groups_8.svg	true	default	ok
+deep_groups_9__default__bz0	deep_groups_9.svg	false	default	ok
+deep_groups_9__default__bz1	deep_groups_9.svg	true	default	ok
+doctype_entity__default__bz0	doctype_entity.svg	false	default	ok
+doctype_entity__default__bz1	doctype_entity.svg	true	default	ok
+empty_root__default__bz0	empty_root.svg	false	default	ok
+empty_root__default__bz1	empty_root.svg	true	default	ok
+group_order__default__bz0	group_order.svg	false	default	ok
+group_order__default__bz1	group_order.svg	true	default	ok
+inkscape_attrs__default__bz0	inkscape_attrs.svg	false	default	ok
+inkscape_attrs__default__bz1	inkscape_attrs.svg	true	default	ok
+mixed_prefix_default__default__bz0	mixed_prefix_default.svg	false	default	ok
+mixed_prefix_default__default__bz1	mixed_prefix_default.svg	true	default	ok
+multi_subpath_close__default__bz0	multi_subpath_close.svg	false	default	ok
+multi_subpath_close__default__bz1	multi_subpath_close.svg	true	default	ok
+nested_svg__default__bz0	nested_svg.svg	false	default	ok
+nested_svg__default__bz1	nested_svg.svg	true	default	ok
+no_xmlns_attr_prefix_root__default__bz0	no_xmlns_attr_prefix_root.svg	false	default	ok
+no_xmlns_attr_prefix_root__default__bz1	no_xmlns_attr_prefix_root.svg	true	default	ok
+ns_override__default__bz0	ns_override.svg	false	default	ok
+ns_override__default__bz1	ns_override.svg	true	default	ok
+other_default_ns__default__bz0	other_default_ns.svg	false	default	ok
+other_default_ns__default__bz1	other_default_ns.svg	true	default	ok
+path_e_notation__default__bz0	path_e_notation.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+path_e_notation__default__bz1	path_e_notation.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+path_e_part_0__default__bz0	path_e_part_0.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+path_e_part_0__default__bz1	path_e_part_0.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+path_e_part_1__default__bz0	path_e_part_1.svg	false	default	ok
+path_e_part_1__default__bz1	path_e_part_1.svg	true	default	ok
+path_e_part_2__default__bz0	path_e_part_2.svg	false	default	ok
+path_e_part_2__default__bz1	path_e_part_2.svg	true	default	ok
+path_e_part_3__default__bz0	path_e_part_3.svg	false	default	ok
+path_e_part_3__default__bz1	path_e_part_3.svg	true	default	ok
+path_misc__default__bz0	path_misc.svg	false	default	ok
+path_misc__default__bz1	path_misc.svg	true	default	ok
+path_no_d__default__bz0	path_no_d.svg	false	default	EXCEPTION: System.NullReferenceException
+path_no_d__default__bz1	path_no_d.svg	true	default	EXCEPTION: System.NullReferenceException
+polyline_no_points__default__bz0	polyline_no_points.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_no_points__default__bz1	polyline_no_points.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_part_0__default__bz0	polyline_part_0.svg	false	default	ok
+polyline_part_0__default__bz1	polyline_part_0.svg	true	default	ok
+polyline_part_1__default__bz0	polyline_part_1.svg	false	default	ok
+polyline_part_1__default__bz1	polyline_part_1.svg	true	default	ok
+polyline_part_2__default__bz0	polyline_part_2.svg	false	default	ok
+polyline_part_2__default__bz1	polyline_part_2.svg	true	default	ok
+polyline_part_3__default__bz0	polyline_part_3.svg	false	default	ok
+polyline_part_3__default__bz1	polyline_part_3.svg	true	default	ok
+polyline_part_4__default__bz0	polyline_part_4.svg	false	default	ok
+polyline_part_4__default__bz1	polyline_part_4.svg	true	default	ok
+polyline_part_5__default__bz0	polyline_part_5.svg	false	default	ok
+polyline_part_5__default__bz1	polyline_part_5.svg	true	default	ok
+polyline_part_6__default__bz0	polyline_part_6.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_part_6__default__bz1	polyline_part_6.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_short_point__default__bz0	polyline_short_point.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_short_point__default__bz1	polyline_short_point.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_variants__default__bz0	polyline_variants.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+polyline_variants__default__bz1	polyline_variants.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+precision__default__bz0	precision.svg	false	default	ok
+precision__default__bz1	precision.svg	true	default	ok
+rect_variants__default__bz0	rect_variants.svg	false	default	ok
+rect_variants__default__bz1	rect_variants.svg	true	default	ok
+root_is_g__default__bz0	root_is_g.svg	false	default	ok
+root_is_g__default__bz1	root_is_g.svg	true	default	ok
+root_path__default__bz0	root_path.svg	false	default	ok
+root_path__default__bz1	root_path.svg	true	default	ok
+style_attr_colors__default__bz0	style_attr_colors.svg	false	default	ok
+style_attr_colors__default__bz1	style_attr_colors.svg	true	default	ok
+style_colors__default__bz0	style_colors.svg	false	default	ok
+style_colors__default__bz1	style_colors.svg	true	default	ok
+style_trailing_semicolon__default__bz0	style_trailing_semicolon.svg	false	default	ok
+style_trailing_semicolon__default__bz1	style_trailing_semicolon.svg	true	default	ok
+svg_no_size__default__bz0	svg_no_size.svg	false	default	ok
+svg_no_size__default__bz1	svg_no_size.svg	true	default	ok
+svg_percent_size__default__bz0	svg_percent_size.svg	false	default	ok
+svg_percent_size__default__bz1	svg_percent_size.svg	true	default	ok
+text_image__default__bz0	text_image.svg	false	default	ok
+text_image__default__bz1	text_image.svg	true	default	ok
+tf_all__default__bz0	tf_all.svg	false	default	ok
+tf_all__default__bz1	tf_all.svg	true	default	ok
+tf_bad_foo___default__bz0	tf_bad_foo_.svg	false	default	ok
+tf_bad_foo___default__bz1	tf_bad_foo_.svg	true	default	ok
+tf_bad_matrix_1_0_0_1_0____default__bz0	tf_bad_matrix_1_0_0_1_0__.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+tf_bad_matrix_1_0_0_1_0____default__bz1	tf_bad_matrix_1_0_0_1_0__.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+tf_bad_matrix_1_2_3____default__bz0	tf_bad_matrix_1_2_3__.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+tf_bad_matrix_1_2_3____default__bz1	tf_bad_matrix_1_2_3__.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+tf_bad_rotate_____default__bz0	tf_bad_rotate___.svg	false	default	ok
+tf_bad_rotate_____default__bz1	tf_bad_rotate___.svg	true	default	ok
+tf_bad_scale_2_____default__bz0	tf_bad_scale_2___.svg	false	default	ok
+tf_bad_scale_2_____default__bz1	tf_bad_scale_2___.svg	true	default	ok
+tf_bad_scale_____default__bz0	tf_bad_scale___.svg	false	default	ok
+tf_bad_scale_____default__bz1	tf_bad_scale___.svg	true	default	ok
+tf_bad_translate___default__bz0	tf_bad_translate_.svg	false	default	EXCEPTION: System.ArgumentOutOfRangeException
+tf_bad_translate___default__bz1	tf_bad_translate_.svg	true	default	EXCEPTION: System.ArgumentOutOfRangeException
+tf_bad_translate_10____default__bz0	tf_bad_translate_10__.svg	false	default	ok
+tf_bad_translate_10____default__bz1	tf_bad_translate_10__.svg	true	default	ok
+tf_bad_translate__10_20____default__bz0	tf_bad_translate__10_20__.svg	false	default	ok
+tf_bad_translate__10_20____default__bz1	tf_bad_translate__10_20__.svg	true	default	ok
+tf_bad_translate_abc____default__bz0	tf_bad_translate_abc__.svg	false	default	ok
+tf_bad_translate_abc____default__bz1	tf_bad_translate_abc__.svg	true	default	ok
+unicode_emoji__default__bz0	unicode_emoji.svg	false	default	ok
+unicode_emoji__default__bz1	unicode_emoji.svg	true	default	ok
+units_misc__default__bz0	units_misc.svg	false	default	ok
+units_misc__default__bz1	units_misc.svg	true	default	ok
+units_nonfinite__default__bz0	units_nonfinite.svg	false	default	ok
+units_nonfinite__default__bz1	units_nonfinite.svg	true	default	ok
+use_element__default__bz0	use_element.svg	false	default	ok
+use_element__default__bz1	use_element.svg	true	default	ok
+viewbox_few__default__bz0	viewbox_few.svg	false	default	EXCEPTION: System.IndexOutOfRangeException
+viewbox_few__default__bz1	viewbox_few.svg	true	default	EXCEPTION: System.IndexOutOfRangeException
+viewbox_leading_space__default__bz0	viewbox_leading_space.svg	false	default	ok
+viewbox_leading_space__default__bz1	viewbox_leading_space.svg	true	default	ok
+viewbox_paren__default__bz0	viewbox_paren.svg	false	default	ok
+viewbox_paren__default__bz1	viewbox_paren.svg	true	default	ok
+viewbox_zero__default__bz0	viewbox_zero.svg	false	default	ok
+viewbox_zero__default__bz1	viewbox_zero.svg	true	default	ok
+tf_all__mm_false__bz0	tf_all.svg	false	mm_false	ok
+units_misc__mm_false__bz0	units_misc.svg	false	mm_false	ok
+svg_no_size__mm_false__bz0	svg_no_size.svg	false	mm_false	ok
+rect_variants__mm_false__bz0	rect_variants.svg	false	mm_false	ok
+arcs_misc__mm_false__bz0	arcs_misc.svg	false	mm_false	ok
+tf_all__scale50_off__bz0	tf_all.svg	false	scale50_off	ok
+tf_all__scale_mm_false__bz1	tf_all.svg	true	scale_mm_false	ok
+inkscape_attrs__scale50_off__bz0	inkscape_attrs.svg	false	scale50_off	ok
+inkscape_attrs__scale_mm_false__bz1	inkscape_attrs.svg	true	scale_mm_false	ok
+arcs_misc__scale50_off__bz0	arcs_misc.svg	false	scale50_off	ok
+arcs_misc__scale_mm_false__bz1	arcs_misc.svg	true	scale_mm_false	ok
+group_order__scale50_off__bz0	group_order.svg	false	scale50_off	ok
+group_order__scale_mm_false__bz1	group_order.svg	true	scale_mm_false	ok
+curves_misc__scale50_off__bz0	curves_misc.svg	false	scale50_off	ok
+curves_misc__scale_mm_false__bz1	curves_misc.svg	true	scale_mm_false	ok
+svg_no_size__scale50_off__bz0	svg_no_size.svg	false	scale50_off	ok
+svg_no_size__scale_mm_false__bz1	svg_no_size.svg	true	scale_mm_false	ok
+viewbox_zero__scale50_off__bz0	viewbox_zero.svg	false	scale50_off	ok
+viewbox_zero__scale_mm_false__bz1	viewbox_zero.svg	true	scale_mm_false	ok
+style_colors__filterRed__bz0	style_colors.svg	false	filterRed	ok
+style_colors__filterGreen__bz0	style_colors.svg	false	filterGreen	ok
+style_colors__filterBlue__bz0	style_colors.svg	false	filterBlue	ok
+style_colors__filterBlack__bz0	style_colors.svg	false	filterBlack	ok
+style_attr_colors__filterRed__bz0	style_attr_colors.svg	false	filterRed	ok
+style_attr_colors__filterGreen__bz0	style_attr_colors.svg	false	filterGreen	ok
+style_attr_colors__filterBlue__bz0	style_attr_colors.svg	false	filterBlue	ok
+style_attr_colors__filterBlack__bz0	style_attr_colors.svg	false	filterBlack	ok
+style_trailing_semicolon__filterRed__bz0	style_trailing_semicolon.svg	false	filterRed	ok
+style_trailing_semicolon__filterGreen__bz0	style_trailing_semicolon.svg	false	filterGreen	ok
+style_trailing_semicolon__filterBlue__bz0	style_trailing_semicolon.svg	false	filterBlue	ok
+style_trailing_semicolon__filterBlack__bz0	style_trailing_semicolon.svg	false	filterBlack	ok
+group_order__filterRed__bz0	group_order.svg	false	filterRed	EXCEPTION: System.NullReferenceException
+group_order__filterGreen__bz0	group_order.svg	false	filterGreen	EXCEPTION: System.NullReferenceException
+group_order__filterBlue__bz0	group_order.svg	false	filterBlue	EXCEPTION: System.NullReferenceException
+group_order__filterBlack__bz0	group_order.svg	false	filterBlack	EXCEPTION: System.NullReferenceException
+inkscape_attrs__filterRed__bz0	inkscape_attrs.svg	false	filterRed	EXCEPTION: System.NullReferenceException
+inkscape_attrs__filterGreen__bz0	inkscape_attrs.svg	false	filterGreen	EXCEPTION: System.NullReferenceException
+inkscape_attrs__filterBlue__bz0	inkscape_attrs.svg	false	filterBlue	EXCEPTION: System.NullReferenceException
+inkscape_attrs__filterBlack__bz0	inkscape_attrs.svg	false	filterBlack	EXCEPTION: System.NullReferenceException
+tf_all__filterRed__bz0	tf_all.svg	false	filterRed	EXCEPTION: System.NullReferenceException
+tf_all__filterGreen__bz0	tf_all.svg	false	filterGreen	EXCEPTION: System.NullReferenceException
+tf_all__filterBlue__bz0	tf_all.svg	false	filterBlue	EXCEPTION: System.NullReferenceException
+tf_all__filterBlack__bz0	tf_all.svg	false	filterBlack	EXCEPTION: System.NullReferenceException
+curves_misc__pwm0__bz0	curves_misc.svg	false	pwm0	ok
+curves_misc__smoothie__bz0	curves_misc.svg	false	smoothie	ok
+curves_misc__noskip_speed__bz1	curves_misc.svg	true	noskip_speed	ok
+arcs_misc__pwm0__bz0	arcs_misc.svg	false	pwm0	ok
+arcs_misc__smoothie__bz0	arcs_misc.svg	false	smoothie	ok
+arcs_misc__noskip_speed__bz1	arcs_misc.svg	true	noskip_speed	ok
+rect_variants__pwm0__bz0	rect_variants.svg	false	pwm0	ok
+rect_variants__smoothie__bz0	rect_variants.svg	false	smoothie	ok
+rect_variants__noskip_speed__bz1	rect_variants.svg	true	noskip_speed	ok
+tf_all__pwm0__bz0	tf_all.svg	false	pwm0	ok
+tf_all__smoothie__bz0	tf_all.svg	false	smoothie	ok
+tf_all__noskip_speed__bz1	tf_all.svg	true	noskip_speed	ok

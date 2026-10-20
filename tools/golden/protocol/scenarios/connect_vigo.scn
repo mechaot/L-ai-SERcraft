@@ -1,0 +1,8 @@
+lastver none
+fw vigo
+trace queries on
+connect
+rx Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+dump
+rx <VSta:0|SBuf:0,0,0>
+dump

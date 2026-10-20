@@ -1,0 +1,14 @@
+t.bool	System.Boolean	True
+t.int	System.Int32	-42
+t.float	System.Single	1.5
+t.double	System.Double	0.1
+t.decimal	System.Decimal	12.50
+t.string	System.String	hello ä€
+t.long	System.Int64	1234567890123
+t.enum	LaserGRBL.Settings+GraphicMode	FBO
+t.timespan	System.TimeSpan	00:01:30
+t.version	System.Version	1.2.3
+t.objarray	System.Object[]	1|2.5|x|True
+t.point	System.Drawing.Point	{X=3,Y=4}
+t.size	System.Drawing.Size	{Width=5, Height=6}
+t.datetime	System.DateTime	05/06/2024 07:08:09

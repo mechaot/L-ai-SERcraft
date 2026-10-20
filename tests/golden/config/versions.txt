@@ -1,0 +1,139 @@
+[version none]
+null
+
+[version 0.8]
+ToString=0.8
+Major=0
+Minor=8
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=0 ge=true eq=true
+cmp(0.9)=-1 ge=false eq=false
+cmp(0.9j)=-1 ge=false eq=false
+cmp(1.0)=-1 ge=false eq=false
+cmp(1.1)=-1 ge=false eq=false
+cmp(1.1f)=-1 ge=false eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=-1 ge=false eq=false
+
+[version 0.9]
+ToString=0.9
+Major=0
+Minor=9
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=0 ge=true eq=true
+cmp(0.9j)=-1 ge=false eq=false
+cmp(1.0)=-1 ge=false eq=false
+cmp(1.1)=-1 ge=false eq=false
+cmp(1.1f)=-1 ge=false eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=-1 ge=false eq=false
+
+[version 0.9j]
+ToString=0.9j
+Major=0
+Minor=9
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=0 ge=true eq=true
+cmp(1.0)=-1 ge=false eq=false
+cmp(1.1)=-1 ge=false eq=false
+cmp(1.1f)=-1 ge=false eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=-1 ge=false eq=false
+
+[version 1.0]
+ToString=1.0
+Major=1
+Minor=0
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=1 ge=true eq=false
+cmp(1.0)=0 ge=true eq=true
+cmp(1.1)=-1 ge=false eq=false
+cmp(1.1f)=-1 ge=false eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=-1 ge=false eq=false
+
+[version 1.1]
+ToString=1.1
+Major=1
+Minor=1
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=1 ge=true eq=false
+cmp(1.0)=1 ge=true eq=false
+cmp(1.1)=0 ge=true eq=true
+cmp(1.1f)=-1 ge=false eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=-1 ge=false eq=false
+
+[version 1.1f]
+ToString=1.1f
+Major=1
+Minor=1
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=1 ge=true eq=false
+cmp(1.0)=1 ge=true eq=false
+cmp(1.1)=1 ge=true eq=false
+cmp(1.1f)=0 ge=true eq=true
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=0 ge=true eq=false
+
+[version 1.2]
+ToString=1.2
+Major=1
+Minor=2
+IsOrtur=false
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=-1
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=1 ge=true eq=false
+cmp(1.0)=1 ge=true eq=false
+cmp(1.1)=1 ge=true eq=false
+cmp(1.1f)=1 ge=true eq=false
+cmp(1.2)=0 ge=true eq=true
+cmp(ortur1.1)=1 ge=true eq=false
+
+[version ortur1.1]
+ToString=1.1f
+Major=1
+Minor=1
+IsOrtur=true
+IsLonger=false
+IsHAL=false
+OrturFWVersionNumber=170
+cmp(0.8)=1 ge=true eq=false
+cmp(0.9)=1 ge=true eq=false
+cmp(0.9j)=1 ge=true eq=false
+cmp(1.0)=1 ge=true eq=false
+cmp(1.1)=1 ge=true eq=false
+cmp(1.1f)=0 ge=true eq=false
+cmp(1.2)=-1 ge=false eq=false
+cmp(ortur1.1)=0 ge=true eq=true
+

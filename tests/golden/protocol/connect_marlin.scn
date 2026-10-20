@@ -1,0 +1,8 @@
+lastver none
+fw marlin
+trace queries on
+connect
+dump
+rx X:10.00 Y:5.50 Z:0.00 E:0.00 Count X:1600 Y:880 Z:0
+dump
+tx 2

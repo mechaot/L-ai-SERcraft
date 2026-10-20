@@ -1,0 +1,14 @@
+lastver none
+fw grbl
+connect
+rx Foo 2.3x
+dump
+rx Bar 1.1f
+rx Grbl 
+rx Grbl x.1f
+rx GrblHAL 1
+rx SimpleLaser 1
+rx Grbl-Vigo:1
+rx [MSG:Get IP ]
+rx [MSG:Get IP 1]
+dump

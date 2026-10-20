@@ -1,0 +1,54 @@
+> lastver 1.1f
+> conf 1.1 $32=1
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> feedhold
+> resume
+> forcestatus Run
+> feedhold
+  TXB 21
+> dump
+  DUMP status=Run inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=True holdcool=False connected=True stuck=False canjog=False comopen=True
+> rx <Hold:0|MPos:0.000,0.000,0.000>
+  EV status Hold
+> dump
+  DUMP status=Hold inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=True holdcool=False connected=True stuck=False canjog=False comopen=True
+> resume
+  TXB 7E
+> dump
+  DUMP status=Hold inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+> rx <Run|MPos:0.000,0.000,0.000>
+  EV status Run
+> feedhold cooling
+  TXB 21
+> rx <Hold:0|MPos:0.000,0.000,0.000>
+  EV status Cooling
+> dump
+  DUMP status=Cooling inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=True connected=True stuck=False canjog=False comopen=True
+> rx <Idle|MPos:0.000,0.000,0.000>
+  EV status Idle
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Run|MPos:0.000,0.000,0.000>
+  EV status Run
+> rx <Hold:0|MPos:0.000,0.000,0.000>
+  EV status AutoHold
+> dump
+  DUMP status=AutoHold inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+> safetydoor
+  TXB 40
+> rx <Door:1|MPos:0.000,0.000,0.000>
+  EV status Door
+> resume
+  TXB 7E
+> dump
+  DUMP status=Door inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=False comopen=True
+> custom !
+  TXB 21
+> dump
+  DUMP status=Door inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=True holdcool=False connected=True stuck=False canjog=False comopen=True
+> custom ~
+  TXB 7E

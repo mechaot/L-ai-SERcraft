@@ -1,0 +1,36 @@
+lastver 1.1f
+conf 1.1 $130=300 $131=200
+set bool "Enable Continuous Jog" true
+fw grbl
+fastconnect
+jogset 1500 10
+jog E 1500
+tx
+jog N 1500
+tx
+jog Zup 1500 1
+tx
+jogabort
+tx
+jog NE 800
+tx
+cjogpos 12.5 7.25 900
+tx
+jogpos 1 2 300
+tx
+jog Home 400
+tx
+cjog SW 100
+tx
+cjogabort
+tx
+jog W 100
+board auto off
+tx
+jog W 100
+cjog S 100
+tx
+cjog Zup 100
+cjog Position 100
+cjog Abort 100
+tx

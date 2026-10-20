@@ -1,0 +1,19 @@
+# Free-running TX/RX threads (real OpenCom); only order-independent parts are compared.
+set tm "Threading Mode" Insane
+set bool "Query MachineInfo ($I) at connect" false
+
+lastver none
+fw vigo
+newprog G1 X1 Y1 F500\nG1 X2 Y2\nG4 P0\nG1 X3 Y3\nG0 X0 Y0
+connectthreads
+waitfor txlines 1
+rxq Grbl 1.1f ['$' for help]
+rxq <Idle|MPos:0.000,0.000,0.000|Bf:15,128|FS:0,0>
+waitfor status Idle
+waitfor txtext $$
+waitfor refreshdone
+runprogram
+waitfor idleprog
+dump
+closecom user
+dump

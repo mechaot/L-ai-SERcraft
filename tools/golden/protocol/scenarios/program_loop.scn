@@ -1,0 +1,11 @@
+lastver 1.1f
+set str GCode.CustomPasses ;(sink)\nG91\nG0 Z-1\nG90
+fw grbl
+fastconnect
+newprog G1 X1\nG1 X2
+loopcount 3
+runprogram
+run
+dump
+run
+dump

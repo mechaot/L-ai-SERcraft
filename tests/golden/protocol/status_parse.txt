@@ -1,0 +1,48 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:1.000,2.000,3.000|Bf:15,128|FS:0,0>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=0,0,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Idle|WPos:1.000,2.000,3.000|WCO:10.000,20.000,0.000|FS:500,12000>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=10,20,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=500 curs=12000 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Idle|MPos:1.000,2.000,3.000|F:777>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=100,100,100 ovtar=100,100,100 mpos=1,2,3 wco=10,20,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=777 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Jog|MPos:1.000,2.000,3.000|Ov:120,50,80>
+  EV status Jog
+  EV override
+  TXB 90
+  TXB 99
+  TXB 95
+> dump
+  DUMP status=Jog inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=128 ovcur=120,50,80 ovtar=100,100,100 mpos=1,2,3 wco=10,20,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=777 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Door:1|MPos:1.000,2.000,3.000>
+  EV status Door
+> rx <Hold:0|MPos:1.000,2.000,3.000>
+  EV status AutoHold
+> rx <Hold:1|MPos:1.000,2.000,3.000>
+> rx <Alarm|MPos:1.000,2.000,3.000>
+  EV status Alarm
+> rx <Check|MPos:1.000,2.000,3.000>
+  EV status Check
+> rx <Home|MPos:1.000,2.000,3.000>
+  EV status Home
+> rx <Tool|MPos:1.000,2.000,3.000>
+  EV status Tool
+> rx <Sleep|MPos:1.000,2.000,3.000>
+> rx <idle|MPos:1.000,2.000,3.000>
+> rx <Idle|MPos:1,2|Bf:15|FS:1>
+  EV status Idle
+> rx <Idle|Ov:1,2>
+> rx <Idle|MPos:1.000,2.000,3.000|Pn:XYZ|A:SFM>
+> rx <Idle|Bf:15,255>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=255 ovcur=120,50,80 ovtar=100,100,100 mpos=1,2,3 wco=10,20,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=777 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+> rx <Idle|Bf:15,5000>
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=128 free=128 grblblock=15 grblbuffer=5000 ovcur=120,50,80 ovtar=100,100,100 mpos=1,2,3 wco=10,20,0 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=777 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True

@@ -1,0 +1,11 @@
+> lastver 1.1f
+> conf 1.1 $20=1 $130=300 $131=200
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx <Idle|MPos:0.000,0.000,0.000|WCO:10.000,20.000,0.000>
+> jogpos -50 -50 1000
+> jogpos 500 500 1000
+> jogpos 100 100 1000

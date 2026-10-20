@@ -1,0 +1,75 @@
+image=two_blobs_28x14.png
+width=28
+height=14
+dir=None
+UseSpotRemoval=false
+SpotRemoval=2
+UseSmoothing=false
+Smoothing=1.0
+UseOptimize=false
+Optimize=0.2
+useOptimizeFast=false
+res=10
+fres=3
+oX=0
+oY=0
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=1000
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=false
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=41
+estimated_ticks=5430000
+drawing_range=xmin=0.3 xmax=2.7 ymin=0.2 ymax=1.1 valid=true
+moving_range=xmin=0 xmax=2.7 ymin=0 ymax=1.1 valid=true
+quadrant=I
+---
+M3 S0
+F800
+G0 X2.05 Y0.2
+S1000
+G1 X1.714 Y0.2
+G1 X1.557 Y0.357
+G1 X1.4 Y0.514
+G1 X1.4 Y0.65
+G1 X1.4 Y0.786
+G1 X1.557 Y0.943
+G1 X1.714 Y1.1
+G1 X2.05 Y1.1
+G1 X2.386 Y1.1
+G1 X2.543 Y0.943
+G1 X2.7 Y0.786
+G1 X2.7 Y0.65
+G1 X2.7 Y0.514
+G1 X2.543 Y0.357
+G1 X2.386 Y0.2
+G1 X2.05 Y0.2
+S0
+G0 X0.75 Y0.2
+S1000
+G1 X0.614 Y0.2
+G1 X0.457 Y0.357
+G1 X0.3 Y0.514
+G1 X0.3 Y0.65
+G1 X0.3 Y0.786
+G1 X0.457 Y0.943
+G1 X0.614 Y1.1
+G1 X0.75 Y1.1
+G1 X0.886 Y1.1
+G1 X1.043 Y0.943
+G1 X1.2 Y0.786
+G1 X1.2 Y0.65
+G1 X1.2 Y0.514
+G1 X1.043 Y0.357
+G1 X0.886 Y0.2
+G1 X0.75 Y0.2
+S0
+M5

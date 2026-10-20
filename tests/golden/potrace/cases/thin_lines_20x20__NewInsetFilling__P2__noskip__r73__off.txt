@@ -1,0 +1,78 @@
+image=thin_lines_20x20.png
+width=20
+height=20
+dir=NewInsetFilling
+UseSpotRemoval=true
+SpotRemoval=10
+UseSmoothing=true
+Smoothing=1.3333
+UseOptimize=true
+Optimize=1.0
+useOptimizeFast=true
+res=7.3
+fres=2
+oX=12.5
+oY=-3.25
+markSpeed=1000
+borderSpeed=800
+minPower=0
+maxPower=255
+lOn=M3
+lOff=M5
+c.pwm=true
+setting.Support Hardware PWM=true
+setting.Disable G0 fast skip=true
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+harness_replica=false
+exception=none
+count=44
+estimated_ticks=18170000
+drawing_range=xmin=12.631 xmax=14.72 ymin=-2.709 ymax=-0.613 valid=true
+moving_range=xmin=0 xmax=14.72 ymin=-2.709 ymax=0 valid=true
+quadrant=IV
+---
+M3 S0
+F1000
+F800
+G1 X12.936 Y-2.678
+S255
+G1 X12.821 Y-2.11
+G1 X12.671 Y-1.975
+G1 X12.638 Y-1.932
+G1 X12.671 Y-1.896
+G1 X12.823 Y-1.798
+G1 X12.911 Y-1.446
+G1 X12.844 Y-1.036
+G1 X12.671 Y-0.729
+G1 X12.631 Y-0.637
+G1 X12.658 Y-0.621
+G1 X12.855 Y-0.687
+G1 X12.955 Y-0.619
+G1 X12.997 Y-0.613
+G1 X13.037 Y-0.723
+G1 X13.441 Y-1.488
+G3 X14.63 Y-1.904 I1.264 J1.705
+G1 X14.72 Y-1.944
+G1 X14.706 Y-1.981
+G1 X14.514 Y-2.191
+G1 X14.706 Y-2.677
+G1 X14.694 Y-2.702
+G1 X14.618 Y-2.668
+G3 X13.887 Y-2.122 I-2.716 J-2.878
+G1 X13.496 Y-2.017
+G1 X13.2 Y-2.166
+G1 X13.012 Y-2.668
+G1 X12.973 Y-2.709
+G1 X12.936 Y-2.678
+S0
+G1 X13.422 Y-1.507
+S255
+G1 X13.157 Y-1.397
+G1 X13.048 Y-1.507
+G1 X13.157 Y-1.771
+G1 X13.422 Y-1.88
+G1 X13.531 Y-1.771
+G1 X13.422 Y-1.507
+S0
+M5

@@ -1,0 +1,16 @@
+program=quadrant_IV.nc
+conf=v08
+load_ok=true
+count=6
+estimated_ticks=48570000
+drawing_range=xmin=0 xmax=5 ymin=-5 ymax=0 valid=true
+moving_range=xmin=0 xmax=5 ymin=-5 ymax=0 valid=true
+spindle_range=smin=0 smax=100 valid=true
+quadrant=IV
+---
+0	0	G90
+1	0	M3 S100
+2	570000	G0 X1 Y-1
+3	24570000	G1 X5 Y-1 F100
+4	48570000	G1 X5 Y-5
+5	48570000	M5

@@ -1,0 +1,39 @@
+> lastver 1.1f
+> fw grbl
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> newprog G90\nG1 X5 Y5 F800\nG1 X6 Y6
+> rx <Idle|MPos:3.300,4.400,0.100|WCO:1.100,2.200,0.050>
+> continue 1 false true
+> jogset 1234 0.1
+> jog N 1234.56
+> jog E 0.1
+> jogpos 1.005 2.675 33.333
+> run
+  TX G92X3.3Y4.4Z0.1\n
+  TX G90\n
+  TX M5G0X0Y0Z0F0S0\n
+  TX G90\n
+  TX G1X5Y5F800\n
+  TX G1X6Y6\n
+  TX $J=G91Y0.1F1234.56\n
+  TX $J=G91X0.1F0.1\n
+  TX $J=G90X1.01Y2.68F33.333\n
+  EV programended
+  TX M5\n
+> dump
+  DUMP status=Idle inprogram=False target=3 sent=6 executed=6 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=3.3,4.4,0.1 wco=1.1,2.2,0.05 lastwco=0,0,0 queue=0 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG [resume from #2]
+  SENT[1] CMD G92 X3.3 Y4.4 Z0.1 | ResponseGood | OK
+  SENT[2] CMD G90 | ResponseGood | OK
+  SENT[3] CMD M5 G0 X0 Y0 Z0 F0 S0 | ResponseGood | OK
+  SENT[4] CMD G90 | ResponseGood | OK
+  SENT[5] CMD G1 X5 Y5 F800 | ResponseGood | OK
+  SENT[6] CMD G1 X6 Y6 | ResponseGood | OK
+  SENT[7] CMD $J=G91Y0.1F1234.56 | ResponseGood | OK
+  SENT[8] CMD $J=G91X0.1F0.1 | ResponseGood | OK
+  SENT[9] CMD $J=G90X1.01Y2.68F33.333 | ResponseGood | OK
+  SENT[10] MSG [3 lines, 0 errors, <time>]
+  SENT[11] CMD M5 | ResponseGood | OK

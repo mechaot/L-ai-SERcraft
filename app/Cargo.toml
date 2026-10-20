@@ -1,0 +1,30 @@
+[package]
+name = "lasergrbl"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "lasergrbl"
+path = "src/main.rs"
+
+[dependencies]
+lasergrbl-core.workspace = true
+lg-base.workspace = true
+lg-gcode.workspace = true
+lg-services.workspace = true
+lg-dotnet.workspace = true
+lg-raster.workspace = true
+lg-potrace.workspace = true
+lg-svg2gcode.workspace = true
+eframe.workspace = true
+egui_extras.workspace = true
+rfd.workspace = true
+image.workspace = true
+resvg.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+crossbeam-channel.workspace = true
+chrono.workspace = true
+log.workspace = true

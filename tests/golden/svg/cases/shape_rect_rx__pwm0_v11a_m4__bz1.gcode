@@ -1,0 +1,15 @@
+M5 S255
+M5 (1st shape)
+G0X15Y60(rect)
+M4 (rect a1)
+G1X45F1000(rect a1)
+G3X50Y65I0J5(rect)
+G1Y85(rect b1)
+G3X45Y90I-5J0(rect)
+G1X15(rect a2)
+G3X10Y85I0J-5(rect)
+G1Y65(rect b2)
+G3X15Y60I5J0(rect)
+G1(rect)
+M5 (rect)
+M5 S0

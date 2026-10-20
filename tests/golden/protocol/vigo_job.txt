@@ -1,0 +1,88 @@
+> lastver 1.1f
+> fw vigo
+> fastconnect
+  EV status Connecting
+  EV override
+  TXB 18
+> rx Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  EV override
+> newprog G1 X1 Y1\nG1 X2 Y2\nG1 X3
+> enqueue G1 X0
+> tx
+  TX G1X0\n
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=False target=0 sent=0 executed=0 errors=0 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] MSG Grbl-Vigo:1.1f|Build:G-20170131-V3.0-20200720
+  SENT[1] CMD G1 X0 | ResponseGood | OK
+> board auto off
+> runprogram
+> tx 20
+  TX >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf\n
+  TXSLEEP 4
+  TX G90\n
+  TXSLEEP 4
+  TX G1X1Y1\n
+  TXSLEEP 4
+  TX G1X2Y2\n
+  TXSLEEP 4
+  TX G1X3\n
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+  TXSLEEP 15
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=5 executed=0 errors=0 lastissue=Unknown used=63 bsize=127 free=64 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=5 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | WaitingResponse | 
+  SENT[1] CMD G90 | WaitingResponse | 
+  SENT[2] CMD G1 X1 Y1 | WaitingResponse | 
+  SENT[3] CMD G1 X2 Y2 | WaitingResponse | 
+  SENT[4] CMD G1 X3 | WaitingResponse | 
+> rx <VSta:2|SBuf:3,1,0>
+> rx <VSta:2|SBuf:7,3,1>
+> dump
+  DUMP status=Idle inprogram=True target=5 sent=5 executed=4 errors=1 lastissue=Unknown used=5 bsize=127 free=122 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=1 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | ResponseGood | OK
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD G1 X1 Y1 | ResponseGood | OK
+  SENT[3] CMD G1 X2 Y2 | ResponseBad | ERROR:99
+  SENT[4] CMD G1 X3 | WaitingResponse | 
+> rx <VSta:2|SBuf:7,5,1>
+  EV programended
+> rx <VSta:0|SBuf:1,0,0>
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=1 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=3 pending=0 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | ResponseGood | OK
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD G1 X1 Y1 | ResponseGood | OK
+  SENT[3] CMD G1 X2 Y2 | ResponseBad | ERROR:99
+  SENT[4] CMD G1 X3 | ResponseGood | OK
+  SENT[5] MSG [3 lines, 1 errors, <time>]
+> rx <VSta:x|SBuf:1>
+> run
+  TX M5\n
+  TX G0X0Y0M5\n
+  TX >NPredMjdFaeaJajf6OHy:hkRUygcpBXwtV\n
+> dump
+  DUMP status=Idle inprogram=False target=5 sent=5 executed=5 errors=1 lastissue=Unknown used=0 bsize=127 free=127 grblblock=-1 grblbuffer=-1 ovcur=100,100,100 ovtar=100,100,100 mpos=0,0,0 wco=0,0,0 lastwco=0,0,0 queue=0 pending=2 retry=False loop=1 curf=0 curs=0 ver=1.1f ip=none failed=0 holduser=False holdcool=False connected=True stuck=False canjog=True comopen=True
+  SENT[0] CMD >Ofk9gsd8IKjKBahP0OGS9BrhZCPeWCBALCbyGf | ResponseGood | OK
+  SENT[1] CMD G90 | ResponseGood | OK
+  SENT[2] CMD G1 X1 Y1 | ResponseGood | OK
+  SENT[3] CMD G1 X2 Y2 | ResponseBad | ERROR:99
+  SENT[4] CMD G1 X3 | ResponseGood | OK
+  SENT[5] MSG [3 lines, 1 errors, <time>]
+  SENT[6] CMD M5 | ResponseGood | OK
+  SENT[7] CMD G0X0Y0M5 | ResponseGood | OK
+  SENT[8] CMD >NPredMjdFaeaJajf6OHy:hkRUygcpBXwtV | ResponseGood | OK

@@ -1,0 +1,64 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/dotnet",
+    "crates/clipper",
+    "crates/potrace",
+    "crates/expr",
+    "crates/hershey",
+    "crates/svg2gcode",
+    "crates/raster",
+    "crates/base",
+    "crates/gcode",
+    "crates/core",
+    "crates/services",
+    "app",
+]
+
+[workspace.package]
+version = "7.14.1"
+edition = "2024"
+license = "GPL-3.0-or-later"
+rust-version = "1.95"
+authors = ["LaserGRBL Linux port contributors", "Original LaserGRBL by Diego Settimi"]
+
+[workspace.dependencies]
+# internal crates
+lg-dotnet = { path = "crates/dotnet" }
+lg-clipper = { path = "crates/clipper" }
+lg-potrace = { path = "crates/potrace" }
+lg-expr = { path = "crates/expr" }
+lg-hershey = { path = "crates/hershey" }
+lg-svg2gcode = { path = "crates/svg2gcode" }
+lg-raster = { path = "crates/raster" }
+lg-base = { path = "crates/base" }
+lg-gcode = { path = "crates/gcode" }
+lasergrbl-core = { path = "crates/core" }
+lg-services = { path = "crates/services" }
+
+# external crates (all actively maintained)
+rust_decimal = "1.43"
+roxmltree = "0.21"
+resvg = "0.48"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }
+regex = "1.13"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+crossbeam-channel = "0.5"
+serialport = { version = "4.10", default-features = false }
+tungstenite = "0.30"
+ureq = "3.4"
+dirs = "7"
+flate2 = "1.1"
+base64 = "0.23"
+chrono = "0.4"
+log = "0.4"
+eframe = { version = "0.37", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+egui_extras = { version = "0.37", features = ["image"] }
+rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "wayland"] }
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+opt-level = 3

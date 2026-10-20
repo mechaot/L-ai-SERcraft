@@ -1,0 +1,14 @@
+M3 S0
+S0 (1st shape)
+G0X0.119Y0.198(circle)
+S255 (circle)
+G3X0.119Y0.198I-0.026J0F1000(circle)
+S0 (circle)
+G0X0.026Y0.238(M)
+S255 (L)
+G1X0.159F1000(L)
+Y0.159(L)
+X0.026(L)
+Y0.238(Z)
+S0 (Z)
+M5 S0

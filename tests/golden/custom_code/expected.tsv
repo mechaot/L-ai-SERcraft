@@ -1,0 +1,896 @@
+# cols: scenario <TAB> source(expr|button) <TAB> input line(escaped) <TAB> GrblCore.EvaluateExpression(line) (escaped)
+s0_empty	expr	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s0_empty	expr	G0 X[right] Y[top]	G0 X0.000 Y0.000
+s0_empty	expr	G0 X[left+width/2] Y[bottom+height/2]	G0 X0.000 Y0.000
+s0_empty	expr	G1 X[width] Y[height] F[jogspeed]	G1 X0.000 Y0.000 F1000.000
+s0_empty	expr	G91 G0 X[jogstep] Y[-jogstep]	G91 G0 X10.000 Y[-jogstep]
+s0_empty	expr	G91 G0 X[-jogstep*2]	G91 G0 X[-jogstep*2]
+s0_empty	expr	G0 X[WCO.X] Y[WCO.Y] Z[WCO.Z]	G0 X0.000 Y0.000 Z0.000
+s0_empty	expr	G0 X[MPos.X] Y[MPos.Y] Z[MPos.Z]	G0 X0.000 Y0.000 Z0.000
+s0_empty	expr	G0 X[WPos.X] Y[WPos.Y] Z[WPos.Z]	G0 X0.000 Y0.000 Z0.000
+s0_empty	expr	G0 X[MPos.X+1] Y[MPos.Y-1]	G0 X1.000 Y-1.000
+s0_empty	expr	M3 S[$30]	M3 S1000.000
+s0_empty	expr	M3 S[$30/2]	M3 S500.000
+s0_empty	expr	M3 S[$30*0.1]	M3 S100.000
+s0_empty	expr	M4 S[$30*0.5]	M4 S500.000
+s0_empty	expr	S[$110]	S[$110]
+s0_empty	expr	F[$110/2]	F[$110/2]
+s0_empty	expr	G0 X[$130] Y[$131]	G0 X[$130] Y[$131]
+s0_empty	expr	G0 X[$130/2] Y[$131/2]	G0 X[$130/2] Y[$131/2]
+s0_empty	expr	[$100]	[$100]
+s0_empty	expr	[$32]	[$32]
+s0_empty	expr	G1 X[1+2*3]	G1 X7.000
+s0_empty	expr	G1 X[(1+2)*3]	G1 X9.000
+s0_empty	expr	G1 X[10/3]	G1 X3.333
+s0_empty	expr	G1 X[2/3]	G1 X0.667
+s0_empty	expr	G1 X[1/3]	G1 X0.333
+s0_empty	expr	G1 X[2^3]	G1 X8.000
+s0_empty	expr	G1 X[2^0.5]	G1 X1.414
+s0_empty	expr	G1 X[2^-1]	G1 X[2^-1]
+s0_empty	expr	G1 X[abs(-5)]	G1 X5.000
+s0_empty	expr	G1 X[abs(left)]	G1 X0.000
+s0_empty	expr	G1 X[abs -5]	G1 X[abs -5]
+s0_empty	expr	G1 X[sign(-5)]	G1 X-1.000
+s0_empty	expr	G1 X[-left]	G1 X[-left]
+s0_empty	expr	G1 X[neg left]	G1 X0.000
+s0_empty	expr	G1 X[1/0]	G1 X[1/0]
+s0_empty	expr	G1 X[0/0]	G1 X[0/0]
+s0_empty	expr	G1 X[-1/0]	G1 X[-1/0]
+s0_empty	expr	G1 X[1e3]	G1 X1000.000
+s0_empty	expr	G1 X[1E3]	G1 X1000.000
+s0_empty	expr	G1 X[1e-3]	G1 X0.001
+s0_empty	expr	G1 X[0.0005]	G1 X0.001
+s0_empty	expr	G1 X[0.0015]	G1 X0.002
+s0_empty	expr	G1 X[0.0025]	G1 X0.003
+s0_empty	expr	G1 X[-0.0005]	G1 X-0.001
+s0_empty	expr	G1 X[1234567.89123]	G1 X1234567.891
+s0_empty	expr	G1 X[0.1+0.2]	G1 X0.300
+s0_empty	expr	G1 X[100000000000000000000]	G1 X100000000000000000000.000
+s0_empty	expr	G1 X[1e29]	G1 X[1e29]
+s0_empty	expr	G1 X[1e30]	G1 X[1e30]
+s0_empty	expr	G1 X[1e-30]	G1 X0.000
+s0_empty	expr	G1 X[ left ]	G1 X0.000
+s0_empty	expr	G1 X[  1 + 2  ]	G1 X3.000
+s0_empty	expr	G1 X[1+2] Y[3*4] Z[5-6]	G1 X3.000 Y12.000 Z-1.000
+s0_empty	expr	G1 X[1+2]Y[3*4]	G1 X3.000Y12.000
+s0_empty	expr	[1][2][3]	1.0002.0003.000
+s0_empty	expr	[[1]]	[[1]]
+s0_empty	expr	[[1+1]+1]	[[1+1]+1]
+s0_empty	expr	[1+[2]]	[1+[2]]
+s0_empty	expr	[1	[1
+s0_empty	expr	1]	1]
+s0_empty	expr	[]	[]
+s0_empty	expr	[ ]	[ ]
+s0_empty	expr	[   ]	[   ]
+s0_empty	expr	G1 X[	G1 X[
+s0_empty	expr	G1 X]	G1 X]
+s0_empty	expr	G1 X[1+2	G1 X[1+2
+s0_empty	expr	G1 X1+2]	G1 X1+2]
+s0_empty	expr	G1 X[unknown]	G1 X[unknown]
+s0_empty	expr	G1 X[left+unknown]	G1 X[left+unknown]
+s0_empty	expr	G1 X[$999]	G1 X[$999]
+s0_empty	expr	G1 X[$30+$31]	G1 X[$30+$31]
+s0_empty	expr	G1 X[MPos.X]	G1 X0.000
+s0_empty	expr	G1 X[mpos.x]	G1 X[mpos.x]
+s0_empty	expr	G1 X[LEFT]	G1 X[LEFT]
+s0_empty	expr	G1 X[Left]	G1 X[Left]
+s0_empty	expr	G1 X[WCO.W]	G1 X[WCO.W]
+s0_empty	expr	G1 X[1,5]	G1 X15.000
+s0_empty	expr	G1 X[1.5.5]	G1 X[1.5.5]
+s0_empty	expr	G1 X[1..5]	G1 X[1..5]
+s0_empty	expr	G1 X[.5]	G1 X0.500
+s0_empty	expr	G1 X[5.]	G1 X5.000
+s0_empty	expr	G1 X[+5]	G1 X5.000
+s0_empty	expr	G1 X[++5]	G1 X[++5]
+s0_empty	expr	G1 X[--5]	G1 X[--5]
+s0_empty	expr	G1 X[5--5]	G1 X10.000
+s0_empty	expr	G1 X[5- -5]	G1 X10.000
+s0_empty	expr	G1 X[5*-5]	G1 X-25.000
+s0_empty	expr	G1 X[(5)]	G1 X5.000
+s0_empty	expr	G1 X[((5))]	G1 X5.000
+s0_empty	expr	G1 X[(5]	G1 X[(5]
+s0_empty	expr	G1 X[5)]	G1 X[5)]
+s0_empty	expr	G1 X[()]	G1 X[()]
+s0_empty	expr	G1 X[1 2]	G1 X12.000
+s0_empty	expr	G1 X[1+]	G1 X[1+]
+s0_empty	expr	G1 X[+]	G1 X[+]
+s0_empty	expr	G1 X[*]	G1 X[*]
+s0_empty	expr	G1 X[1==1]	G1 X0.000
+s0_empty	expr	G1 X[1==2]	G1 X0.000
+s0_empty	expr	G1 X[1!=2]	G1 X0.000
+s0_empty	expr	G1 X[1<2]	G1 X0.000
+s0_empty	expr	G1 X[2<1]	G1 X0.000
+s0_empty	expr	G1 X[1<=1]	G1 X0.000
+s0_empty	expr	G1 X[2>=3]	G1 X0.000
+s0_empty	expr	G1 X[1>0]	G1 X0.000
+s0_empty	expr	G1 X[1&&0]	G1 X0.000
+s0_empty	expr	G1 X[1&&1]	G1 X0.000
+s0_empty	expr	G1 X[0||1]	G1 X0.000
+s0_empty	expr	G1 X[0||0]	G1 X0.000
+s0_empty	expr	G1 X[left>0]	G1 X0.000
+s0_empty	expr	G1 X[width>5&&height>5]	G1 X0.000
+s0_empty	expr	G1 X[1+2*3^2]	G1 X19.000
+s0_empty	expr	G1 X[2*3^2]	G1 X18.000
+s0_empty	expr	G1 X[-2^2]	G1 X4.000
+s0_empty	expr	G1 X[(-2)^2]	G1 X4.000
+s0_empty	expr	G1 X[10-2-3]	G1 X5.000
+s0_empty	expr	G1 X[100/10/5]	G1 X2.000
+s0_empty	expr	G1 X[2^3^2]	G1 X64.000
+s0_empty	expr	G1 X[7%3]	G1 X[7%3]
+s0_empty	expr	G1 X[sqrt(4)]	G1 X[sqrt(4)]
+s0_empty	expr	G1 X[sin(0)]	G1 X[sin(0)]
+s0_empty	expr	G1 X[pi]	G1 X[pi]
+s0_empty	expr	G1 X[width/height]	G1 X[width/height]
+s0_empty	expr	G1 X[(right-left)/2+left]	G1 X0.000
+s0_empty	expr	G1 X[top-bottom]	G1 X0.000
+s0_empty	expr	G1 X[jogstep/jogspeed]	G1 X0.010
+s0_empty	expr	G1 X[jogspeed/jogstep]	G1 X100.000
+s0_empty	expr	G1 X[WCO.X+MPos.X]	G1 X0.000
+s0_empty	expr	G90 G0 X[left-5] Y[bottom-5]	G90 G0 X-5.000 Y-5.000
+s0_empty	expr	G90 G0 X[right+5] Y[top+5]	G90 G0 X5.000 Y5.000
+s0_empty	expr	G0 X[left] Y[bottom] (frame start)	G0 X0.000 Y0.000 (frame start)
+s0_empty	expr	(comment [1+1])	(comment 2.000)
+s0_empty	expr	; comment [2*2]	; comment 4.000
+s0_empty	expr	G0 X0 Y0	G0 X0 Y0
+s0_empty	expr	G0 X-1.5 Y[0]	G0 X-1.5 Y0.000
+s0_empty	expr	M5	M5
+s0_empty	expr	$H	$H
+s0_empty	expr	$X	$X
+s0_empty	expr	$J=G91 X[jogstep] F[jogspeed]	$J=G91 X10.000 F1000.000
+s0_empty	expr	$100=[250*2]	$100=500.000
+s0_empty	expr	?	?
+s0_empty	expr	!	!
+s0_empty	expr	~	~
+s0_empty	expr	ctrl-x	ctrl-x
+s0_empty	expr	0x18	0x18
+s0_empty	expr	0x85	0x85
+s0_empty	expr	text only no brackets	text only no brackets
+s0_empty	expr	G1 X[1+1] Y[bad syntax here]	G1 X2.000 Y[bad syntax here]
+s0_empty	expr	G1 X[3.14159265358979]	G1 X3.142
+s0_empty	expr	G1 X[123456789.123456789]	G1 X123456789.123
+s0_empty	expr	G1 X[0.9995]	G1 X1.000
+s0_empty	expr	G1 X[0.9994999]	G1 X0.999
+s0_empty	expr	G1 X[1/7]	G1 X0.143
+s0_empty	expr	G1 X[22/7]	G1 X3.143
+s0_empty	expr	G1 X[100/3]	G1 X33.333
+s0_empty	expr	G1 X[2/3*3]	G1 X2.000
+s0_empty	expr	G1 X[1e15]	G1 X1000000000000000.000
+s0_empty	expr	G1 X[1e14+0.5]	G1 X100000000000001.000
+s0_empty	expr	G1 X[123456789012345.6]	G1 X123456789012346.000
+s0_empty	expr	G1 X[0.1*3]	G1 X0.300
+s0_empty	expr	G1 X[1.005*1000]	G1 X1005.000
+s0_empty	expr	G1 X[4.35*100]	G1 X435.000
+s0_empty	button	G0 X[left+width/2] Y[bottom+height/2]	G0 X0.000 Y0.000
+s0_empty	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s0_empty	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s0_empty	button	M3 S[$30*3/100] F1000	M3 S30.000 F1000
+s0_empty	button	G1 Y[top] 	G1 Y0.000
+s0_empty	button	G1 X[right]	G1 X0.000
+s0_empty	button	G1 Y[bottom] 	G1 Y0.000
+s0_empty	button	G1 X[left]	G1 X0.000
+s0_empty	button	M5	M5
+s0_empty	button	G0 X0 Y0	G0 X0 Y0
+s0_empty	button	M3 S[$30*3/100]	M3 S30.000
+s0_empty	button	G1 F1000	G1 F1000
+s0_empty	button	M5 S0	M5 S0
+s0_empty	button	G0	G0
+s0_empty	button	M3 S[$30*10/100]	M3 S100.000
+s0_empty	button	G1 F1000	G1 F1000
+s0_empty	button	M5 S0	M5 S0
+s0_empty	button	G0	G0
+s1_square_v11a	expr	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s1_square_v11a	expr	G0 X[right] Y[top]	G0 X10.000 Y10.000
+s1_square_v11a	expr	G0 X[left+width/2] Y[bottom+height/2]	G0 X5.000 Y5.000
+s1_square_v11a	expr	G1 X[width] Y[height] F[jogspeed]	G1 X10.000 Y10.000 F3000.000
+s1_square_v11a	expr	G91 G0 X[jogstep] Y[-jogstep]	G91 G0 X5.500 Y[-jogstep]
+s1_square_v11a	expr	G91 G0 X[-jogstep*2]	G91 G0 X[-jogstep*2]
+s1_square_v11a	expr	G0 X[WCO.X] Y[WCO.Y] Z[WCO.Z]	G0 X2.500 Y1.500 Z0.250
+s1_square_v11a	expr	G0 X[MPos.X] Y[MPos.Y] Z[MPos.Z]	G0 X12.500 Y-3.250 Z1.000
+s1_square_v11a	expr	G0 X[WPos.X] Y[WPos.Y] Z[WPos.Z]	G0 X12.500 Y-3.250 Z1.000
+s1_square_v11a	expr	G0 X[MPos.X+1] Y[MPos.Y-1]	G0 X13.500 Y-4.250
+s1_square_v11a	expr	M3 S[$30]	M3 S255.000
+s1_square_v11a	expr	M3 S[$30/2]	M3 S127.500
+s1_square_v11a	expr	M3 S[$30*0.1]	M3 S25.500
+s1_square_v11a	expr	M4 S[$30*0.5]	M4 S127.500
+s1_square_v11a	expr	S[$110]	S3000.000
+s1_square_v11a	expr	F[$110/2]	F1500.000
+s1_square_v11a	expr	G0 X[$130] Y[$131]	G0 X400.000 Y300.000
+s1_square_v11a	expr	G0 X[$130/2] Y[$131/2]	G0 X200.000 Y150.000
+s1_square_v11a	expr	[$100]	250.000
+s1_square_v11a	expr	[$32]	1.000
+s1_square_v11a	expr	G1 X[1+2*3]	G1 X7.000
+s1_square_v11a	expr	G1 X[(1+2)*3]	G1 X9.000
+s1_square_v11a	expr	G1 X[10/3]	G1 X3.333
+s1_square_v11a	expr	G1 X[2/3]	G1 X0.667
+s1_square_v11a	expr	G1 X[1/3]	G1 X0.333
+s1_square_v11a	expr	G1 X[2^3]	G1 X8.000
+s1_square_v11a	expr	G1 X[2^0.5]	G1 X1.414
+s1_square_v11a	expr	G1 X[2^-1]	G1 X[2^-1]
+s1_square_v11a	expr	G1 X[abs(-5)]	G1 X5.000
+s1_square_v11a	expr	G1 X[abs(left)]	G1 X0.000
+s1_square_v11a	expr	G1 X[abs -5]	G1 X[abs -5]
+s1_square_v11a	expr	G1 X[sign(-5)]	G1 X-1.000
+s1_square_v11a	expr	G1 X[-left]	G1 X[-left]
+s1_square_v11a	expr	G1 X[neg left]	G1 X0.000
+s1_square_v11a	expr	G1 X[1/0]	G1 X[1/0]
+s1_square_v11a	expr	G1 X[0/0]	G1 X[0/0]
+s1_square_v11a	expr	G1 X[-1/0]	G1 X[-1/0]
+s1_square_v11a	expr	G1 X[1e3]	G1 X1000.000
+s1_square_v11a	expr	G1 X[1E3]	G1 X1000.000
+s1_square_v11a	expr	G1 X[1e-3]	G1 X0.001
+s1_square_v11a	expr	G1 X[0.0005]	G1 X0.001
+s1_square_v11a	expr	G1 X[0.0015]	G1 X0.002
+s1_square_v11a	expr	G1 X[0.0025]	G1 X0.003
+s1_square_v11a	expr	G1 X[-0.0005]	G1 X-0.001
+s1_square_v11a	expr	G1 X[1234567.89123]	G1 X1234567.891
+s1_square_v11a	expr	G1 X[0.1+0.2]	G1 X0.300
+s1_square_v11a	expr	G1 X[100000000000000000000]	G1 X100000000000000000000.000
+s1_square_v11a	expr	G1 X[1e29]	G1 X[1e29]
+s1_square_v11a	expr	G1 X[1e30]	G1 X[1e30]
+s1_square_v11a	expr	G1 X[1e-30]	G1 X0.000
+s1_square_v11a	expr	G1 X[ left ]	G1 X0.000
+s1_square_v11a	expr	G1 X[  1 + 2  ]	G1 X3.000
+s1_square_v11a	expr	G1 X[1+2] Y[3*4] Z[5-6]	G1 X3.000 Y12.000 Z-1.000
+s1_square_v11a	expr	G1 X[1+2]Y[3*4]	G1 X3.000Y12.000
+s1_square_v11a	expr	[1][2][3]	1.0002.0003.000
+s1_square_v11a	expr	[[1]]	[[1]]
+s1_square_v11a	expr	[[1+1]+1]	[[1+1]+1]
+s1_square_v11a	expr	[1+[2]]	[1+[2]]
+s1_square_v11a	expr	[1	[1
+s1_square_v11a	expr	1]	1]
+s1_square_v11a	expr	[]	[]
+s1_square_v11a	expr	[ ]	[ ]
+s1_square_v11a	expr	[   ]	[   ]
+s1_square_v11a	expr	G1 X[	G1 X[
+s1_square_v11a	expr	G1 X]	G1 X]
+s1_square_v11a	expr	G1 X[1+2	G1 X[1+2
+s1_square_v11a	expr	G1 X1+2]	G1 X1+2]
+s1_square_v11a	expr	G1 X[unknown]	G1 X[unknown]
+s1_square_v11a	expr	G1 X[left+unknown]	G1 X[left+unknown]
+s1_square_v11a	expr	G1 X[$999]	G1 X[$999]
+s1_square_v11a	expr	G1 X[$30+$31]	G1 X255.000
+s1_square_v11a	expr	G1 X[MPos.X]	G1 X12.500
+s1_square_v11a	expr	G1 X[mpos.x]	G1 X[mpos.x]
+s1_square_v11a	expr	G1 X[LEFT]	G1 X[LEFT]
+s1_square_v11a	expr	G1 X[Left]	G1 X[Left]
+s1_square_v11a	expr	G1 X[WCO.W]	G1 X[WCO.W]
+s1_square_v11a	expr	G1 X[1,5]	G1 X15.000
+s1_square_v11a	expr	G1 X[1.5.5]	G1 X[1.5.5]
+s1_square_v11a	expr	G1 X[1..5]	G1 X[1..5]
+s1_square_v11a	expr	G1 X[.5]	G1 X0.500
+s1_square_v11a	expr	G1 X[5.]	G1 X5.000
+s1_square_v11a	expr	G1 X[+5]	G1 X5.000
+s1_square_v11a	expr	G1 X[++5]	G1 X[++5]
+s1_square_v11a	expr	G1 X[--5]	G1 X[--5]
+s1_square_v11a	expr	G1 X[5--5]	G1 X10.000
+s1_square_v11a	expr	G1 X[5- -5]	G1 X10.000
+s1_square_v11a	expr	G1 X[5*-5]	G1 X-25.000
+s1_square_v11a	expr	G1 X[(5)]	G1 X5.000
+s1_square_v11a	expr	G1 X[((5))]	G1 X5.000
+s1_square_v11a	expr	G1 X[(5]	G1 X[(5]
+s1_square_v11a	expr	G1 X[5)]	G1 X[5)]
+s1_square_v11a	expr	G1 X[()]	G1 X[()]
+s1_square_v11a	expr	G1 X[1 2]	G1 X12.000
+s1_square_v11a	expr	G1 X[1+]	G1 X[1+]
+s1_square_v11a	expr	G1 X[+]	G1 X[+]
+s1_square_v11a	expr	G1 X[*]	G1 X[*]
+s1_square_v11a	expr	G1 X[1==1]	G1 X0.000
+s1_square_v11a	expr	G1 X[1==2]	G1 X0.000
+s1_square_v11a	expr	G1 X[1!=2]	G1 X0.000
+s1_square_v11a	expr	G1 X[1<2]	G1 X0.000
+s1_square_v11a	expr	G1 X[2<1]	G1 X0.000
+s1_square_v11a	expr	G1 X[1<=1]	G1 X0.000
+s1_square_v11a	expr	G1 X[2>=3]	G1 X0.000
+s1_square_v11a	expr	G1 X[1>0]	G1 X0.000
+s1_square_v11a	expr	G1 X[1&&0]	G1 X0.000
+s1_square_v11a	expr	G1 X[1&&1]	G1 X0.000
+s1_square_v11a	expr	G1 X[0||1]	G1 X0.000
+s1_square_v11a	expr	G1 X[0||0]	G1 X0.000
+s1_square_v11a	expr	G1 X[left>0]	G1 X0.000
+s1_square_v11a	expr	G1 X[width>5&&height>5]	G1 X0.000
+s1_square_v11a	expr	G1 X[1+2*3^2]	G1 X19.000
+s1_square_v11a	expr	G1 X[2*3^2]	G1 X18.000
+s1_square_v11a	expr	G1 X[-2^2]	G1 X4.000
+s1_square_v11a	expr	G1 X[(-2)^2]	G1 X4.000
+s1_square_v11a	expr	G1 X[10-2-3]	G1 X5.000
+s1_square_v11a	expr	G1 X[100/10/5]	G1 X2.000
+s1_square_v11a	expr	G1 X[2^3^2]	G1 X64.000
+s1_square_v11a	expr	G1 X[7%3]	G1 X[7%3]
+s1_square_v11a	expr	G1 X[sqrt(4)]	G1 X[sqrt(4)]
+s1_square_v11a	expr	G1 X[sin(0)]	G1 X[sin(0)]
+s1_square_v11a	expr	G1 X[pi]	G1 X[pi]
+s1_square_v11a	expr	G1 X[width/height]	G1 X1.000
+s1_square_v11a	expr	G1 X[(right-left)/2+left]	G1 X5.000
+s1_square_v11a	expr	G1 X[top-bottom]	G1 X10.000
+s1_square_v11a	expr	G1 X[jogstep/jogspeed]	G1 X0.002
+s1_square_v11a	expr	G1 X[jogspeed/jogstep]	G1 X545.455
+s1_square_v11a	expr	G1 X[WCO.X+MPos.X]	G1 X15.000
+s1_square_v11a	expr	G90 G0 X[left-5] Y[bottom-5]	G90 G0 X-5.000 Y-5.000
+s1_square_v11a	expr	G90 G0 X[right+5] Y[top+5]	G90 G0 X15.000 Y15.000
+s1_square_v11a	expr	G0 X[left] Y[bottom] (frame start)	G0 X0.000 Y0.000 (frame start)
+s1_square_v11a	expr	(comment [1+1])	(comment 2.000)
+s1_square_v11a	expr	; comment [2*2]	; comment 4.000
+s1_square_v11a	expr	G0 X0 Y0	G0 X0 Y0
+s1_square_v11a	expr	G0 X-1.5 Y[0]	G0 X-1.5 Y0.000
+s1_square_v11a	expr	M5	M5
+s1_square_v11a	expr	$H	$H
+s1_square_v11a	expr	$X	$X
+s1_square_v11a	expr	$J=G91 X[jogstep] F[jogspeed]	$J=G91 X5.500 F3000.000
+s1_square_v11a	expr	$100=[250*2]	$100=500.000
+s1_square_v11a	expr	?	?
+s1_square_v11a	expr	!	!
+s1_square_v11a	expr	~	~
+s1_square_v11a	expr	ctrl-x	ctrl-x
+s1_square_v11a	expr	0x18	0x18
+s1_square_v11a	expr	0x85	0x85
+s1_square_v11a	expr	text only no brackets	text only no brackets
+s1_square_v11a	expr	G1 X[1+1] Y[bad syntax here]	G1 X2.000 Y[bad syntax here]
+s1_square_v11a	expr	G1 X[3.14159265358979]	G1 X3.142
+s1_square_v11a	expr	G1 X[123456789.123456789]	G1 X123456789.123
+s1_square_v11a	expr	G1 X[0.9995]	G1 X1.000
+s1_square_v11a	expr	G1 X[0.9994999]	G1 X0.999
+s1_square_v11a	expr	G1 X[1/7]	G1 X0.143
+s1_square_v11a	expr	G1 X[22/7]	G1 X3.143
+s1_square_v11a	expr	G1 X[100/3]	G1 X33.333
+s1_square_v11a	expr	G1 X[2/3*3]	G1 X2.000
+s1_square_v11a	expr	G1 X[1e15]	G1 X1000000000000000.000
+s1_square_v11a	expr	G1 X[1e14+0.5]	G1 X100000000000001.000
+s1_square_v11a	expr	G1 X[123456789012345.6]	G1 X123456789012346.000
+s1_square_v11a	expr	G1 X[0.1*3]	G1 X0.300
+s1_square_v11a	expr	G1 X[1.005*1000]	G1 X1005.000
+s1_square_v11a	expr	G1 X[4.35*100]	G1 X435.000
+s1_square_v11a	button	G0 X[left+width/2] Y[bottom+height/2]	G0 X5.000 Y5.000
+s1_square_v11a	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s1_square_v11a	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s1_square_v11a	button	M3 S[$30*3/100] F1000	M3 S7.650 F1000
+s1_square_v11a	button	G1 Y[top] 	G1 Y10.000
+s1_square_v11a	button	G1 X[right]	G1 X10.000
+s1_square_v11a	button	G1 Y[bottom] 	G1 Y0.000
+s1_square_v11a	button	G1 X[left]	G1 X0.000
+s1_square_v11a	button	M5	M5
+s1_square_v11a	button	G0 X0 Y0	G0 X0 Y0
+s1_square_v11a	button	M3 S[$30*3/100]	M3 S7.650
+s1_square_v11a	button	G1 F1000	G1 F1000
+s1_square_v11a	button	M5 S0	M5 S0
+s1_square_v11a	button	G0	G0
+s1_square_v11a	button	M3 S[$30*10/100]	M3 S25.500
+s1_square_v11a	button	G1 F1000	G1 F1000
+s1_square_v11a	button	M5 S0	M5 S0
+s1_square_v11a	button	G0	G0
+s2_mix_v11b_garbage	expr	G0 X[left] Y[bottom]	G0 X-10.000 Y-10.000
+s2_mix_v11b_garbage	expr	G0 X[right] Y[top]	G0 X20.000 Y10.000
+s2_mix_v11b_garbage	expr	G0 X[left+width/2] Y[bottom+height/2]	G0 X5.000 Y0.000
+s2_mix_v11b_garbage	expr	G1 X[width] Y[height] F[jogspeed]	G1 X30.000 Y20.000 F500.000
+s2_mix_v11b_garbage	expr	G91 G0 X[jogstep] Y[-jogstep]	G91 G0 X0.100 Y[-jogstep]
+s2_mix_v11b_garbage	expr	G91 G0 X[-jogstep*2]	G91 G0 X[-jogstep*2]
+s2_mix_v11b_garbage	expr	G0 X[WCO.X] Y[WCO.Y] Z[WCO.Z]	G0 X-1.000 Y-2.000 Z3.000
+s2_mix_v11b_garbage	expr	G0 X[MPos.X] Y[MPos.Y] Z[MPos.Z]	G0 X-5.000 Y-6.000 Z0.125
+s2_mix_v11b_garbage	expr	G0 X[WPos.X] Y[WPos.Y] Z[WPos.Z]	G0 X-5.000 Y-6.000 Z0.125
+s2_mix_v11b_garbage	expr	G0 X[MPos.X+1] Y[MPos.Y-1]	G0 X-4.000 Y-7.000
+s2_mix_v11b_garbage	expr	M3 S[$30]	M3 S1000.000
+s2_mix_v11b_garbage	expr	M3 S[$30/2]	M3 S500.000
+s2_mix_v11b_garbage	expr	M3 S[$30*0.1]	M3 S100.000
+s2_mix_v11b_garbage	expr	M4 S[$30*0.5]	M4 S500.000
+s2_mix_v11b_garbage	expr	S[$110]	S[$110]
+s2_mix_v11b_garbage	expr	F[$110/2]	F[$110/2]
+s2_mix_v11b_garbage	expr	G0 X[$130] Y[$131]	G0 X[$130] Y600.000
+s2_mix_v11b_garbage	expr	G0 X[$130/2] Y[$131/2]	G0 X[$130/2] Y300.000
+s2_mix_v11b_garbage	expr	[$100]	[$100]
+s2_mix_v11b_garbage	expr	[$32]	0.000
+s2_mix_v11b_garbage	expr	G1 X[1+2*3]	G1 X7.000
+s2_mix_v11b_garbage	expr	G1 X[(1+2)*3]	G1 X9.000
+s2_mix_v11b_garbage	expr	G1 X[10/3]	G1 X3.333
+s2_mix_v11b_garbage	expr	G1 X[2/3]	G1 X0.667
+s2_mix_v11b_garbage	expr	G1 X[1/3]	G1 X0.333
+s2_mix_v11b_garbage	expr	G1 X[2^3]	G1 X8.000
+s2_mix_v11b_garbage	expr	G1 X[2^0.5]	G1 X1.414
+s2_mix_v11b_garbage	expr	G1 X[2^-1]	G1 X[2^-1]
+s2_mix_v11b_garbage	expr	G1 X[abs(-5)]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[abs(left)]	G1 X10.000
+s2_mix_v11b_garbage	expr	G1 X[abs -5]	G1 X[abs -5]
+s2_mix_v11b_garbage	expr	G1 X[sign(-5)]	G1 X-1.000
+s2_mix_v11b_garbage	expr	G1 X[-left]	G1 X[-left]
+s2_mix_v11b_garbage	expr	G1 X[neg left]	G1 X10.000
+s2_mix_v11b_garbage	expr	G1 X[1/0]	G1 X[1/0]
+s2_mix_v11b_garbage	expr	G1 X[0/0]	G1 X[0/0]
+s2_mix_v11b_garbage	expr	G1 X[-1/0]	G1 X[-1/0]
+s2_mix_v11b_garbage	expr	G1 X[1e3]	G1 X1000.000
+s2_mix_v11b_garbage	expr	G1 X[1E3]	G1 X1000.000
+s2_mix_v11b_garbage	expr	G1 X[1e-3]	G1 X0.001
+s2_mix_v11b_garbage	expr	G1 X[0.0005]	G1 X0.001
+s2_mix_v11b_garbage	expr	G1 X[0.0015]	G1 X0.002
+s2_mix_v11b_garbage	expr	G1 X[0.0025]	G1 X0.003
+s2_mix_v11b_garbage	expr	G1 X[-0.0005]	G1 X-0.001
+s2_mix_v11b_garbage	expr	G1 X[1234567.89123]	G1 X1234567.891
+s2_mix_v11b_garbage	expr	G1 X[0.1+0.2]	G1 X0.300
+s2_mix_v11b_garbage	expr	G1 X[100000000000000000000]	G1 X100000000000000000000.000
+s2_mix_v11b_garbage	expr	G1 X[1e29]	G1 X[1e29]
+s2_mix_v11b_garbage	expr	G1 X[1e30]	G1 X[1e30]
+s2_mix_v11b_garbage	expr	G1 X[1e-30]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[ left ]	G1 X-10.000
+s2_mix_v11b_garbage	expr	G1 X[  1 + 2  ]	G1 X3.000
+s2_mix_v11b_garbage	expr	G1 X[1+2] Y[3*4] Z[5-6]	G1 X3.000 Y12.000 Z-1.000
+s2_mix_v11b_garbage	expr	G1 X[1+2]Y[3*4]	G1 X3.000Y12.000
+s2_mix_v11b_garbage	expr	[1][2][3]	1.0002.0003.000
+s2_mix_v11b_garbage	expr	[[1]]	[[1]]
+s2_mix_v11b_garbage	expr	[[1+1]+1]	[[1+1]+1]
+s2_mix_v11b_garbage	expr	[1+[2]]	[1+[2]]
+s2_mix_v11b_garbage	expr	[1	[1
+s2_mix_v11b_garbage	expr	1]	1]
+s2_mix_v11b_garbage	expr	[]	[]
+s2_mix_v11b_garbage	expr	[ ]	[ ]
+s2_mix_v11b_garbage	expr	[   ]	[   ]
+s2_mix_v11b_garbage	expr	G1 X[	G1 X[
+s2_mix_v11b_garbage	expr	G1 X]	G1 X]
+s2_mix_v11b_garbage	expr	G1 X[1+2	G1 X[1+2
+s2_mix_v11b_garbage	expr	G1 X1+2]	G1 X1+2]
+s2_mix_v11b_garbage	expr	G1 X[unknown]	G1 X[unknown]
+s2_mix_v11b_garbage	expr	G1 X[left+unknown]	G1 X[left+unknown]
+s2_mix_v11b_garbage	expr	G1 X[$999]	G1 X[$999]
+s2_mix_v11b_garbage	expr	G1 X[$30+$31]	G1 X1010.000
+s2_mix_v11b_garbage	expr	G1 X[MPos.X]	G1 X-5.000
+s2_mix_v11b_garbage	expr	G1 X[mpos.x]	G1 X[mpos.x]
+s2_mix_v11b_garbage	expr	G1 X[LEFT]	G1 X[LEFT]
+s2_mix_v11b_garbage	expr	G1 X[Left]	G1 X[Left]
+s2_mix_v11b_garbage	expr	G1 X[WCO.W]	G1 X[WCO.W]
+s2_mix_v11b_garbage	expr	G1 X[1,5]	G1 X15.000
+s2_mix_v11b_garbage	expr	G1 X[1.5.5]	G1 X[1.5.5]
+s2_mix_v11b_garbage	expr	G1 X[1..5]	G1 X[1..5]
+s2_mix_v11b_garbage	expr	G1 X[.5]	G1 X0.500
+s2_mix_v11b_garbage	expr	G1 X[5.]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[+5]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[++5]	G1 X[++5]
+s2_mix_v11b_garbage	expr	G1 X[--5]	G1 X[--5]
+s2_mix_v11b_garbage	expr	G1 X[5--5]	G1 X10.000
+s2_mix_v11b_garbage	expr	G1 X[5- -5]	G1 X10.000
+s2_mix_v11b_garbage	expr	G1 X[5*-5]	G1 X-25.000
+s2_mix_v11b_garbage	expr	G1 X[(5)]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[((5))]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[(5]	G1 X[(5]
+s2_mix_v11b_garbage	expr	G1 X[5)]	G1 X[5)]
+s2_mix_v11b_garbage	expr	G1 X[()]	G1 X[()]
+s2_mix_v11b_garbage	expr	G1 X[1 2]	G1 X12.000
+s2_mix_v11b_garbage	expr	G1 X[1+]	G1 X[1+]
+s2_mix_v11b_garbage	expr	G1 X[+]	G1 X[+]
+s2_mix_v11b_garbage	expr	G1 X[*]	G1 X[*]
+s2_mix_v11b_garbage	expr	G1 X[1==1]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1==2]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1!=2]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1<2]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[2<1]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1<=1]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[2>=3]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1>0]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1&&0]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1&&1]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[0||1]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[0||0]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[left>0]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[width>5&&height>5]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[1+2*3^2]	G1 X19.000
+s2_mix_v11b_garbage	expr	G1 X[2*3^2]	G1 X18.000
+s2_mix_v11b_garbage	expr	G1 X[-2^2]	G1 X4.000
+s2_mix_v11b_garbage	expr	G1 X[(-2)^2]	G1 X4.000
+s2_mix_v11b_garbage	expr	G1 X[10-2-3]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[100/10/5]	G1 X2.000
+s2_mix_v11b_garbage	expr	G1 X[2^3^2]	G1 X64.000
+s2_mix_v11b_garbage	expr	G1 X[7%3]	G1 X[7%3]
+s2_mix_v11b_garbage	expr	G1 X[sqrt(4)]	G1 X[sqrt(4)]
+s2_mix_v11b_garbage	expr	G1 X[sin(0)]	G1 X[sin(0)]
+s2_mix_v11b_garbage	expr	G1 X[pi]	G1 X[pi]
+s2_mix_v11b_garbage	expr	G1 X[width/height]	G1 X1.500
+s2_mix_v11b_garbage	expr	G1 X[(right-left)/2+left]	G1 X5.000
+s2_mix_v11b_garbage	expr	G1 X[top-bottom]	G1 X20.000
+s2_mix_v11b_garbage	expr	G1 X[jogstep/jogspeed]	G1 X0.000
+s2_mix_v11b_garbage	expr	G1 X[jogspeed/jogstep]	G1 X5000.000
+s2_mix_v11b_garbage	expr	G1 X[WCO.X+MPos.X]	G1 X-6.000
+s2_mix_v11b_garbage	expr	G90 G0 X[left-5] Y[bottom-5]	G90 G0 X-15.000 Y-15.000
+s2_mix_v11b_garbage	expr	G90 G0 X[right+5] Y[top+5]	G90 G0 X25.000 Y15.000
+s2_mix_v11b_garbage	expr	G0 X[left] Y[bottom] (frame start)	G0 X-10.000 Y-10.000 (frame start)
+s2_mix_v11b_garbage	expr	(comment [1+1])	(comment 2.000)
+s2_mix_v11b_garbage	expr	; comment [2*2]	; comment 4.000
+s2_mix_v11b_garbage	expr	G0 X0 Y0	G0 X0 Y0
+s2_mix_v11b_garbage	expr	G0 X-1.5 Y[0]	G0 X-1.5 Y0.000
+s2_mix_v11b_garbage	expr	M5	M5
+s2_mix_v11b_garbage	expr	$H	$H
+s2_mix_v11b_garbage	expr	$X	$X
+s2_mix_v11b_garbage	expr	$J=G91 X[jogstep] F[jogspeed]	$J=G91 X0.100 F500.000
+s2_mix_v11b_garbage	expr	$100=[250*2]	$100=500.000
+s2_mix_v11b_garbage	expr	?	?
+s2_mix_v11b_garbage	expr	!	!
+s2_mix_v11b_garbage	expr	~	~
+s2_mix_v11b_garbage	expr	ctrl-x	ctrl-x
+s2_mix_v11b_garbage	expr	0x18	0x18
+s2_mix_v11b_garbage	expr	0x85	0x85
+s2_mix_v11b_garbage	expr	text only no brackets	text only no brackets
+s2_mix_v11b_garbage	expr	G1 X[1+1] Y[bad syntax here]	G1 X2.000 Y[bad syntax here]
+s2_mix_v11b_garbage	expr	G1 X[3.14159265358979]	G1 X3.142
+s2_mix_v11b_garbage	expr	G1 X[123456789.123456789]	G1 X123456789.123
+s2_mix_v11b_garbage	expr	G1 X[0.9995]	G1 X1.000
+s2_mix_v11b_garbage	expr	G1 X[0.9994999]	G1 X0.999
+s2_mix_v11b_garbage	expr	G1 X[1/7]	G1 X0.143
+s2_mix_v11b_garbage	expr	G1 X[22/7]	G1 X3.143
+s2_mix_v11b_garbage	expr	G1 X[100/3]	G1 X33.333
+s2_mix_v11b_garbage	expr	G1 X[2/3*3]	G1 X2.000
+s2_mix_v11b_garbage	expr	G1 X[1e15]	G1 X1000000000000000.000
+s2_mix_v11b_garbage	expr	G1 X[1e14+0.5]	G1 X100000000000001.000
+s2_mix_v11b_garbage	expr	G1 X[123456789012345.6]	G1 X123456789012346.000
+s2_mix_v11b_garbage	expr	G1 X[0.1*3]	G1 X0.300
+s2_mix_v11b_garbage	expr	G1 X[1.005*1000]	G1 X1005.000
+s2_mix_v11b_garbage	expr	G1 X[4.35*100]	G1 X435.000
+s2_mix_v11b_garbage	button	G0 X[left+width/2] Y[bottom+height/2]	G0 X5.000 Y0.000
+s2_mix_v11b_garbage	button	G0 X[left] Y[bottom]	G0 X-10.000 Y-10.000
+s2_mix_v11b_garbage	button	G0 X[left] Y[bottom]	G0 X-10.000 Y-10.000
+s2_mix_v11b_garbage	button	M3 S[$30*3/100] F1000	M3 S30.000 F1000
+s2_mix_v11b_garbage	button	G1 Y[top] 	G1 Y10.000
+s2_mix_v11b_garbage	button	G1 X[right]	G1 X20.000
+s2_mix_v11b_garbage	button	G1 Y[bottom] 	G1 Y-10.000
+s2_mix_v11b_garbage	button	G1 X[left]	G1 X-10.000
+s2_mix_v11b_garbage	button	M5	M5
+s2_mix_v11b_garbage	button	G0 X0 Y0	G0 X0 Y0
+s2_mix_v11b_garbage	button	M3 S[$30*3/100]	M3 S30.000
+s2_mix_v11b_garbage	button	G1 F1000	G1 F1000
+s2_mix_v11b_garbage	button	M5 S0	M5 S0
+s2_mix_v11b_garbage	button	G0	G0
+s2_mix_v11b_garbage	button	M3 S[$30*10/100]	M3 S100.000
+s2_mix_v11b_garbage	button	G1 F1000	G1 F1000
+s2_mix_v11b_garbage	button	M5 S0	M5 S0
+s2_mix_v11b_garbage	button	G0	G0
+s3_unknown_range	expr	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s3_unknown_range	expr	G0 X[right] Y[top]	G0 X0.000 Y0.000
+s3_unknown_range	expr	G0 X[left+width/2] Y[bottom+height/2]	G0 X0.000 Y0.000
+s3_unknown_range	expr	G1 X[width] Y[height] F[jogspeed]	G1 X0.000 Y0.000 F1.000
+s3_unknown_range	expr	G91 G0 X[jogstep] Y[-jogstep]	G91 G0 X0.001 Y[-jogstep]
+s3_unknown_range	expr	G91 G0 X[-jogstep*2]	G91 G0 X[-jogstep*2]
+s3_unknown_range	expr	G0 X[WCO.X] Y[WCO.Y] Z[WCO.Z]	G0 X0.001 Y0.000 Z0.000
+s3_unknown_range	expr	G0 X[MPos.X] Y[MPos.Y] Z[MPos.Z]	G0 X0.333 Y0.667 Z0.000
+s3_unknown_range	expr	G0 X[WPos.X] Y[WPos.Y] Z[WPos.Z]	G0 X0.333 Y0.667 Z0.000
+s3_unknown_range	expr	G0 X[MPos.X+1] Y[MPos.Y-1]	G0 X1.333 Y-0.333
+s3_unknown_range	expr	M3 S[$30]	M3 S2000.000
+s3_unknown_range	expr	M3 S[$30/2]	M3 S1000.000
+s3_unknown_range	expr	M3 S[$30*0.1]	M3 S200.000
+s3_unknown_range	expr	M4 S[$30*0.5]	M4 S1000.000
+s3_unknown_range	expr	S[$110]	S2000.000
+s3_unknown_range	expr	F[$110/2]	F1000.000
+s3_unknown_range	expr	G0 X[$130] Y[$131]	G0 X250.000 Y180.000
+s3_unknown_range	expr	G0 X[$130/2] Y[$131/2]	G0 X125.000 Y90.000
+s3_unknown_range	expr	[$100]	200.000
+s3_unknown_range	expr	[$32]	[$32]
+s3_unknown_range	expr	G1 X[1+2*3]	G1 X7.000
+s3_unknown_range	expr	G1 X[(1+2)*3]	G1 X9.000
+s3_unknown_range	expr	G1 X[10/3]	G1 X3.333
+s3_unknown_range	expr	G1 X[2/3]	G1 X0.667
+s3_unknown_range	expr	G1 X[1/3]	G1 X0.333
+s3_unknown_range	expr	G1 X[2^3]	G1 X8.000
+s3_unknown_range	expr	G1 X[2^0.5]	G1 X1.414
+s3_unknown_range	expr	G1 X[2^-1]	G1 X[2^-1]
+s3_unknown_range	expr	G1 X[abs(-5)]	G1 X5.000
+s3_unknown_range	expr	G1 X[abs(left)]	G1 X0.000
+s3_unknown_range	expr	G1 X[abs -5]	G1 X[abs -5]
+s3_unknown_range	expr	G1 X[sign(-5)]	G1 X-1.000
+s3_unknown_range	expr	G1 X[-left]	G1 X[-left]
+s3_unknown_range	expr	G1 X[neg left]	G1 X0.000
+s3_unknown_range	expr	G1 X[1/0]	G1 X[1/0]
+s3_unknown_range	expr	G1 X[0/0]	G1 X[0/0]
+s3_unknown_range	expr	G1 X[-1/0]	G1 X[-1/0]
+s3_unknown_range	expr	G1 X[1e3]	G1 X1000.000
+s3_unknown_range	expr	G1 X[1E3]	G1 X1000.000
+s3_unknown_range	expr	G1 X[1e-3]	G1 X0.001
+s3_unknown_range	expr	G1 X[0.0005]	G1 X0.001
+s3_unknown_range	expr	G1 X[0.0015]	G1 X0.002
+s3_unknown_range	expr	G1 X[0.0025]	G1 X0.003
+s3_unknown_range	expr	G1 X[-0.0005]	G1 X-0.001
+s3_unknown_range	expr	G1 X[1234567.89123]	G1 X1234567.891
+s3_unknown_range	expr	G1 X[0.1+0.2]	G1 X0.300
+s3_unknown_range	expr	G1 X[100000000000000000000]	G1 X100000000000000000000.000
+s3_unknown_range	expr	G1 X[1e29]	G1 X[1e29]
+s3_unknown_range	expr	G1 X[1e30]	G1 X[1e30]
+s3_unknown_range	expr	G1 X[1e-30]	G1 X0.000
+s3_unknown_range	expr	G1 X[ left ]	G1 X0.000
+s3_unknown_range	expr	G1 X[  1 + 2  ]	G1 X3.000
+s3_unknown_range	expr	G1 X[1+2] Y[3*4] Z[5-6]	G1 X3.000 Y12.000 Z-1.000
+s3_unknown_range	expr	G1 X[1+2]Y[3*4]	G1 X3.000Y12.000
+s3_unknown_range	expr	[1][2][3]	1.0002.0003.000
+s3_unknown_range	expr	[[1]]	[[1]]
+s3_unknown_range	expr	[[1+1]+1]	[[1+1]+1]
+s3_unknown_range	expr	[1+[2]]	[1+[2]]
+s3_unknown_range	expr	[1	[1
+s3_unknown_range	expr	1]	1]
+s3_unknown_range	expr	[]	[]
+s3_unknown_range	expr	[ ]	[ ]
+s3_unknown_range	expr	[   ]	[   ]
+s3_unknown_range	expr	G1 X[	G1 X[
+s3_unknown_range	expr	G1 X]	G1 X]
+s3_unknown_range	expr	G1 X[1+2	G1 X[1+2
+s3_unknown_range	expr	G1 X1+2]	G1 X1+2]
+s3_unknown_range	expr	G1 X[unknown]	G1 X[unknown]
+s3_unknown_range	expr	G1 X[left+unknown]	G1 X[left+unknown]
+s3_unknown_range	expr	G1 X[$999]	G1 X[$999]
+s3_unknown_range	expr	G1 X[$30+$31]	G1 X[$30+$31]
+s3_unknown_range	expr	G1 X[MPos.X]	G1 X0.333
+s3_unknown_range	expr	G1 X[mpos.x]	G1 X[mpos.x]
+s3_unknown_range	expr	G1 X[LEFT]	G1 X[LEFT]
+s3_unknown_range	expr	G1 X[Left]	G1 X[Left]
+s3_unknown_range	expr	G1 X[WCO.W]	G1 X[WCO.W]
+s3_unknown_range	expr	G1 X[1,5]	G1 X15.000
+s3_unknown_range	expr	G1 X[1.5.5]	G1 X[1.5.5]
+s3_unknown_range	expr	G1 X[1..5]	G1 X[1..5]
+s3_unknown_range	expr	G1 X[.5]	G1 X0.500
+s3_unknown_range	expr	G1 X[5.]	G1 X5.000
+s3_unknown_range	expr	G1 X[+5]	G1 X5.000
+s3_unknown_range	expr	G1 X[++5]	G1 X[++5]
+s3_unknown_range	expr	G1 X[--5]	G1 X[--5]
+s3_unknown_range	expr	G1 X[5--5]	G1 X10.000
+s3_unknown_range	expr	G1 X[5- -5]	G1 X10.000
+s3_unknown_range	expr	G1 X[5*-5]	G1 X-25.000
+s3_unknown_range	expr	G1 X[(5)]	G1 X5.000
+s3_unknown_range	expr	G1 X[((5))]	G1 X5.000
+s3_unknown_range	expr	G1 X[(5]	G1 X[(5]
+s3_unknown_range	expr	G1 X[5)]	G1 X[5)]
+s3_unknown_range	expr	G1 X[()]	G1 X[()]
+s3_unknown_range	expr	G1 X[1 2]	G1 X12.000
+s3_unknown_range	expr	G1 X[1+]	G1 X[1+]
+s3_unknown_range	expr	G1 X[+]	G1 X[+]
+s3_unknown_range	expr	G1 X[*]	G1 X[*]
+s3_unknown_range	expr	G1 X[1==1]	G1 X0.000
+s3_unknown_range	expr	G1 X[1==2]	G1 X0.000
+s3_unknown_range	expr	G1 X[1!=2]	G1 X0.000
+s3_unknown_range	expr	G1 X[1<2]	G1 X0.000
+s3_unknown_range	expr	G1 X[2<1]	G1 X0.000
+s3_unknown_range	expr	G1 X[1<=1]	G1 X0.000
+s3_unknown_range	expr	G1 X[2>=3]	G1 X0.000
+s3_unknown_range	expr	G1 X[1>0]	G1 X0.000
+s3_unknown_range	expr	G1 X[1&&0]	G1 X0.000
+s3_unknown_range	expr	G1 X[1&&1]	G1 X0.000
+s3_unknown_range	expr	G1 X[0||1]	G1 X0.000
+s3_unknown_range	expr	G1 X[0||0]	G1 X0.000
+s3_unknown_range	expr	G1 X[left>0]	G1 X0.000
+s3_unknown_range	expr	G1 X[width>5&&height>5]	G1 X0.000
+s3_unknown_range	expr	G1 X[1+2*3^2]	G1 X19.000
+s3_unknown_range	expr	G1 X[2*3^2]	G1 X18.000
+s3_unknown_range	expr	G1 X[-2^2]	G1 X4.000
+s3_unknown_range	expr	G1 X[(-2)^2]	G1 X4.000
+s3_unknown_range	expr	G1 X[10-2-3]	G1 X5.000
+s3_unknown_range	expr	G1 X[100/10/5]	G1 X2.000
+s3_unknown_range	expr	G1 X[2^3^2]	G1 X64.000
+s3_unknown_range	expr	G1 X[7%3]	G1 X[7%3]
+s3_unknown_range	expr	G1 X[sqrt(4)]	G1 X[sqrt(4)]
+s3_unknown_range	expr	G1 X[sin(0)]	G1 X[sin(0)]
+s3_unknown_range	expr	G1 X[pi]	G1 X[pi]
+s3_unknown_range	expr	G1 X[width/height]	G1 X[width/height]
+s3_unknown_range	expr	G1 X[(right-left)/2+left]	G1 X0.000
+s3_unknown_range	expr	G1 X[top-bottom]	G1 X0.000
+s3_unknown_range	expr	G1 X[jogstep/jogspeed]	G1 X0.001
+s3_unknown_range	expr	G1 X[jogspeed/jogstep]	G1 X1000.000
+s3_unknown_range	expr	G1 X[WCO.X+MPos.X]	G1 X0.334
+s3_unknown_range	expr	G90 G0 X[left-5] Y[bottom-5]	G90 G0 X-5.000 Y-5.000
+s3_unknown_range	expr	G90 G0 X[right+5] Y[top+5]	G90 G0 X5.000 Y5.000
+s3_unknown_range	expr	G0 X[left] Y[bottom] (frame start)	G0 X0.000 Y0.000 (frame start)
+s3_unknown_range	expr	(comment [1+1])	(comment 2.000)
+s3_unknown_range	expr	; comment [2*2]	; comment 4.000
+s3_unknown_range	expr	G0 X0 Y0	G0 X0 Y0
+s3_unknown_range	expr	G0 X-1.5 Y[0]	G0 X-1.5 Y0.000
+s3_unknown_range	expr	M5	M5
+s3_unknown_range	expr	$H	$H
+s3_unknown_range	expr	$X	$X
+s3_unknown_range	expr	$J=G91 X[jogstep] F[jogspeed]	$J=G91 X0.001 F1.000
+s3_unknown_range	expr	$100=[250*2]	$100=500.000
+s3_unknown_range	expr	?	?
+s3_unknown_range	expr	!	!
+s3_unknown_range	expr	~	~
+s3_unknown_range	expr	ctrl-x	ctrl-x
+s3_unknown_range	expr	0x18	0x18
+s3_unknown_range	expr	0x85	0x85
+s3_unknown_range	expr	text only no brackets	text only no brackets
+s3_unknown_range	expr	G1 X[1+1] Y[bad syntax here]	G1 X2.000 Y[bad syntax here]
+s3_unknown_range	expr	G1 X[3.14159265358979]	G1 X3.142
+s3_unknown_range	expr	G1 X[123456789.123456789]	G1 X123456789.123
+s3_unknown_range	expr	G1 X[0.9995]	G1 X1.000
+s3_unknown_range	expr	G1 X[0.9994999]	G1 X0.999
+s3_unknown_range	expr	G1 X[1/7]	G1 X0.143
+s3_unknown_range	expr	G1 X[22/7]	G1 X3.143
+s3_unknown_range	expr	G1 X[100/3]	G1 X33.333
+s3_unknown_range	expr	G1 X[2/3*3]	G1 X2.000
+s3_unknown_range	expr	G1 X[1e15]	G1 X1000000000000000.000
+s3_unknown_range	expr	G1 X[1e14+0.5]	G1 X100000000000001.000
+s3_unknown_range	expr	G1 X[123456789012345.6]	G1 X123456789012346.000
+s3_unknown_range	expr	G1 X[0.1*3]	G1 X0.300
+s3_unknown_range	expr	G1 X[1.005*1000]	G1 X1005.000
+s3_unknown_range	expr	G1 X[4.35*100]	G1 X435.000
+s3_unknown_range	button	G0 X[left+width/2] Y[bottom+height/2]	G0 X0.000 Y0.000
+s3_unknown_range	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s3_unknown_range	button	G0 X[left] Y[bottom]	G0 X0.000 Y0.000
+s3_unknown_range	button	M3 S[$30*3/100] F1000	M3 S60.000 F1000
+s3_unknown_range	button	G1 Y[top] 	G1 Y0.000
+s3_unknown_range	button	G1 X[right]	G1 X0.000
+s3_unknown_range	button	G1 Y[bottom] 	G1 Y0.000
+s3_unknown_range	button	G1 X[left]	G1 X0.000
+s3_unknown_range	button	M5	M5
+s3_unknown_range	button	G0 X0 Y0	G0 X0 Y0
+s3_unknown_range	button	M3 S[$30*3/100]	M3 S60.000
+s3_unknown_range	button	G1 F1000	G1 F1000
+s3_unknown_range	button	M5 S0	M5 S0
+s3_unknown_range	button	G0	G0
+s3_unknown_range	button	M3 S[$30*10/100]	M3 S200.000
+s3_unknown_range	button	G1 F1000	G1 F1000
+s3_unknown_range	button	M5 S0	M5 S0
+s3_unknown_range	button	G0	G0
+s4_negq	expr	G0 X[left] Y[bottom]	G0 X-5.000 Y-5.000
+s4_negq	expr	G0 X[right] Y[top]	G0 X0.000 Y0.000
+s4_negq	expr	G0 X[left+width/2] Y[bottom+height/2]	G0 X-2.500 Y-2.500
+s4_negq	expr	G1 X[width] Y[height] F[jogspeed]	G1 X5.000 Y5.000 F6000.000
+s4_negq	expr	G91 G0 X[jogstep] Y[-jogstep]	G91 G0 X25.000 Y[-jogstep]
+s4_negq	expr	G91 G0 X[-jogstep*2]	G91 G0 X[-jogstep*2]
+s4_negq	expr	G0 X[WCO.X] Y[WCO.Y] Z[WCO.Z]	G0 X-100.000 Y0.000 Z0.000
+s4_negq	expr	G0 X[MPos.X] Y[MPos.Y] Z[MPos.Z]	G0 X100.000 Y100.000 Z100.000
+s4_negq	expr	G0 X[WPos.X] Y[WPos.Y] Z[WPos.Z]	G0 X100.000 Y100.000 Z100.000
+s4_negq	expr	G0 X[MPos.X+1] Y[MPos.Y-1]	G0 X101.000 Y99.000
+s4_negq	expr	M3 S[$30]	M3 S255.000
+s4_negq	expr	M3 S[$30/2]	M3 S127.500
+s4_negq	expr	M3 S[$30*0.1]	M3 S25.500
+s4_negq	expr	M4 S[$30*0.5]	M4 S127.500
+s4_negq	expr	S[$110]	S3000.000
+s4_negq	expr	F[$110/2]	F1500.000
+s4_negq	expr	G0 X[$130] Y[$131]	G0 X400.000 Y300.000
+s4_negq	expr	G0 X[$130/2] Y[$131/2]	G0 X200.000 Y150.000
+s4_negq	expr	[$100]	250.000
+s4_negq	expr	[$32]	0.000
+s4_negq	expr	G1 X[1+2*3]	G1 X7.000
+s4_negq	expr	G1 X[(1+2)*3]	G1 X9.000
+s4_negq	expr	G1 X[10/3]	G1 X3.333
+s4_negq	expr	G1 X[2/3]	G1 X0.667
+s4_negq	expr	G1 X[1/3]	G1 X0.333
+s4_negq	expr	G1 X[2^3]	G1 X8.000
+s4_negq	expr	G1 X[2^0.5]	G1 X1.414
+s4_negq	expr	G1 X[2^-1]	G1 X[2^-1]
+s4_negq	expr	G1 X[abs(-5)]	G1 X5.000
+s4_negq	expr	G1 X[abs(left)]	G1 X5.000
+s4_negq	expr	G1 X[abs -5]	G1 X[abs -5]
+s4_negq	expr	G1 X[sign(-5)]	G1 X-1.000
+s4_negq	expr	G1 X[-left]	G1 X[-left]
+s4_negq	expr	G1 X[neg left]	G1 X5.000
+s4_negq	expr	G1 X[1/0]	G1 X[1/0]
+s4_negq	expr	G1 X[0/0]	G1 X[0/0]
+s4_negq	expr	G1 X[-1/0]	G1 X[-1/0]
+s4_negq	expr	G1 X[1e3]	G1 X1000.000
+s4_negq	expr	G1 X[1E3]	G1 X1000.000
+s4_negq	expr	G1 X[1e-3]	G1 X0.001
+s4_negq	expr	G1 X[0.0005]	G1 X0.001
+s4_negq	expr	G1 X[0.0015]	G1 X0.002
+s4_negq	expr	G1 X[0.0025]	G1 X0.003
+s4_negq	expr	G1 X[-0.0005]	G1 X-0.001
+s4_negq	expr	G1 X[1234567.89123]	G1 X1234567.891
+s4_negq	expr	G1 X[0.1+0.2]	G1 X0.300
+s4_negq	expr	G1 X[100000000000000000000]	G1 X100000000000000000000.000
+s4_negq	expr	G1 X[1e29]	G1 X[1e29]
+s4_negq	expr	G1 X[1e30]	G1 X[1e30]
+s4_negq	expr	G1 X[1e-30]	G1 X0.000
+s4_negq	expr	G1 X[ left ]	G1 X-5.000
+s4_negq	expr	G1 X[  1 + 2  ]	G1 X3.000
+s4_negq	expr	G1 X[1+2] Y[3*4] Z[5-6]	G1 X3.000 Y12.000 Z-1.000
+s4_negq	expr	G1 X[1+2]Y[3*4]	G1 X3.000Y12.000
+s4_negq	expr	[1][2][3]	1.0002.0003.000
+s4_negq	expr	[[1]]	[[1]]
+s4_negq	expr	[[1+1]+1]	[[1+1]+1]
+s4_negq	expr	[1+[2]]	[1+[2]]
+s4_negq	expr	[1	[1
+s4_negq	expr	1]	1]
+s4_negq	expr	[]	[]
+s4_negq	expr	[ ]	[ ]
+s4_negq	expr	[   ]	[   ]
+s4_negq	expr	G1 X[	G1 X[
+s4_negq	expr	G1 X]	G1 X]
+s4_negq	expr	G1 X[1+2	G1 X[1+2
+s4_negq	expr	G1 X1+2]	G1 X1+2]
+s4_negq	expr	G1 X[unknown]	G1 X[unknown]
+s4_negq	expr	G1 X[left+unknown]	G1 X[left+unknown]
+s4_negq	expr	G1 X[$999]	G1 X[$999]
+s4_negq	expr	G1 X[$30+$31]	G1 X255.500
+s4_negq	expr	G1 X[MPos.X]	G1 X100.000
+s4_negq	expr	G1 X[mpos.x]	G1 X[mpos.x]
+s4_negq	expr	G1 X[LEFT]	G1 X[LEFT]
+s4_negq	expr	G1 X[Left]	G1 X[Left]
+s4_negq	expr	G1 X[WCO.W]	G1 X[WCO.W]
+s4_negq	expr	G1 X[1,5]	G1 X15.000
+s4_negq	expr	G1 X[1.5.5]	G1 X[1.5.5]
+s4_negq	expr	G1 X[1..5]	G1 X[1..5]
+s4_negq	expr	G1 X[.5]	G1 X0.500
+s4_negq	expr	G1 X[5.]	G1 X5.000
+s4_negq	expr	G1 X[+5]	G1 X5.000
+s4_negq	expr	G1 X[++5]	G1 X[++5]
+s4_negq	expr	G1 X[--5]	G1 X[--5]
+s4_negq	expr	G1 X[5--5]	G1 X10.000
+s4_negq	expr	G1 X[5- -5]	G1 X10.000
+s4_negq	expr	G1 X[5*-5]	G1 X-25.000
+s4_negq	expr	G1 X[(5)]	G1 X5.000
+s4_negq	expr	G1 X[((5))]	G1 X5.000
+s4_negq	expr	G1 X[(5]	G1 X[(5]
+s4_negq	expr	G1 X[5)]	G1 X[5)]
+s4_negq	expr	G1 X[()]	G1 X[()]
+s4_negq	expr	G1 X[1 2]	G1 X12.000
+s4_negq	expr	G1 X[1+]	G1 X[1+]
+s4_negq	expr	G1 X[+]	G1 X[+]
+s4_negq	expr	G1 X[*]	G1 X[*]
+s4_negq	expr	G1 X[1==1]	G1 X0.000
+s4_negq	expr	G1 X[1==2]	G1 X0.000
+s4_negq	expr	G1 X[1!=2]	G1 X0.000
+s4_negq	expr	G1 X[1<2]	G1 X0.000
+s4_negq	expr	G1 X[2<1]	G1 X0.000
+s4_negq	expr	G1 X[1<=1]	G1 X0.000
+s4_negq	expr	G1 X[2>=3]	G1 X0.000
+s4_negq	expr	G1 X[1>0]	G1 X0.000
+s4_negq	expr	G1 X[1&&0]	G1 X0.000
+s4_negq	expr	G1 X[1&&1]	G1 X0.000
+s4_negq	expr	G1 X[0||1]	G1 X0.000
+s4_negq	expr	G1 X[0||0]	G1 X0.000
+s4_negq	expr	G1 X[left>0]	G1 X0.000
+s4_negq	expr	G1 X[width>5&&height>5]	G1 X0.000
+s4_negq	expr	G1 X[1+2*3^2]	G1 X19.000
+s4_negq	expr	G1 X[2*3^2]	G1 X18.000
+s4_negq	expr	G1 X[-2^2]	G1 X4.000
+s4_negq	expr	G1 X[(-2)^2]	G1 X4.000
+s4_negq	expr	G1 X[10-2-3]	G1 X5.000
+s4_negq	expr	G1 X[100/10/5]	G1 X2.000
+s4_negq	expr	G1 X[2^3^2]	G1 X64.000
+s4_negq	expr	G1 X[7%3]	G1 X[7%3]
+s4_negq	expr	G1 X[sqrt(4)]	G1 X[sqrt(4)]
+s4_negq	expr	G1 X[sin(0)]	G1 X[sin(0)]
+s4_negq	expr	G1 X[pi]	G1 X[pi]
+s4_negq	expr	G1 X[width/height]	G1 X1.000
+s4_negq	expr	G1 X[(right-left)/2+left]	G1 X-2.500
+s4_negq	expr	G1 X[top-bottom]	G1 X5.000
+s4_negq	expr	G1 X[jogstep/jogspeed]	G1 X0.004
+s4_negq	expr	G1 X[jogspeed/jogstep]	G1 X240.000
+s4_negq	expr	G1 X[WCO.X+MPos.X]	G1 X0.000
+s4_negq	expr	G90 G0 X[left-5] Y[bottom-5]	G90 G0 X-10.000 Y-10.000
+s4_negq	expr	G90 G0 X[right+5] Y[top+5]	G90 G0 X5.000 Y5.000
+s4_negq	expr	G0 X[left] Y[bottom] (frame start)	G0 X-5.000 Y-5.000 (frame start)
+s4_negq	expr	(comment [1+1])	(comment 2.000)
+s4_negq	expr	; comment [2*2]	; comment 4.000
+s4_negq	expr	G0 X0 Y0	G0 X0 Y0
+s4_negq	expr	G0 X-1.5 Y[0]	G0 X-1.5 Y0.000
+s4_negq	expr	M5	M5
+s4_negq	expr	$H	$H
+s4_negq	expr	$X	$X
+s4_negq	expr	$J=G91 X[jogstep] F[jogspeed]	$J=G91 X25.000 F6000.000
+s4_negq	expr	$100=[250*2]	$100=500.000
+s4_negq	expr	?	?
+s4_negq	expr	!	!
+s4_negq	expr	~	~
+s4_negq	expr	ctrl-x	ctrl-x
+s4_negq	expr	0x18	0x18
+s4_negq	expr	0x85	0x85
+s4_negq	expr	text only no brackets	text only no brackets
+s4_negq	expr	G1 X[1+1] Y[bad syntax here]	G1 X2.000 Y[bad syntax here]
+s4_negq	expr	G1 X[3.14159265358979]	G1 X3.142
+s4_negq	expr	G1 X[123456789.123456789]	G1 X123456789.123
+s4_negq	expr	G1 X[0.9995]	G1 X1.000
+s4_negq	expr	G1 X[0.9994999]	G1 X0.999
+s4_negq	expr	G1 X[1/7]	G1 X0.143
+s4_negq	expr	G1 X[22/7]	G1 X3.143
+s4_negq	expr	G1 X[100/3]	G1 X33.333
+s4_negq	expr	G1 X[2/3*3]	G1 X2.000
+s4_negq	expr	G1 X[1e15]	G1 X1000000000000000.000
+s4_negq	expr	G1 X[1e14+0.5]	G1 X100000000000001.000
+s4_negq	expr	G1 X[123456789012345.6]	G1 X123456789012346.000
+s4_negq	expr	G1 X[0.1*3]	G1 X0.300
+s4_negq	expr	G1 X[1.005*1000]	G1 X1005.000
+s4_negq	expr	G1 X[4.35*100]	G1 X435.000
+s4_negq	button	G0 X[left+width/2] Y[bottom+height/2]	G0 X-2.500 Y-2.500
+s4_negq	button	G0 X[left] Y[bottom]	G0 X-5.000 Y-5.000
+s4_negq	button	G0 X[left] Y[bottom]	G0 X-5.000 Y-5.000
+s4_negq	button	M3 S[$30*3/100] F1000	M3 S7.650 F1000
+s4_negq	button	G1 Y[top] 	G1 Y0.000
+s4_negq	button	G1 X[right]	G1 X0.000
+s4_negq	button	G1 Y[bottom] 	G1 Y-5.000
+s4_negq	button	G1 X[left]	G1 X-5.000
+s4_negq	button	M5	M5
+s4_negq	button	G0 X0 Y0	G0 X0 Y0
+s4_negq	button	M3 S[$30*3/100]	M3 S7.650
+s4_negq	button	G1 F1000	G1 F1000
+s4_negq	button	M5 S0	M5 S0
+s4_negq	button	G0	G0
+s4_negq	button	M3 S[$30*10/100]	M3 S25.500
+s4_negq	button	G1 F1000	G1 F1000
+s4_negq	button	M5 S0	M5 S0
+s4_negq	button	G0	G0

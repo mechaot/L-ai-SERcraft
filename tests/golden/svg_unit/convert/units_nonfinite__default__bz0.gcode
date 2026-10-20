@@ -1,0 +1,15 @@
+M3 S0
+S0 (1st shape)
+G0X3Y98(circle)
+S255 (circle)
+G3X3Y98I-3J0F1000(circle)
+S0 (circle)
+G0XNaNYNaN(circle)
+S255 (circle)
+G3XNaNYNaNI-3J0F1000(circle)
+S0 (circle)
+G0X10Y90(M)
+S255 (L)
+G1X20Y80F1000(L)
+S0 (End path)
+M5 S0

@@ -1,0 +1,60 @@
+image=gray_ramp_16x4.png
+width=16
+height=4
+dir=Vertical
+pwm=true
+firmwareType=Grbl
+res=10
+fres=10
+oX=0
+oY=0
+minPower=0
+maxPower=255
+markSpeed=1000
+borderSpeed=1000
+lOn=M3
+lOff=M5
+setting.Unidirectional Engraving=true
+setting.Disable G0 fast skip=true
+grbl_conf=default
+grbl_conf.MaxPWM=1000
+grbl_conf.MaxRateX=4000
+exception=none
+count=32
+estimated_ticks=7100000
+drawing_range=xmin=0 xmax=1.4 ymin=0.4 ymax=0.4 valid=true
+moving_range=xmin=0 xmax=1.4 ymin=0 ymax=0.4 valid=true
+quadrant=I
+---
+G1 X0 Y0 F1000
+M3 S0
+G1 Y0.4 S255
+G1 X0.1 Y0 S0
+G1 Y0.4 S238
+G1 X0.2 Y0 S0
+G1 Y0.4 S221
+G1 X0.3 Y0 S0
+G1 Y0.4 S204
+G1 X0.4 Y0 S0
+G1 Y0.4 S187
+G1 X0.5 Y0 S0
+G1 Y0.4 S170
+G1 X0.6 Y0 S0
+G1 Y0.4 S153
+G1 X0.7 Y0 S0
+G1 Y0.4 S136
+G1 X0.8 Y0 S0
+G1 Y0.4 S119
+G1 X0.9 Y0 S0
+G1 Y0.4 S102
+G1 X1 Y0 S0
+G1 Y0.4 S85
+G1 X1.1 Y0 S0
+G1 Y0.4 S68
+G1 X1.2 Y0 S0
+G1 Y0.4 S51
+G1 X1.3 Y0 S0
+G1 Y0.4 S34
+G1 X1.4 Y0 S0
+G1 Y0.4 S17
+M5
