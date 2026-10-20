@@ -1,5 +1,8 @@
 //! LaserGRBL egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`).
 
+// Windows: GUI app, no console window (C# `WinExe`)
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 mod app_state;
 mod forms;
 mod main_form;

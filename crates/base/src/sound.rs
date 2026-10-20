@@ -57,6 +57,7 @@ pub fn sound_file(id: EventId) -> Option<PathBuf> {
 /// Find an executable on PATH.
 ///
 /// `name`: program name. Returns the full path.
+#[cfg(not(target_os = "windows"))]
 fn which(name: &str) -> Option<PathBuf> {
     let paths = std::env::var_os("PATH")?;
     std::env::split_paths(&paths).map(|d| d.join(name)).find(|p| p.is_file())

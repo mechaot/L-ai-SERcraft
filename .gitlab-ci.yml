@@ -2,12 +2,24 @@
 #
 # .yml, not .yaml: only the .yml spelling is auto-detected.
 #
-#   lint:clippy      clippy, warnings are errors              | lint
-#   test:cargo       whole workspace incl. golden tests       | test
-#   build:appimage   portable AppImage (glibc 2.28 baseline)  | build -> artifact
+#   lint:clippy           clippy, warnings are errors              | lint
+#   test:cargo            whole workspace incl. golden tests       | test
+#   build:linux-appimage  portable AppImage (glibc 2.28 baseline)  | build -> artifact
+#   build:windows         x86_64 .exe + resources, zip             | build -> artifact
+#   build:macos           universal2 (arm64 + x86_64) + resources  | build -> artifact
+#
+# Every build is a cross build on the Linux runner with cargo-zigbuild. The
+# three builds are independent and `allow_failure: true`: one broken platform
+# never blocks the other artifacts (pipeline then shows "passed with warnings").
 #
 # Runner: docker executor, internet access, non-privileged. The AppImage needs
-# no FUSE (appimagetool runs with APPIMAGE_EXTRACT_AND_RUN=1).
+# no FUSE (appimagetool runs with APPIMAGE_EXTRACT_AND_RUN=1). macOS uses the
+# cargo-zigbuild image: it ships the macOS 11.3 SDK (SDKROOT) that linking the
+# Apple frameworks needs. Its Rust is older than ours, the job installs ours.
+#
+# Windows/macOS artifacts are unsigned. Windows: unzip, run lasergrbl.exe
+# (SmartScreen warns). macOS: untar, `xattr -dr com.apple.quarantine LaserGRBL`,
+# run LaserGRBL/lasergrbl. The resources folder must stay next to the binary.
 #
 # No rustfmt gate: the code base is not rustfmt-formatted (long lines kept on
 # purpose), a `cargo fmt --check` job would always fail.
@@ -16,8 +28,7 @@
 # the pinned AppImage tools. `target/` is not cached (tens of GB).
 #
 # Scheduling: every job has an explicit `needs:`; stages are only a fallback
-# order. build:appimage needs both checks, so a red tree never yields an
-# AppImage artifact.
+# order. Every build needs both checks, so a red tree never yields artifacts.
 #
 # Runner-side, not expressible here: Settings > CI/CD > "Auto-cancel redundant
 # pipelines" (what makes the `interruptible: true` default do anything).
@@ -30,6 +41,8 @@ stages:
 variables:
   # Pinned images/tools: bump deliberately. Rust >= 1.95 (edition 2024).
   RUST_IMAGE: "rust:1.99.0-trixie"
+  RUST_TOOLCHAIN: "1.99.0"            # same as RUST_IMAGE; installed in ZIGBUILD_IMAGE
+  ZIGBUILD_IMAGE: "ghcr.io/rust-cross/cargo-zigbuild:0.23.4"   # + macOS 11.3 SDK
   CARGO_ZIGBUILD_VERSION: "0.23.4"
   ZIGLANG_VERSION: "0.17.0"           # PyPI `ziglang`: zig as a pip package
 
@@ -91,22 +104,25 @@ test:cargo:
 
 # --------------------------------------------------------------- build ------
 
-build:appimage:
+# shared by the zigbuild jobs on RUST_IMAGE: pinned zig + cargo-zigbuild in
+# the cache dir that packaging/appimage/build-appimage.sh puts on PATH.
+.zig-tools:
   extends: .rust
   stage: build
   needs: ["lint:clippy", "test:cargo"]
+  allow_failure: true
   cache:
     - *cargo-cache
-    - key: "appimage-tools-zigbuild$CARGO_ZIGBUILD_VERSION-zig$ZIGLANG_VERSION"
+    - key: "zig-tools-zigbuild$CARGO_ZIGBUILD_VERSION-zig$ZIGLANG_VERSION"
       paths:
         - .cache/appimage/cargo/
         - .cache/appimage/venv/
         - .cache/appimage/appimagetool-x86_64.AppImage
-  script:
-    # python3-venv: zig via pip; binutils: objdump for the glibc check
+  before_script:
+    - rustc --version && cargo --version
+    # python3-venv: zig via pip; binutils: objdump; zip: Windows package
     - apt-get update -qq
-    - apt-get install -y -qq --no-install-recommends python3 python3-venv binutils file >/dev/null
-    # pinned zig + cargo-zigbuild in the cache dir the build script puts on PATH
+    - apt-get install -y -qq --no-install-recommends python3 python3-venv binutils file zip >/dev/null
     - |
       T=.cache/appimage
       [ -x "$T/venv/bin/python3" ] || python3 -m venv "$T/venv"
@@ -114,6 +130,14 @@ build:appimage:
         || "$T/venv/bin/pip" install --quiet "ziglang==$ZIGLANG_VERSION"
       "$T/cargo/bin/cargo-zigbuild" --version 2>/dev/null | grep -q " $CARGO_ZIGBUILD_VERSION\$" \
         || cargo install --locked --root "$T/cargo" cargo-zigbuild --version "$CARGO_ZIGBUILD_VERSION"
+      export PATH="$CI_PROJECT_DIR/$T/cargo/bin:$CI_PROJECT_DIR/$T/venv/bin:$PATH"
+    # package version from the workspace manifest
+    - VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/{s/^version *= *"\(.*\)"/\1/p}' Cargo.toml)"
+
+# Linux first: the primary target.
+build:linux-appimage:
+  extends: .zig-tools
+  script:
     - packaging/appimage/build-appimage.sh 2>&1 | tee build-appimage.log
     # must be the portable zigbuild, never the native fallback
     - |
@@ -125,7 +149,7 @@ build:appimage:
       [ "$(printf '%s\n2.28\n' "$MAXG" | sort -V | tail -1)" = "2.28" ] || { echo "binary needs glibc > 2.28" >&2; exit 1; }
     # smoke test: the packed AppImage extracts and holds the binary + resources
     - |
-      APP="$(ls dist/LaserGRBL-*-x86_64.AppImage)"
+      APP="dist/LaserGRBL-$VERSION-x86_64.AppImage"
       chmod +x "$APP"
       (cd "$(mktemp -d)" && "$CI_PROJECT_DIR/$APP" --appimage-extract >/dev/null \
         && test -x squashfs-root/usr/bin/lasergrbl \
@@ -133,8 +157,70 @@ build:appimage:
         && test -x squashfs-root/AppRun)
       sha256sum "$APP" | tee "$APP.sha256"
   artifacts:
-    name: "LaserGRBL-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    name: "LaserGRBL-linux-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
     expire_in: 1 month
     paths:
       - dist/LaserGRBL-*-x86_64.AppImage
       - dist/LaserGRBL-*-x86_64.AppImage.sha256
+
+build:windows:
+  extends: .zig-tools
+  script:
+    - rustup target add x86_64-pc-windows-gnu
+    # windows-gnu linked by zig (mingw-w64 libs ship with zig)
+    - cargo zigbuild --release --locked -p lasergrbl --target x86_64-pc-windows-gnu
+    # GUI subsystem (no console window), 64 bit
+    - file target/x86_64-pc-windows-gnu/release/lasergrbl.exe | tee /dev/stderr | grep -qE 'PE32\+ executable.*\(GUI\).*x86-64'
+    # zip: LaserGRBL/lasergrbl.exe + LaserGRBL/resources (looked up next to the exe)
+    - |
+      PKG="LaserGRBL-$VERSION-windows-x86_64"
+      STAGE="$(mktemp -d)/LaserGRBL"
+      mkdir -p "$STAGE" dist
+      cp target/x86_64-pc-windows-gnu/release/lasergrbl.exe "$STAGE/"
+      cp -r resources "$STAGE/resources"
+      cp LICENSE.md "$STAGE/"
+      (cd "$(dirname "$STAGE")" && zip -qr9 "$CI_PROJECT_DIR/dist/$PKG.zip" LaserGRBL)
+      sha256sum "dist/$PKG.zip" | tee "dist/$PKG.zip.sha256"
+  artifacts:
+    name: "LaserGRBL-windows-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    expire_in: 1 month
+    paths:
+      - dist/LaserGRBL-*-windows-x86_64.zip
+      - dist/LaserGRBL-*-windows-x86_64.zip.sha256
+
+build:macos:
+  image: $ZIGBUILD_IMAGE
+  stage: build
+  needs: ["lint:clippy", "test:cargo"]
+  allow_failure: true
+  cache:
+    - *cargo-cache
+  before_script:
+    # image Rust is too old for edition 2024 deps: install ours + both mac targets
+    - rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target aarch64-apple-darwin,x86_64-apple-darwin
+    - rustup default "$RUST_TOOLCHAIN"
+    - rustc --version && cargo --version && cargo zigbuild --version
+    - echo "SDKROOT=$SDKROOT" && test -d "$SDKROOT"
+    - VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/{s/^version *= *"\(.*\)"/\1/p}' Cargo.toml)"
+  script:
+    # universal2 = arm64 + x86_64 in one fat binary
+    - cargo zigbuild --release --locked -p lasergrbl --target universal2-apple-darwin
+    - BIN=target/universal2-apple-darwin/release/lasergrbl
+    # fat Mach-O magic (no `file` needed)
+    - test "$(head -c4 "$BIN" | od -An -tx1 | tr -d ' \n')" = "cafebabe"
+    # tar.gz keeps the exec bit: LaserGRBL/lasergrbl + LaserGRBL/resources
+    - |
+      PKG="LaserGRBL-$VERSION-macos-universal"
+      STAGE="$(mktemp -d)/LaserGRBL"
+      mkdir -p "$STAGE" dist
+      install -m755 "$BIN" "$STAGE/lasergrbl"
+      cp -r resources "$STAGE/resources"
+      cp LICENSE.md "$STAGE/"
+      tar -C "$(dirname "$STAGE")" -czf "dist/$PKG.tar.gz" LaserGRBL
+      sha256sum "dist/$PKG.tar.gz" | tee "dist/$PKG.tar.gz.sha256"
+  artifacts:
+    name: "LaserGRBL-macos-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    expire_in: 1 month
+    paths:
+      - dist/LaserGRBL-*-macos-universal.tar.gz
+      - dist/LaserGRBL-*-macos-universal.tar.gz.sha256

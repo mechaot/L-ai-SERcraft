@@ -60,9 +60,18 @@ graphics drivers always come from the host system. `appimagetool` (pinned, sha25
 ## CI
 
 `.gitlab-ci.yml` (GitLab CE, docker executor): `lint:clippy` (warnings are errors) and `test:cargo` (whole
-workspace incl. golden tests) run in parallel; `build:appimage` runs after both and keeps
-`dist/LaserGRBL-<version>-x86_64.AppImage` (+ `.sha256`) as job artifact for a month. The job fails if the
-binary needs a glibc newer than 2.28. Tool versions (Rust image, cargo-zigbuild, zig) are pinned at the top.
+workspace incl. golden tests) run in parallel. After both, three independent cross builds (cargo-zigbuild on
+the Linux runner) each keep a package + `.sha256` as job artifact for a month:
+
+| job | artifact | notes |
+|---|---|---|
+| `build:linux-appimage` | `LaserGRBL-<v>-x86_64.AppImage` | fails if the binary needs glibc > 2.28 |
+| `build:windows` | `LaserGRBL-<v>-windows-x86_64.zip` | `lasergrbl.exe` (GUI subsystem) + `resources/` |
+| `build:macos` | `LaserGRBL-<v>-macos-universal.tar.gz` | arm64 + x86_64, macOS 11.3 SDK from the cargo-zigbuild image |
+
+The build jobs are `allow_failure: true`: a broken platform never blocks the others. Windows/macOS builds are
+unsigned (SmartScreen warning; on macOS run `xattr -dr com.apple.quarantine LaserGRBL` once). Keep `resources/`
+next to the binary. Tool versions (Rust image, cargo-zigbuild, zig) are pinned at the top of the file.
 
 ## Repository layout
 
