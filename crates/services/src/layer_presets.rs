@@ -29,6 +29,11 @@ fn default_fill_distance() -> f64 {
     0.1
 }
 
+/// Serde default for flags that are on unless stored otherwise. Returns true.
+fn default_true() -> bool {
+    true
+}
+
 /// One named set of layer values.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LayerPreset {
@@ -57,6 +62,9 @@ pub struct LayerPreset {
     /// Second hatch rotated +90 degrees.
     #[serde(default)]
     pub fill_cross: bool,
+    /// Finish each connected fill area before the next (order only).
+    #[serde(default = "default_true")]
+    pub fill_per_shape: bool,
 }
 
 /// Power base for a max PWM value.
@@ -69,7 +77,7 @@ fn base_of(max_pwm: i32) -> i32 {
 impl LayerPreset {
     /// The built-in example preset. Returns "Plywood 4mm engrave" (1 pass, 1000 mm/min, 45 %, M4, All).
     pub fn example() -> Self {
-        Self { name: EXAMPLE_NAME.to_owned(), passes: 1, speed: 1000, power_pct: 45.0, laser_on: "M4".to_owned(), filter: default_filter(), fill: false, fill_distance: default_fill_distance(), fill_angle: 0.0, fill_cross: false }
+        Self { name: EXAMPLE_NAME.to_owned(), passes: 1, speed: 1000, power_pct: 45.0, laser_on: "M4".to_owned(), filter: default_filter(), fill: false, fill_distance: default_fill_distance(), fill_angle: 0.0, fill_cross: false, fill_per_shape: true }
     }
 
     /// S value of the preset.
@@ -259,7 +267,7 @@ mod tests {
     }
 
     fn preset(name: &str, speed: i32) -> LayerPreset {
-        LayerPreset { name: name.into(), passes: 2, speed, power_pct: 30.0, laser_on: "M3".into(), filter: "Red".into(), fill: false, fill_distance: 0.1, fill_angle: 0.0, fill_cross: false }
+        LayerPreset { name: name.into(), passes: 2, speed, power_pct: 30.0, laser_on: "M3".into(), filter: "Red".into(), fill: false, fill_distance: 0.1, fill_angle: 0.0, fill_cross: false, fill_per_shape: true }
     }
 
     #[test]
@@ -351,6 +359,8 @@ mod tests {
         std::fs::write(&f, r#"{"version":1,"presets":[{"name":"x","passes":1,"speed":100,"power_pct":10.0,"laser_on":"M3"}]}"#).unwrap();
         let p = PresetDb::load_from(&f).presets()[0].clone();
         assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (false, 0.1, 0.0, false));
+        // old JSON without the field: per shape on
+        assert!(p.fill_per_shape);
     }
 
     #[test]

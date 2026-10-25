@@ -100,6 +100,14 @@ struct LayerUi {
     /// Second hatch rotated +90 degrees.
     #[serde(default)]
     fill_cross: bool,
+    /// Finish each connected fill area before the next.
+    #[serde(default = "default_true")]
+    fill_per_shape: bool,
+}
+
+/// Serde default for flags that are on unless stored otherwise. Returns true.
+fn default_true() -> bool {
+    true
 }
 
 /// Serde default of [`LayerUi::fill_distance`] (mm).
@@ -266,6 +274,7 @@ impl ParamsDock {
             fill_distance: default_fill_distance(),
             fill_angle: 0,
             fill_cross: false,
+            fill_per_shape: true,
         }
     }
 
@@ -334,16 +343,19 @@ impl ParamsDock {
         self.revision += 1;
     }
 
-    /// Dev hook (`LASERGRBL_DEV_SEQ` `fill=N` / `nofill=N` / `cross=N` / `nocross=N`): set fill flags of layer `i`.
+    /// Dev hook (`LASERGRBL_DEV_SEQ` `fill=N` / `nofill=N` / `cross=N` / `nocross=N` / `pershape=N` / `nopershape=N`): set fill flags of layer `i`.
     ///
-    /// `i`: layer index. `fill`: new fill flag (None = keep). `cross`: new cross flag (None = keep).
-    pub fn dev_set_fill(&mut self, i: usize, fill: Option<bool>, cross: Option<bool>) {
+    /// `i`: layer index. `fill`: new fill flag (None = keep). `cross`: new cross flag (None = keep). `per_shape`: new per-shape flag (None = keep).
+    pub fn dev_set_fill(&mut self, i: usize, fill: Option<bool>, cross: Option<bool>, per_shape: Option<bool>) {
         let Some((_, l)) = self.layers.get_mut(i) else { return };
         if let Some(f) = fill {
             l.fill = f;
         }
         if let Some(c) = cross {
             l.fill_cross = c;
+        }
+        if let Some(p) = per_shape {
+            l.fill_per_shape = p;
         }
         self.mark_dirty();
         self.revision += 1;
@@ -381,7 +393,7 @@ impl ParamsDock {
                 power_max: l.max_power,
                 laser_on: LASER_OPTIONS[l.laser_on].1.to_owned(),
                 filter: FILTER_OPTIONS[l.filter],
-                fill: l.fill.then_some(HatchFill { distance_mm: l.fill_distance as f64, angle_deg: l.fill_angle as f64, cross: l.fill_cross }),
+                fill: l.fill.then_some(HatchFill { distance_mm: l.fill_distance as f64, angle_deg: l.fill_angle as f64, cross: l.fill_cross, per_shape: l.fill_per_shape }),
             })
             .collect()
     }
@@ -554,6 +566,7 @@ impl ParamsDock {
         c.fill_distance = p.fill_distance.clamp(0.01, 10.0) as f32;
         c.fill_angle = (p.fill_angle.round() as i32).clamp(0, 360);
         c.fill_cross = p.fill_cross;
+        c.fill_per_shape = p.fill_per_shape;
         c.preset = Some(p.name.clone());
         lg_base::settings::set(PRESET_KEY, Some(p.name.clone()));
         self.preset_name = p.name;
@@ -587,6 +600,7 @@ impl ParamsDock {
             fill_distance: round2(c.fill_distance as f64),
             fill_angle: c.fill_angle as f64,
             fill_cross: c.fill_cross,
+            fill_per_shape: c.fill_per_shape,
         };
         let res = self.presets_db.lock().unwrap_or_else(|e| e.into_inner()).upsert(p);
         match res {
@@ -619,6 +633,7 @@ impl ParamsDock {
                 || round2(p.fill_distance) != round2(c.fill_distance as f64)
                 || p.fill_angle.round() as i32 != c.fill_angle
                 || p.fill_cross != c.fill_cross
+                || p.fill_per_shape != c.fill_per_shape
         })
     }
 
@@ -900,6 +915,11 @@ impl ParamsDock {
                     self.cur_mut().fill_cross = cross;
                     *edited = true;
                 }
+                let mut per_shape = self.cur().fill_per_shape;
+                if ui.checkbox(&mut per_shape, tr_plain("ParamsDock.FillPerShape")).on_hover_text(tr_plain("ParamsDock.FillPerShapeTip")).changed() {
+                    self.cur_mut().fill_per_shape = per_shape;
+                    *edited = true;
+                }
             });
         });
     }
@@ -1093,13 +1113,14 @@ mod tests {
         let mut d = new_dock();
         {
             let c = d.cur_mut();
-            (c.fill, c.fill_distance, c.fill_angle, c.fill_cross) = (true, 0.25, 45, true);
+            (c.fill, c.fill_distance, c.fill_angle, c.fill_cross, c.fill_per_shape) = (true, 0.25, 45, true, false);
         }
         d.preset_name = "Hatch".into();
         d.save_preset();
         assert!(!d.preset_modified());
         let p = d.presets.iter().find(|p| p.name == "Hatch").unwrap().clone();
         assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (true, 0.25, 45.0, true));
+        assert!(!p.fill_per_shape);
         // edit one value: modified
         d.cur_mut().fill_angle = 50;
         assert!(d.preset_modified());
@@ -1109,11 +1130,11 @@ mod tests {
         d.cur_mut().fill = false;
         d.select_preset(i);
         let c = d.cur();
-        assert_eq!((c.fill, c.fill_angle, c.fill_cross), (true, 45, true));
+        assert_eq!((c.fill, c.fill_angle, c.fill_cross, c.fill_per_shape), (true, 45, true, false));
         assert!((c.fill_distance - 0.25).abs() < 1e-6);
         // layer params carry the fill
         let lp = d.layer_params();
-        assert_eq!(lp[0].fill, Some(HatchFill { distance_mm: 0.25f32 as f64, angle_deg: 45.0, cross: true }));
+        assert_eq!(lp[0].fill, Some(HatchFill { distance_mm: 0.25f32 as f64, angle_deg: 45.0, cross: true, per_shape: false }));
     }
 
     #[test]
@@ -1727,6 +1748,70 @@ mod e2e {
         h.settle();
         assert_eq!(h.all_lines(), base);
         assert!(h.file_loaded_events() >= 1, "fill off must make the preview rebuild");
+        let _ = std::fs::remove_file(&p);
+    }
+
+    /// Two rects 20x10 (X 10..30 and 50..70, Y 70..80 in G-code) and an open polyline, one layer.
+    const TWO_RECTS_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <g id="a"><rect x="10" y="20" width="20" height="10" style="stroke:#000000;fill:none"/>
+  <rect x="50" y="20" width="20" height="10" style="stroke:#000000;fill:none"/>
+  <polyline points="50,10 70,10 70,15" style="stroke:#000000;fill:none"/></g>
+</svg>"##;
+
+    /// Pen-down G1 segments of a program as sorted unordered endpoint pairs (rounded to 1e-3).
+    fn burned(lines: &[String]) -> Vec<[i64; 4]> {
+        let r = |v: f64| (v * 1e3).round() as i64;
+        let m = moves(lines);
+        let mut v: Vec<[i64; 4]> = m
+            .windows(2)
+            .filter(|w| w[1].0)
+            .map(|w| {
+                let (p, q) = ((r(w[0].1), r(w[0].2)), (r(w[1].1), r(w[1].2)));
+                let (lo, hi) = if p <= q { (p, q) } else { (q, p) };
+                [lo.0, lo.1, hi.0, hi.1]
+            })
+            .collect();
+        v.sort();
+        v
+    }
+
+    #[test]
+    fn fill_per_shape_toggle_keeps_lines() {
+        let _g = settings_guard();
+        let p = std::env::temp_dir().join(format!("lg-e2e-pershape-{}.svg", std::process::id()));
+        std::fs::write(&p, TWO_RECTS_SVG).unwrap();
+        let mut h = Harness::new();
+        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h.wait());
+        h.frame(vec![]);
+        let base = h.all_lines();
+
+        // fill on (per shape is on by default)
+        h.click_text(&tr_plain("ParamsDock.FillEnabled"));
+        h.type_into("params-fill-distance", "1");
+        h.type_into("params-fill-angle", "0");
+        h.settle();
+        let a = h.all_lines();
+        let rows_a = fill_pairs(&a, &base);
+        assert_eq!(rows_a.len(), 20, "{rows_a:?}");
+        // left rect (x < 40) fully before right rect
+        assert!(rows_a[..10].iter().all(|(s, e)| s.0 < 40.0 && e.0 < 40.0), "{rows_a:?}");
+        assert!(rows_a[10..].iter().all(|(s, e)| s.0 > 40.0 && e.0 > 40.0), "{rows_a:?}");
+
+        // per shape off: row by row, shapes interleave
+        h.click_text(&tr_plain("ParamsDock.FillPerShape"));
+        h.settle();
+        let b = h.all_lines();
+        assert_ne!(a, b);
+        assert_eq!(burned(&a), burned(&b));
+        let rows_b = fill_pairs(&b, &base);
+        assert_eq!(rows_b.len(), 20);
+        assert!(rows_b[0].0.0 < 40.0 && rows_b[1].0.0 > 40.0, "{rows_b:?}");
+
+        // on again: identical to the first program
+        h.click_text(&tr_plain("ParamsDock.FillPerShape"));
+        h.settle();
+        assert_eq!(h.all_lines(), a);
         let _ = std::fs::remove_file(&p);
     }
 

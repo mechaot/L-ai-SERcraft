@@ -45,14 +45,17 @@ fn moves(sec: &str) -> Vec<(bool, f64, f64)> {
 }
 
 /// Fill segments: moves after the outline moves of `base`, as (G0 start, G1 end) pairs. `sec`: layer text. `base`: same layer without fill.
-fn pairs(sec: &str, base: &str) -> Vec<((f64, f64), (f64, f64))> {
+fn pairs(sec: &str, base: &str) -> Vec<Pair> {
     let m = moves(sec);
     let nb = moves(base).len();
     m[nb..].chunks(2).filter(|c| c.len() == 2 && !c[0].0 && c[1].0).map(|c| ((c[0].1, c[0].2), (c[1].1, c[1].2))).collect()
 }
 
+/// Fill segment: (G0 start, G1 end).
+type Pair = ((f64, f64), (f64, f64));
+
 fn f(d: f64, a: f64, cross: bool) -> Option<HatchFill> {
-    Some(HatchFill { distance_mm: d, angle_deg: a, cross })
+    Some(HatchFill { distance_mm: d, angle_deg: a, cross, per_shape: false })
 }
 
 #[test]
@@ -135,4 +138,26 @@ fn color_filter_excludes_shape() {
     let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><g><rect style="stroke:#00ff00;fill:none" x="10" y="20" width="20" height="10"/></g></svg>"##;
     let red = |l: &mut LayerParams| l.filter = ColorFilter::Red;
     assert_eq!(conv(svg, None, red), conv(svg, f(1.0, 0.0, false), red));
+}
+
+#[test]
+fn per_shape_same_segments_other_order() {
+    let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><g><rect x="10" y="20" width="10" height="5"/><rect x="40" y="20" width="10" height="5"/></g></svg>"#;
+    let base = conv(svg, None, |_| {});
+    let mk = |per_shape| pairs(&conv(svg, Some(HatchFill { distance_mm: 1.0, angle_deg: 0.0, cross: false, per_shape }), |_| {}), &base);
+    let (on, off) = (mk(true), mk(false));
+    assert_eq!(on.len(), 10);
+    assert_ne!(on, off);
+    // unordered endpoint pairs, rounded to 1e-3
+    let norm = |v: &[Pair]| {
+        let r = |p: (f64, f64)| ((p.0 * 1e3).round() as i64, (p.1 * 1e3).round() as i64);
+        let mut o: Vec<_> = v.iter().map(|(a, b)| (r(*a).min(r(*b)), r(*a).max(r(*b)))).collect();
+        o.sort();
+        o
+    };
+    assert_eq!(norm(&on), norm(&off));
+    // per shape: left shape (x < 30) first, contiguous
+    assert!(on[..5].iter().all(|(a, _)| a.0 < 30.0) && on[5..].iter().all(|(a, _)| a.0 > 30.0));
+    // row mode alternates shapes
+    assert!(off[0].0.0 < 30.0 && off[1].0.0 > 30.0);
 }

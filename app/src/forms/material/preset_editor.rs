@@ -107,7 +107,11 @@ impl PresetEditor {
                         });
                         row.col(|ui| {
                             // "x" marks cross hatch
-                            let t = if p.fill { format!("{:.2} mm · {}°{}", p.fill_distance, p.fill_angle.round(), if p.fill_cross { " · x" } else { "" }) } else { "—".to_owned() };
+                            let mut t = if p.fill { format!("{:.2} mm · {}°{}", p.fill_distance, p.fill_angle.round(), if p.fill_cross { " · x" } else { "" }) } else { "—".to_owned() };
+                            // per shape order tag
+                            if p.fill && p.fill_per_shape {
+                                t.push_str(&format!(" · {}", tr("Presets.PerShape")));
+                            }
                             ui.label(t);
                         });
                         row.col(|ui| {
