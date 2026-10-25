@@ -1,11 +1,10 @@
 // Golden generator for lg-services: reference data written by the original code under Mono.
-//   args: <outdir> <StandardMaterials.psh>
+//   args: <outdir>
 // Outputs:
 //   keys.txt              code <TAB> KeysConverter text, for every Keys code 0..255 plus modifier combos
 //   hotkeys_default.txt   default HotKeysManager table (sorted): action, value, keys int, KeysConverter text
 //   project_sample.lps    Project.StoreSettings output (2 entries, enums/decimal/bool/int/string values)
 //   project_sample.txt    description of the stored values
-//   materials_*.txt/psh   MaterialDB.Load results, queries and the file SaveChanges writes
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +20,6 @@ static class GenServices
         Directory.CreateDirectory(outdir);
         Hotkeys(outdir);
         Project(outdir);
-        Material(outdir, args[1]);
     }
 
     static string KeyText(Keys k)
@@ -100,44 +98,5 @@ static class GenServices
             foreach (var kv in back[i])
                 sb.AppendLine(i + "\t" + kv.Key + "\t" + kv.Value.GetType().FullName + "\t" + Convert.ToString(kv.Value, System.Globalization.CultureInfo.InvariantCulture));
         File.WriteAllText(Path.Combine(outdir, "project_sample.txt"), sb.ToString());
-    }
-
-    static void Material(string outdir, string stdpsh)
-    {
-        string data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LaserGRBL");
-        Directory.CreateDirectory(data);
-        File.Copy(stdpsh, Path.Combine(data, "StandardMaterials.psh"), true);
-        var db = LaserGRBL.PSHelper.MaterialDB.Load();
-        var sb = new StringBuilder();
-        sb.AppendLine("rows\t" + db.Materials.Rows.Count);
-        var T = db.Materials;
-        var flags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
-        Func<string, object[], object> call = (n, a) => T.GetType().GetMethod(n, flags).Invoke(T, a);
-        var models = (object[])call("Models", new object[0]);
-        sb.AppendLine("models\t" + string.Join("|", Array.ConvertAll(models, x => (string)x)));
-        var m0 = (string)models[0];
-        var mats = (object[])call("Materials", new object[] { m0 });
-        sb.AppendLine("materials(" + m0 + ")\t" + string.Join("|", Array.ConvertAll(mats, x => (string)x)));
-        var m1 = (string)mats[0];
-        var acts = (object[])call("Actions", new object[] { m0, m1 });
-        sb.AppendLine("actions(" + m0 + "," + m1 + ")\t" + string.Join("|", Array.ConvertAll(acts, x => (string)x)));
-        var a0 = (string)acts[0];
-        var th = (object[])call("Thickness", new object[] { m0, m1, a0 });
-        sb.AppendLine("thickness\t" + string.Join("|", Array.ConvertAll(th, x => (string)x)));
-        var row = (LaserGRBL.PSHelper.MaterialDB.MaterialsRow)call("GetResult", new object[] { m0, m1, a0, (string)th[0] });
-        sb.AppendLine("result\t" + row.id + "\t" + row.Power + "\t" + row.Speed + "\t" + row.Cycles + "\t" + row.Remarks);
-        File.WriteAllText(Path.Combine(outdir, "materials_queries.txt"), sb.ToString());
-
-        // modify + add + delete, then save
-        T.Rows[0]["Power"] = 55;
-        T.AddMaterialsRow(new Guid("11111111-2222-3333-4444-555555555555"), true, "Test <Laser> & Co", "Mat \"x\"", "2mm", "Cut", 80, 300, 2, "line1\nline2");
-        T.AddMaterialsRow(new Guid("11111111-2222-3333-4444-555555555556"), false, "Test <Laser> & Co", "Mat2", "", "Engrave", 10, 3000, 1, "");
-        T.Rows[1].Delete();
-        db.GetType().GetMethod("SaveChanges", flags).Invoke(db, null);
-        File.Copy(Path.Combine(data, "UserMaterials.psh"), Path.Combine(outdir, "materials_saved.psh"), true);
-
-        // reload: user file wins, server rows missing from user file are imported as new
-        var db2 = LaserGRBL.PSHelper.MaterialDB.Load();
-        File.WriteAllText(Path.Combine(outdir, "materials_reload.txt"), "rows\t" + db2.Materials.Rows.Count + "\nnew\t" + db2.GetType().GetMethod("GetNewCount", flags).Invoke(db2, null) + "\n");
     }
 }

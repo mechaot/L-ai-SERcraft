@@ -1,25 +1,26 @@
 #![allow(dead_code, clippy::collapsible_if, clippy::collapsible_match, clippy::too_many_arguments, clippy::type_complexity)]
-//! Material power/speed helper (WP-U3): `PSHelper/PSHelperForm.cs` and `PSHelper/PSEditorForm.cs`.
+//! Named layer presets (replaces the C# material helper `PSHelper/*`, intentional deviation).
 //!
-//! The C# `GrblCore.MaterialDB` static becomes a shared handle ([`SharedMaterialDb`]); the core
-//! can hand its own instance to the forms, [`default_db`] is a process wide fallback.
+//! The preset DB is a shared handle ([`SharedPresetDb`]); [`default_presets`] is the process wide
+//! instance loaded from `<config dir>/LaserGRBL/LayerPresets.json`. [`PresetEditor`] lists and
+//! deletes presets, [`PresetPickerForm`] is the picker of the raster import "P/S helper" button.
 
-use lg_services::material_db::MaterialDb;
+use lg_services::layer_presets::PresetDb;
 use std::sync::{Arc, Mutex, OnceLock};
 
-pub mod ps_editor;
-pub mod ps_helper;
+pub mod preset_editor;
+pub mod preset_picker;
 
-pub use ps_editor::MaterialEditor;
-pub use ps_helper::PsHelperForm;
+pub use preset_editor::PresetEditor;
+pub use preset_picker::PresetPickerForm;
 
-/// Shared material database (`GrblCore.MaterialDB`).
-pub type SharedMaterialDb = Arc<Mutex<MaterialDb>>;
+/// Shared preset database.
+pub type SharedPresetDb = Arc<Mutex<PresetDb>>;
 
-/// Process wide database loaded on first use (`MaterialDB.Load()`).
+/// Process wide database, loaded on first use (eager at app start).
 ///
 /// Returns a clone of the shared handle.
-pub fn default_db() -> SharedMaterialDb {
-    static DB: OnceLock<SharedMaterialDb> = OnceLock::new();
-    DB.get_or_init(|| Arc::new(Mutex::new(MaterialDb::load()))).clone()
+pub fn default_presets() -> SharedPresetDb {
+    static DB: OnceLock<SharedPresetDb> = OnceLock::new();
+    DB.get_or_init(|| Arc::new(Mutex::new(PresetDb::load()))).clone()
 }

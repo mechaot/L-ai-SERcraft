@@ -2864,64 +2864,70 @@ Vendored libraries are not listed (see PLAN.md §6).
 
 ## `PSHelper/MaterialDB.cs` (WP-C2)
 
+Status: REPLACED by named layer presets (`crates/services/src/layer_presets.rs`, `app/src/forms/material/`), see docs/AUDIT_UI_DIALOGS.md.
+
 | member | status | Rust location / reason |
 |---|---|---|
-| `class MaterialDB` | DONE | crates/services/src/material_db.rs |
-| `class MaterialsDataTable` | DONE | crates/services/src/material_db.rs |
-| `method EndInit` | DONE | crates/services/src/material_db.rs |
-| `method MaterialsDataTable_TableNewRow` | DONE | crates/services/src/material_db.rs |
-| `method OnTableNewRow` | DONE | crates/services/src/material_db.rs |
-| `method GetLastNotDeleted` | DONE | crates/services/src/material_db.rs |
-| `method OnColumnChanging` | DONE | crates/services/src/material_db.rs |
-| `property EnabledRows` | DONE | crates/services/src/material_db.rs |
-| `method Models` | DONE | crates/services/src/material_db.rs |
-| `method Materials` | DONE | crates/services/src/material_db.rs |
-| `method Thickness` | DONE | crates/services/src/material_db.rs |
-| `method Actions` | DONE | crates/services/src/material_db.rs |
-| `method GetResult` | DONE | crates/services/src/material_db.rs |
-| `field FromServer` | DONE | crates/services/src/material_db.rs |
-| `method Load` | DONE | crates/services/src/material_db.rs |
-| `method SaveChanges` | DONE | crates/services/src/material_db.rs |
-| `method GetNewCount` | DONE | crates/services/src/material_db.rs |
-| `method ImportServer` | DONE | crates/services/src/material_db.rs |
-| `property UserFile` | DONE | crates/services/src/material_db.rs |
-| `property ServerFile` | DONE | crates/services/src/material_db.rs |
+| `class MaterialDB` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `class MaterialsDataTable` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method EndInit` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method MaterialsDataTable_TableNewRow` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method OnTableNewRow` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method GetLastNotDeleted` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method OnColumnChanging` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property EnabledRows` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Models` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Materials` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Thickness` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Actions` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method GetResult` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `field FromServer` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Load` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method SaveChanges` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method GetNewCount` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method ImportServer` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property UserFile` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property ServerFile` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
 
 ## `PSHelper/PSEditorForm.cs` (WP-U3)
 
+Status: REPLACED by named layer presets (`crates/services/src/layer_presets.rs`, `app/src/forms/material/`), see docs/AUDIT_UI_DIALOGS.md.
+
 | member | status | Rust location / reason |
 |---|---|---|
-| `class PSEditorForm` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `ctor PSEditorForm` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method CreateAndShowDialog` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method PSEditorForm_FormClosing` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method BtnImport_Click` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method DG_DataError` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method DG_CellParsing` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method StripNonNumber` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method Paste` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method GetInt` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
-| `method DG_KeyDown` | DONE | app/src/forms/material/ps_editor.rs (`MaterialEditor`) |
+| `class PSEditorForm` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `ctor PSEditorForm` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CreateAndShowDialog` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method PSEditorForm_FormClosing` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method BtnImport_Click` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method DG_DataError` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method DG_CellParsing` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method StripNonNumber` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method Paste` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method GetInt` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method DG_KeyDown` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
 
 ## `PSHelper/PSHelperForm.cs` (WP-U3)
 
+Status: REPLACED by named layer presets (`crates/services/src/layer_presets.rs`, `app/src/forms/material/`), see docs/AUDIT_UI_DIALOGS.md.
+
 | member | status | Rust location / reason |
 |---|---|---|
-| `class PSHelperForm` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `ctor PSHelperForm` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method SetDefault` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method CreateAndShowDialog` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method InitModels` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method CbModel_SelectedIndexChanged` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `property SelectedModel` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `property SelectedMaterial` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `property SelectedAction` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `property SelectedThickness` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method CbMaterial_SelectedIndexChanged` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method CbAction_SelectedIndexChanged` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method CbThickness_SelectedIndexChanged` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method BtnApply_Click` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
-| `method BtnCancel_Click` | DONE | app/src/forms/material/ps_helper.rs (`PsHelperForm`) |
+| `class PSHelperForm` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `ctor PSHelperForm` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method SetDefault` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CreateAndShowDialog` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method InitModels` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CbModel_SelectedIndexChanged` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property SelectedModel` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property SelectedMaterial` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property SelectedAction` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `property SelectedThickness` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CbMaterial_SelectedIndexChanged` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CbAction_SelectedIndexChanged` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method CbThickness_SelectedIndexChanged` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method BtnApply_Click` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
+| `method BtnCancel_Click` | REPLACED | layer presets (docs/AUDIT_UI_DIALOGS.md) |
 
 ## `PreviewForm.cs` (WP-U2)
 

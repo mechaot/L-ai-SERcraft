@@ -90,7 +90,7 @@ right place. After adding or renaming source files, run `python3 -I tools/gen_so
 | `crates/base` | settings, paths, logger, timers/threads, CSV dictionaries, .NET BinaryFormatter (NRBF) reader/writer, sound, telegram |
 | `crates/gcode` | G-code command model, parser state, `GrblFile` (load/analyse/raster/vector/SVG/generators), GRBL config |
 | `crates/core` | `GrblCore` streaming engine (+ Marlin/Smoothie/Vigo), serial/telnet/websocket/emulator links, built-in GRBL emulator, laser life, multi-instance start |
-| `crates/services` | image processor, autotrace, projects, hotkeys, custom buttons, material DB, firmware flashing, WiFi discovery |
+| `crates/services` | image processor, autotrace, projects, hotkeys, custom buttons, layer presets, firmware flashing, WiFi discovery |
 | `app` | the egui application (all forms, preview renderer, theming, icons, i18n) |
 | `resources` | CSV code tables, sounds, icons, firmware images, translations (`resources/README.md`) |
 | `tests/golden` | reference outputs produced by the original C# code |

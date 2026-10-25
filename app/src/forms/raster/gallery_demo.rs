@@ -7,14 +7,14 @@ use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 use super::{RasterImport, RasterOutcome};
-use crate::forms::material::MaterialEditor;
+use crate::forms::material::PresetEditor;
 
 /// State of the gallery tab.
 pub struct RasterDemo {
     file: Arc<RwLock<GrblFile>>,
     path: PathBuf,
     dialog: Option<RasterImport>,
-    editor: Option<MaterialEditor>,
+    editor: Option<PresetEditor>,
     status: String,
     auto_open: bool,
     frames: u32,
@@ -51,8 +51,8 @@ impl RasterDemo {
             if ui.button("Open raster import").clicked() || std::mem::take(&mut self.auto_open) {
                 self.open();
             }
-            if ui.button("Open material editor").clicked() || (self.frames == 2 && std::env::var_os("LASERGRBL_RASTER_EDITOR").is_some()) {
-                self.editor = Some(MaterialEditor::new(crate::forms::material::default_db()));
+            if ui.button("Open preset editor").clicked() || (self.frames == 2 && std::env::var_os("LASERGRBL_RASTER_EDITOR").is_some()) {
+                self.editor = Some(PresetEditor::new(crate::forms::material::default_presets()));
             }
         });
         if !self.status.is_empty() {

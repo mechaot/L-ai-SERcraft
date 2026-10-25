@@ -4,11 +4,11 @@
 use eframe::egui::{self, Align, Key, Layout, Ui, Vec2};
 use lg_dotnet::{dec_div, decimal_to_f32, fmt_decimal_custom, Decimal};
 use lg_services::image_processor::{ImageProcessor, Tool};
-use lg_services::material_db::MaterialRow;
+use lg_services::layer_presets::LayerPreset;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use super::{form_modal_x, tip};
-use crate::forms::material::{PsHelperForm, SharedMaterialDb};
+use crate::forms::material::{PresetPickerForm, SharedPresetDb};
 use crate::ui::dialog::{DialogResult, MessageBox, MessageBoxButtons, MessageBoxHost, MessageBoxIcon};
 use crate::ui::i18n::{tr, tr_fmt, tr_plain};
 use crate::ui::widgets::{flat_combo, grbl_group_box, DecimalInputRanged, GrblButton, ImageButton, IntegerInputRanged};
@@ -36,12 +36,14 @@ enum Msg {
 pub struct ConvertSizeForm {
     uid: u64,
     support_pwm: bool,
-    db: SharedMaterialDb,
+    db: SharedPresetDb,
     // limits (AssignMinMaxLimit)
     table_w: i32,
     table_h: i32,
     max_rate_x: i32,
     max_pwm: i32,
+    /// Firmware is in laser mode ($32=1).
+    laser_mode: bool,
     off_min_x: f32,
     off_min_y: f32,
     // values
@@ -66,15 +68,15 @@ pub struct ConvertSizeForm {
     file_dpi: i32,
     true_width: u32,
     msgs: MessageBoxHost<Msg>,
-    ps: Option<PsHelperForm>,
+    ps: Option<PresetPickerForm>,
 }
 
 impl ConvertSizeForm {
     /// Ctor + `ShowDialog(parent, processor)` initialisation.
     ///
     /// `ip`: image processor to configure (its `gcode` options are filled from settings).
-    /// `db`: material database for the P/S helper button. Returns the form ready to show.
-    pub fn new(ip: &mut ImageProcessor, db: SharedMaterialDb) -> Self {
+    /// `db`: layer preset database for the P/S helper button. Returns the form ready to show.
+    pub fn new(ip: &mut ImageProcessor, db: SharedPresetDb) -> Self {
         let support_pwm: bool = lg_base::settings::get("Support Hardware PWM", true);
         let cfg = lg_gcode::configuration::configuration();
         // AssignMinMaxLimit (the C# try/catch never fires: config getters have defaults)
@@ -91,6 +93,7 @@ impl ConvertSizeForm {
             table_h,
             max_rate_x,
             max_pwm,
+            laser_mode: cfg.laser_mode(),
             off_min_x,
             off_min_y,
             border_speed: 1000,
@@ -251,8 +254,8 @@ impl ConvertSizeForm {
         if let Some(ps) = &mut self.ps {
             if let Some(r) = ps.show(ctx) {
                 self.ps = None;
-                if let Some(row) = r {
-                    self.apply_material(&row);
+                if let Some(p) = r {
+                    self.apply_material(&p);
                 }
             }
         }
@@ -272,15 +275,20 @@ impl ConvertSizeForm {
         result
     }
 
-    /// `BtnPSHelper_Click` result handling.
-    fn apply_material(&mut self, row: &MaterialRow) {
+    /// `BtnPSHelper_Click` result handling (picked layer preset).
+    ///
+    /// `p`: preset; speed, power and laser mode are used, passes and filter are ignored.
+    fn apply_material(&mut self, p: &LayerPreset) {
         if self.show_border {
-            self.border_speed = row.speed;
+            self.border_speed = p.speed;
         }
         if self.show_filling {
-            self.mark_speed = row.speed;
+            self.mark_speed = p.speed;
         }
-        self.max_power = self.max_pwm * row.power / 100;
+        self.max_power = p.power_s(self.max_pwm);
+        // M4 only when firmware is in laser mode (same rule as init)
+        let idx = LASER_OPTIONS.iter().position(|o| o.1 == p.laser_on).unwrap_or(0);
+        self.laser_sel = Some(if idx == 1 && !self.laser_mode { 0 } else { idx });
     }
 
     /// Form body.
@@ -460,7 +468,7 @@ impl ConvertSizeForm {
     fn ps_button(&mut self, ui: &mut Ui) {
         let r = ui.add(ImageButton::new("mdi-database").size(Vec2::splat(17.0)));
         if tip(r, P, "BtnPSHelper").clicked() && self.ps.is_none() {
-            self.ps = Some(PsHelperForm::new(self.db.clone()));
+            self.ps = Some(PresetPickerForm::new(self.db.clone()));
         }
     }
 }

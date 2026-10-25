@@ -23,7 +23,7 @@ code to its Rust location; `PLAN.md` records the original design decisions.
 ```
 app (lasergrbl binary, egui)                       forms, preview renderer, theme/icons/i18n
  ├── lasergrbl-core   (crates/core)                GrblCore engine, com links, emulator, laser life
- ├── lg-services      (crates/services)            image processor, hotkeys, custom buttons, projects, material DB,
+ ├── lg-services      (crates/services)            image processor, hotkeys, custom buttons, projects, layer presets,
  │                                                 autotrace, avrdude, wifi discovery
  │      both ↓
  ├── lg-gcode         (crates/gcode)               GrblCommand, StateBuilder, GrblFile (+generators), GrblConfST
@@ -91,7 +91,8 @@ RasterImport dialog (app/forms/raster) ──► lg_services::ImageProcessor
                                                      GrblFile::load_image_centerline (autotrace → lg-svg2gcode)
 SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
                                                      (auto regen: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
-                                                      not used by the golden paths; returns each layer's command range for the preview highlight/hide)
+                                                      not used by the golden paths; returns each layer's command range for the preview highlight/hide;
+                                                      optional per-layer hatch fill (hatch.rs) of closed curves, per connected area or row by row, emitted as normal burn lines after each pass's outline)
 ```
 
 ### 3.5 Persistence
@@ -102,7 +103,7 @@ SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFil
 | `CustomButtons.json` | custom buttons (`.zbn` import/export = NRBF) | `lg_services::custom_button`, `lg_base::nrbf` |
 | `LaserLifeCounter.json` (+`.old`) | laser module usage | `lasergrbl_core::laser_life` |
 | `UsageStats.json` | local counters | `lasergrbl_core::usage_stats` |
-| `UserMaterials.psh` | material DB (DataSet XML) | `lg_services::material_db` |
+| `LayerPresets.json` | named layer presets (JSON, `<config dir>/LaserGRBL/`: `~/.config` Linux, `%APPDATA%` Windows, `~/Library/Application Support` macOS) | `lg_services::layer_presets` |
 | `GrblEmulator.v11.json` | emulator `$` config | `lasergrbl_core::emulator` |
 | `sessionlog.txt`, com log | logs | `lg_base::logger` |
 Windows `LaserGRBL.Settings.bin`, `.zbn`, `.lps` are BinaryFormatter files read by `lg_base::nrbf`.
