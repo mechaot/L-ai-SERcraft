@@ -106,6 +106,13 @@ The build jobs are `allow_failure: true`: a broken platform never blocks the oth
 unsigned (SmartScreen warning; on macOS run `xattr -dr com.apple.quarantine L-ai-SERctrl` once). Keep `resources/`
 next to the binary. Tool versions (Rust image, cargo-zigbuild, zig) are pinned at the top of the file.
 
+`.github/workflows/ci.yml` (GitHub Actions, GitHub-hosted runners) runs the same checks and packages. Windows
+(MSVC, static CRT) and macOS (arm64 + x86_64 merged with `lipo`, ad-hoc signed) build natively on their own
+runners; the AppImage uses the same zigbuild script and glibc 2.28 gate. Tests also run on Windows and macOS
+for information only. Every run keeps its packages as workflow artifacts for 30 days. A push to `master` replaces
+the rolling pre-release `nightly`. A `v<version>` tag that matches the `Cargo.toml` version creates a GitHub
+Release with all packages and `SHA256SUMS.txt`. Keep the pinned tool versions in sync with `.gitlab-ci.yml`.
+
 ## Repository layout
 
 Before editing, read [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (layers, threads, data flow, rules) and

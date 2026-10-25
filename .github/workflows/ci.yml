@@ -1,0 +1,410 @@
+# L-ai-SERctrl (Rust, based on LaserGRBL) -- CI for GitHub Actions (GitHub-hosted runners).
+#
+# Mirrors .gitlab-ci.yml, but Windows and macOS build natively on their own runners
+# (GitLab cross-builds everything on Linux).
+#
+#   lint            clippy -D warnings, SPDX headers, tag == Cargo version   | ubuntu
+#   test            cargo test, whole workspace incl. golden tests           | ubuntu (gates), windows + macos (info)
+#   build-linux     portable AppImage (zigbuild, glibc 2.28 baseline)        | ubuntu  -> artifact
+#   build-windows   x86_64 MSVC .exe (static CRT) + resources, zip           | windows -> artifact
+#   build-macos     universal2 (arm64 + x86_64, lipo) + resources, tar.gz    | macos   -> artifact
+#   build-source    git archive of the tree (GPLv3 s.6)                      | ubuntu  -> artifact
+#   release         push to master: rolling pre-release `nightly`            | ubuntu  -> GitHub Release
+#                   tag v*: release named after the tag
+#
+# Downloads: every run keeps its packages as workflow artifacts (Actions tab, needs a GitHub login,
+# 30 days). Master and v* tags also publish them as Release assets (public, no login).
+#
+# Builds need lint + the Linux tests. On branches/PRs/master a broken platform never blocks the others
+# (continue-on-error, like GitLab's allow_failure); on v* tags every platform must build.
+# Windows/macOS tests are informational only (continue-on-error).
+#
+# Legal files: zip/tarball hold LICENSE.md, NOTICE.md, CHANGELOG.md and a fresh THIRD_PARTY_LICENSES.txt
+# (tools/gen_third_party.py) next to the binary; the AppImage holds them under usr/share/doc/laiserctrl.
+# The source tarball is offered next to the binaries (Corresponding Source, GPLv3 section 6).
+#
+# Unsigned builds. macOS binary is ad-hoc signed only (arm64 needs a signature to run at all).
+#
+# Caches: cargo download cache keyed by OS + Cargo.lock, plus pinned zig/cargo-zigbuild/appimagetool.
+# `target/` is not cached (tens of GB, the repo cache quota is 10 GB).
+#
+# Actions are pinned by commit SHA (tag in the comment). Tool versions: env block below.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+# Least privilege: read only; `release` alone gets contents: write.
+permissions:
+  contents: read
+
+# One run per ref. Never cancel master/tag runs: a cancelled release job could leave `nightly` half-built.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  # Pinned tools: bump deliberately (keep in sync with .gitlab-ci.yml). Rust >= 1.95 (edition 2024).
+  RUST_TOOLCHAIN: "1.99.0"
+  CARGO_ZIGBUILD_VERSION: "0.23.4"
+  ZIGLANG_VERSION: "0.17.0"           # PyPI `ziglang`: zig as a pip package
+  MACOSX_DEPLOYMENT_TARGET: "11.0"    # same baseline as GitLab (macOS 11.3 SDK)
+
+  CARGO_INCREMENTAL: "0"
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  PYTHONUTF8: "1"                     # Windows Python: utf-8 stdio/files
+
+defaults:
+  run:
+    shell: bash                       # Git Bash on Windows
+
+jobs:
+  # ------------------------------------------------------------------ lint ------
+  lint:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --component clippy
+          rustup default "$RUST_TOOLCHAIN"
+          rustc --version && cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Package version
+        id: version
+        run: |
+          VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/{s/^version *= *"\(.*\)"/\1/p}' Cargo.toml)"
+          [ -n "$VERSION" ] || { echo "version not found in Cargo.toml" >&2; exit 1; }
+          echo "version=$VERSION" | tee -a "$GITHUB_OUTPUT"
+      - name: Tag matches Cargo version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          [ "$GITHUB_REF_NAME" = "v${{ steps.version.outputs.version }}" ] \
+            || { echo "tag $GITHUB_REF_NAME != v${{ steps.version.outputs.version }} (Cargo.toml)" >&2; exit 1; }
+      - name: SPDX headers
+        run: python3 -I tools/check_headers.py
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  # ------------------------------------------------------------------ test ------
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    # Linux gates the builds; the other two only report.
+    continue-on-error: ${{ matrix.os != 'ubuntu-24.04' }}
+    steps:
+      # golden files are compared byte for byte: no CRLF conversion on Windows
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+          rustup default "$RUST_TOOLCHAIN"
+          rustc --version && cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: cargo test
+        run: cargo test --workspace --locked --no-fail-fast
+
+  # ----------------------------------------------------------------- build ------
+  build-linux:
+    needs: [lint, test]
+    runs-on: ubuntu-24.04
+    continue-on-error: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    env:
+      VERSION: ${{ needs.lint.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal
+          rustup default "$RUST_TOOLCHAIN"
+          rustc --version && cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      # same cache dir build-appimage.sh puts on PATH
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            .cache/appimage/cargo/
+            .cache/appimage/venv/
+            .cache/appimage/appimagetool-x86_64.AppImage
+          key: zig-tools-${{ runner.os }}-zigbuild${{ env.CARGO_ZIGBUILD_VERSION }}-zig${{ env.ZIGLANG_VERSION }}
+      - name: zig + cargo-zigbuild
+        run: |
+          T=.cache/appimage
+          # restored venv may point at an old runner Python: rebuild when zig does not answer
+          if ! "$T/venv/bin/python3" -m ziglang version 2>/dev/null | grep -qx "$ZIGLANG_VERSION"; then
+            rm -rf "$T/venv"
+            python3 -m venv "$T/venv"
+            "$T/venv/bin/pip" install --quiet "ziglang==$ZIGLANG_VERSION"
+          fi
+          "$T/cargo/bin/cargo-zigbuild" --version 2>/dev/null | grep -q " $CARGO_ZIGBUILD_VERSION\$" \
+            || cargo install --locked --root "$T/cargo" cargo-zigbuild --version "$CARGO_ZIGBUILD_VERSION"
+      - name: Build AppImage
+        run: |
+          packaging/appimage/build-appimage.sh 2>&1 | tee build-appimage.log
+          # must be the portable zigbuild, never the native fallback
+          if grep -q "WARNING: native build" build-appimage.log; then
+            echo "zigbuild not used: AppImage would not be portable" >&2; exit 1
+          fi
+      - name: Check glibc baseline
+        run: |
+          MAXG="$(objdump -T target/x86_64-unknown-linux-gnu/release/laiserctrl | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)"
+          echo "max GLIBC required: $MAXG"
+          [ "$(printf '%s\n2.28\n' "$MAXG" | sort -V | tail -1)" = "2.28" ] || { echo "binary needs glibc > 2.28" >&2; exit 1; }
+      # packed AppImage extracts and holds binary + resources
+      - name: Smoke test + checksum
+        run: |
+          APP="L-ai-SERctrl-$VERSION-x86_64.AppImage"
+          chmod +x "dist/$APP"
+          (cd "$(mktemp -d)" && "$GITHUB_WORKSPACE/dist/$APP" --appimage-extract >/dev/null \
+            && test -x squashfs-root/usr/bin/laiserctrl \
+            && test -d squashfs-root/usr/share/laiserctrl/resources \
+            && test -x squashfs-root/AppRun)
+          (cd dist && sha256sum "$APP" | tee "$APP.sha256")
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: L-ai-SERctrl-linux
+          path: |
+            dist/L-ai-SERctrl-*-x86_64.AppImage
+            dist/L-ai-SERctrl-*-x86_64.AppImage.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  build-windows:
+    needs: [lint, test]
+    runs-on: windows-2025
+    continue-on-error: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    env:
+      VERSION: ${{ needs.lint.outputs.version }}
+      # static CRT: no VC++ redistributable needed on the target PC
+      RUSTFLAGS: "-C target-feature=+crt-static"
+    steps:
+      # resources are shipped as committed: no CRLF conversion
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target x86_64-pc-windows-msvc
+          rustup default "$RUST_TOOLCHAIN"
+          rustc --version && cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Build
+        run: cargo build --release --locked -p laiserctrl --target x86_64-pc-windows-msvc
+      # PE optional header: Subsystem 2 = GUI (no console window), machine 0x8664 = x86-64
+      - name: Check binary
+        shell: pwsh
+        run: |
+          $b = [IO.File]::ReadAllBytes("target/x86_64-pc-windows-msvc/release/laiserctrl.exe")
+          $pe = [BitConverter]::ToInt32($b, 0x3C)
+          $machine = [BitConverter]::ToUInt16($b, $pe + 4)
+          $subsystem = [BitConverter]::ToUInt16($b, $pe + 24 + 68)
+          "machine=0x{0:X4} subsystem=$subsystem" -f $machine
+          if ($machine -ne 0x8664 -or $subsystem -ne 2) { throw "not a 64-bit GUI executable" }
+      # zip: L-ai-SERctrl/laiserctrl.exe + L-ai-SERctrl/resources (looked up next to the exe)
+      - name: Package
+        run: |
+          PKG="L-ai-SERctrl-$VERSION-windows-x86_64"
+          STAGE="pkg/L-ai-SERctrl"
+          mkdir -p "$STAGE" dist
+          cp target/x86_64-pc-windows-msvc/release/laiserctrl.exe "$STAGE/"
+          cp -r resources "$STAGE/resources"
+          cp LICENSE.md NOTICE.md CHANGELOG.md "$STAGE/"
+          python -I tools/gen_third_party.py --texts "$STAGE/THIRD_PARTY_LICENSES.txt"
+          (cd pkg && 7z a -tzip -mx=9 -bso0 "../dist/$PKG.zip" L-ai-SERctrl)
+          (cd dist && sha256sum "$PKG.zip" | tee "$PKG.zip.sha256")
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: L-ai-SERctrl-windows
+          path: |
+            dist/L-ai-SERctrl-*-windows-x86_64.zip
+            dist/L-ai-SERctrl-*-windows-x86_64.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  build-macos:
+    needs: [lint, test]
+    runs-on: macos-15                 # arm64 runner, x86_64 cross-compiled with the Xcode SDK
+    continue-on-error: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    env:
+      VERSION: ${{ needs.lint.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal --target aarch64-apple-darwin,x86_64-apple-darwin
+          rustup default "$RUST_TOOLCHAIN"
+          rustc --version && cargo --version
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+      - name: Build arm64 + x86_64
+        run: |
+          cargo build --release --locked -p laiserctrl --target aarch64-apple-darwin
+          cargo build --release --locked -p laiserctrl --target x86_64-apple-darwin
+      # universal2 = both slices in one fat binary; re-sign ad hoc after lipo
+      - name: Universal binary
+        run: |
+          mkdir -p target/universal2-apple-darwin/release
+          BIN=target/universal2-apple-darwin/release/laiserctrl
+          lipo -create -output "$BIN" \
+            target/aarch64-apple-darwin/release/laiserctrl \
+            target/x86_64-apple-darwin/release/laiserctrl
+          codesign --force --sign - "$BIN"
+          ARCHS="$(lipo -archs "$BIN")"; echo "archs: $ARCHS"
+          case " $ARCHS " in *" arm64 "*) ;; *) echo "arm64 slice missing" >&2; exit 1 ;; esac
+          case " $ARCHS " in *" x86_64 "*) ;; *) echo "x86_64 slice missing" >&2; exit 1 ;; esac
+      # tar.gz keeps the exec bit: L-ai-SERctrl/laiserctrl + L-ai-SERctrl/resources
+      - name: Package
+        run: |
+          PKG="L-ai-SERctrl-$VERSION-macos-universal"
+          STAGE="pkg/L-ai-SERctrl"
+          mkdir -p "$STAGE" dist
+          install -m755 target/universal2-apple-darwin/release/laiserctrl "$STAGE/laiserctrl"
+          cp -R resources "$STAGE/resources"
+          cp LICENSE.md NOTICE.md CHANGELOG.md "$STAGE/"
+          python3 -I tools/gen_third_party.py --texts "$STAGE/THIRD_PARTY_LICENSES.txt"
+          # no macOS xattrs/AppleDouble files in the archive
+          COPYFILE_DISABLE=1 tar -C pkg -czf "dist/$PKG.tar.gz" L-ai-SERctrl
+          (cd dist && shasum -a 256 "$PKG.tar.gz" | tee "$PKG.tar.gz.sha256")
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: L-ai-SERctrl-macos
+          path: |
+            dist/L-ai-SERctrl-*-macos-universal.tar.gz
+            dist/L-ai-SERctrl-*-macos-universal.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  # Corresponding Source (GPLv3 section 6): the committed tree, next to the binaries.
+  build-source:
+    needs: [lint]
+    runs-on: ubuntu-24.04
+    env:
+      VERSION: ${{ needs.lint.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: git archive
+        run: |
+          PKG="L-ai-SERctrl-$VERSION-source"
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="L-ai-SERctrl-$VERSION/" -o "dist/$PKG.tar.gz" HEAD
+          (cd dist && sha256sum "$PKG.tar.gz" | tee "$PKG.tar.gz.sha256")
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: L-ai-SERctrl-source
+          path: |
+            dist/L-ai-SERctrl-*-source.tar.gz
+            dist/L-ai-SERctrl-*-source.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  # --------------------------------------------------------------- release ------
+  # master: replace the rolling pre-release `nightly`; v* tag: create the release for that tag.
+  # master: takes whatever packages were built (a failed platform is just missing).
+  # tag: runs only when every build succeeded.
+  release:
+    needs: [lint, test, build-linux, build-windows, build-macos, build-source]
+    if: >-
+      always() && github.event_name == 'push'
+      && needs.lint.result == 'success' && needs.test.result == 'success'
+      && (github.ref == 'refs/heads/master'
+          || (startsWith(github.ref, 'refs/tags/v')
+              && needs.build-linux.result == 'success' && needs.build-windows.result == 'success'
+              && needs.build-macos.result == 'success' && needs.build-source.result == 'success'))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION: ${{ needs.lint.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: L-ai-SERctrl-*
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: |
+          ls -l dist
+          [ -n "$(ls dist/*.sha256 2>/dev/null)" ] || { echo "nothing to release" >&2; exit 1; }
+          (cd dist && cat *.sha256 > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - name: Tag release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --verify-tag --title "L-ai-SERctrl $VERSION" --generate-notes
+      - name: Nightly pre-release
+        if: github.ref == 'refs/heads/master'
+        run: |
+          SHORT="${GITHUB_SHA::7}"
+          {
+            echo "Automatic build of \`master\` at $GITHUB_SHA (version $VERSION). Not a release: may be broken."
+            echo
+            echo "* Linux: \`chmod +x L-ai-SERctrl-*.AppImage\`, run it (x86_64, glibc >= 2.28)."
+            echo "* Windows: unzip, run \`L-ai-SERctrl\\laiserctrl.exe\` (unsigned: SmartScreen warns)."
+            echo "* macOS: untar, \`xattr -dr com.apple.quarantine L-ai-SERctrl\`, run \`L-ai-SERctrl/laiserctrl\`."
+            echo
+            echo "Keep \`resources/\` next to the binary. Corresponding source: \`*-source.tar.gz\`."
+          } > notes.md
+          # replace old release + tag: asset names carry the version, a plain upload would pile up
+          gh release delete nightly --cleanup-tag --yes 2>/dev/null || true
+          gh release create nightly dist/* \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title "Nightly $VERSION (master @ $SHORT)" --notes-file notes.md

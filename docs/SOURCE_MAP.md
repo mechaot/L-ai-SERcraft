@@ -75,6 +75,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | golden generators | `tools/golden/<area>/` (`run.sh`; protocol harness `tools/golden/protocol/`) |
 | member-level porting checklist | `PORTING.md` (regenerate skeleton: `tools/gen_porting_checklist.py`) |
 | audit results / known deviations | `docs/AUDIT_NONUI.md`, `docs/AUDIT_UI_MAIN.md`, `docs/AUDIT_UI_DIALOGS.md`, `crates/dotnet/README.md` |
+| CI pipelines (lint, test, AppImage/Windows/macOS/source packages, GitHub releases) | `.gitlab-ci.yml`, `.github/workflows/ci.yml` |
 | AppImage packaging | `packaging/appimage/` (`build-appimage.sh`, `AppRun`, `laiserctrl.desktop`, `io.github.mechaot.laiserctrl.appdata.xml`) |
 | app name, version, window title | `lg_base::APP_NAME` (`crates/base/src/lib.rs`), `app/src/main.rs` (`form_title`), root `Cargo.toml` version |
 | config/temp folder, old-folder migration, resource lookup | `crates/base/src/paths.rs` |
