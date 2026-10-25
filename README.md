@@ -12,7 +12,8 @@ the original design and the years of real-world refinement goes to Diego Settimi
 contributors and translators. L-ai-SERctrl adds per-layer SVG settings, named layer presets and hatch fill.
 
 L-ai-SERctrl is an independent project. See [Authors & credits](#authors--credits) and [License](#license).
-Release notes: [`CHANGELOG.md`](CHANGELOG.md).
+Release notes: [`CHANGELOG.md`](CHANGELOG.md). User manual (multi-layer SVG from Inkscape: cut and fill
+layers): [`docs/MANUAL.md`](docs/MANUAL.md).
 
 ## Authors & credits
 

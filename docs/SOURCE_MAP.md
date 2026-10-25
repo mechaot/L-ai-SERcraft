@@ -82,6 +82,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | splash screen, app icon, branding artwork | `app/src/forms/splash.rs`, `app/src/main.rs` (`load_icon`), `resources/branding/{splash,icon}.{svg,png}`; renderer `app/examples/render_artwork.rs` |
 | License & Credits dialog | `app/src/forms/license.rs` (texts: `LicenseForm.*` i18n keys; `LICENSE.md`) |
 | release notes | `CHANGELOG.md` |
+| user manual (multi-layer SVG from Inkscape) | `docs/MANUAL.md`, example + screenshots `docs/manual/` |
 | resources inventory | `resources/README.md` |
 
 ## File table
