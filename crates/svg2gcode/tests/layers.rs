@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! Layered conversion tests: layer listing, regression vs plain conversion, per-layer values.
 
 use lg_svg2gcode::{ColorFilter, GCodeFromSvg, LayerParams, SvgConvOptions, list_layers_from_text};

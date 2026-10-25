@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `System.Drawing.ColorTranslator.FromHtml` (+ `ColorConverter` string rules) as used by `parseRgb` in GCodeFromSVG.cs.
 //!
 //! Behaviour mirrors Mono's System.Drawing (the golden oracle). Only RGB and "is Color.Empty" matter to callers.

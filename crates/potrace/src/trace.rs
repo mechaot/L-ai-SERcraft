@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2001-2016 Peter Selinger (Potrace)
+// Copyright (C) 2009-2016 Wolfgang Nagl (CsPotrace port)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `CsPotrace/CsPotrace.cs`: Potrace bitmap tracer (bitmap -> paths -> curves).
 //!
 //! C# keeps all parameters and the working state in `static` fields; here the parameters live in

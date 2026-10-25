@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Core/GrblCore.cs` (+ `MarlinCore.cs`, `SmoothieCore.cs`, `VigoCore.cs`): the GRBL streaming engine.
 //!
 //! `GrblCore` is used as `Arc<GrblCore>`. State guarded by `lock(this)` in C# lives in one `Mutex<CoreState>`

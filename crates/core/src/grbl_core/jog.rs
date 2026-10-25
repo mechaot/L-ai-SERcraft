@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Jog command construction of `GrblCore` (`EnqueueJogV09/V11`, `HandleContinuosJog`, `ContinuousJog`).
 //!
 //! All builders are pure and return the exact command strings the C# code enqueues.

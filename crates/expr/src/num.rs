@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2004-2006 Jeremy Roberts, Will Gray (Expression Evaluator)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! .NET number glue for `Tools/ExpressionEvaluator.cs`: `double.Parse` / `double.ToString` wrappers.
 
 use lg_dotnet::{fmt_double, parse_double};

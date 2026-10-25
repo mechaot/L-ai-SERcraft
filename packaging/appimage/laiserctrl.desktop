@@ -1,11 +1,12 @@
 [Desktop Entry]
 Type=Application
-Name=LaserGRBL
+Name=L-ai-SERctrl
 GenericName=Laser engraver controller
 Comment=GRBL laser engraver and cutter controller
-Exec=lasergrbl %f
-Icon=lasergrbl
+Exec=laiserctrl %f
+Icon=laiserctrl
 Terminal=false
+StartupWMClass=laiserctrl
 Categories=Graphics;Engineering;
 MimeType=image/svg+xml;text/x-gcode;
 Keywords=laser;grbl;gcode;engraver;cnc;

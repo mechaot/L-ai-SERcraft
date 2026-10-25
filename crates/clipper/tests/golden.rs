@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Replays `tests/golden/clipper/*.txt` (made by `tools/golden/clipper/run.sh` from the original
 //! C# ClipperLib under Mono) and compares exact points, order and tree shape.
 //!

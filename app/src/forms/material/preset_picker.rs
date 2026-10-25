@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! Preset picker of the raster import "P/S helper" button.
 //!
 //! Not part of the C# app (replaces `PSHelper/PSHelperForm.cs`): pick a saved layer preset, apply

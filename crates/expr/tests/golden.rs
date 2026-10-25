@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Golden test: `Expression` vs original C# (Mono) output in tests/golden/expr/cases.tsv.
 
 use lg_expr::{ExprError, Expression};

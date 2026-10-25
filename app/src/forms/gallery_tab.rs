@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 #![allow(dead_code, clippy::collapsible_if, clippy::too_many_arguments, clippy::needless_borrow)]
 //! Gallery tab "Forms" (WP-U4a): opens each form with a throwaway `GrblFile` and logs the outcome.
 
@@ -219,7 +223,7 @@ mod tests {
         }
         keys.extend(["Title", "Preset", "PresetNone", "EditPresets", "PresetInfo", "PresetNameHint", "SavePresetTip", "Modified", "NoSource", "Generating", "ApplyFailed", "Fill", "FillEnabled", "FillDistance", "FillAngle", "FillCross", "FillPerShape", "FillPerShapeTip", "PresetFillInfo"].map(|k| format!("ParamsDock.{k}")));
         keys.extend(["EditorTitle", "ColName", "ColPasses", "ColSpeed", "ColPower", "ColMode", "ColFilter", "ColFill", "PerShape", "Delete", "Empty", "File", "PickerLabel", "PickerNote"].map(|k| format!("Presets.{k}")));
-        keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "LicenseForm.richTextBox1.Text", "LicenseForm.richTextBox2.Text"].map(String::from));
+        keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "LicenseForm.richTextBox1.Text", "LicenseForm.Title", "LicenseForm.CreditTitle", "LicenseForm.CreditText", "LicenseForm.EditionTitle", "LicenseForm.EditionText", "LicenseForm.AiText", "LicenseForm.LicenseText", "LicenseForm.CreditThirdParty", "LicenseForm.Independent", "LicenseForm.NoticesTitle", "LicenseForm.SourceText"].map(String::from));
         let missing: Vec<&String> = keys.iter().filter(|k| tr(k) == k.as_str()).collect();
         assert!(missing.is_empty(), "missing keys: {missing:?}");
     }

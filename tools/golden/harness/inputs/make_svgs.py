@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 """One-off generator for inputs/svg/*.svg (checked-in inputs; run.sh does not call this)."""
 import pathlib
 out = pathlib.Path(__file__).resolve().parent / "svg"

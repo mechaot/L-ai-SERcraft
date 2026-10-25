@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of the raster line-to-line part of `GrblFile.cs`: `L2LConf`, `ColorSegment` family,
 //! `LoadImageL2L`, `ImageLine2Line`, `OptimizeLine2Line`, `GetSegments`, `ExtractSegment`, `GetColor`.
 

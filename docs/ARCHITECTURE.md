@@ -1,5 +1,7 @@
 # Architecture
 
+L-ai-SERctrl (binary `laiserctrl`, package `laiserctrl`) is a Rust/egui port of LaserGRBL 7.14.1 by Diego Settimi (author of the port: Andreas Pösch). Internal crates keep the names `lasergrbl-core` and `lg-*`.
+
 Orientation for anyone (human or agent) changing this codebase. Read this first, then use
 [`SOURCE_MAP.md`](SOURCE_MAP.md) to jump to the right file. `PORTING.md` maps every member of the original C#
 code to its Rust location; `PLAN.md` records the original design decisions.
@@ -17,11 +19,15 @@ code to its Rust location; `PLAN.md` records the original design decisions.
    original C# under Mono. A change that alters a golden diff is a behaviour change, not a refactor.
 4. **Leaf crates know nothing about settings or the engine.** Options are passed in as structs named after the
    C# setting keys; `lg-gcode`/`lg-services`/`app` read settings and fill them.
+5. **Licensing.** Every `.rs`/`.py`/`.sh` file starts with an SPDX + copyright header (ported files credit Diego
+   Settimi and LaserGRBL, third-party-derived files also their authors); new files need one too
+   (`python3 -I tools/check_headers.py`, run in CI). Authors and third-party licenses live in `NOTICE.md`,
+   Rust dependencies in `THIRD_PARTY_RUST.md` (`tools/gen_third_party.py`). The license dialog embeds `NOTICE.md`.
 
 ## 2. Crate layers (dependencies point downwards only)
 
 ```
-app (lasergrbl binary, egui)                       forms, preview renderer, theme/icons/i18n
+app (laiserctrl binary, egui)                       forms, preview renderer, theme/icons/i18n
  ├── lasergrbl-core   (crates/core)                GrblCore engine, com links, emulator, laser life
  ├── lg-services      (crates/services)            image processor, hotkeys, custom buttons, projects, layer presets,
  │                                                 autotrace, avrdude, wifi discovery
@@ -96,14 +102,14 @@ SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFil
 ```
 
 ### 3.5 Persistence
-`lg_base::paths::data_path()` = `~/.config/LaserGRBL` (Windows `%APPDATA%\LaserGRBL`).
+`lg_base::paths::data_path()` = `~/.config/L-ai-SERctrl` (Windows `%APPDATA%\L-ai-SERctrl`). First start copies an existing old `LaserGRBL` config folder there once (`paths::migrate_dir`, old folder untouched). File names inside keep the original names (e.g. `LaserGRBL.Settings.json`) on purpose. Temp dir: `<temp>/L-ai-SERctrl`.
 | file | content | code |
 |---|---|---|
 | `LaserGRBL.Settings.json` | all settings, C# key names, debounced save | `lg_base::settings` |
 | `CustomButtons.json` | custom buttons (`.zbn` import/export = NRBF) | `lg_services::custom_button`, `lg_base::nrbf` |
 | `LaserLifeCounter.json` (+`.old`) | laser module usage | `lasergrbl_core::laser_life` |
 | `UsageStats.json` | local counters | `lasergrbl_core::usage_stats` |
-| `LayerPresets.json` | named layer presets (JSON, `<config dir>/LaserGRBL/`: `~/.config` Linux, `%APPDATA%` Windows, `~/Library/Application Support` macOS) | `lg_services::layer_presets` |
+| `LayerPresets.json` | named layer presets (JSON, `<config dir>/L-ai-SERctrl/`: `~/.config` Linux, `%APPDATA%` Windows, `~/Library/Application Support` macOS) | `lg_services::layer_presets` |
 | `GrblEmulator.v11.json` | emulator `$` config | `lasergrbl_core::emulator` |
 | `sessionlog.txt`, com log | logs | `lg_base::logger` |
 Windows `LaserGRBL.Settings.bin`, `.zbn`, `.lps` are BinaryFormatter files read by `lg_base::nrbf`.
@@ -140,4 +146,5 @@ Run `cargo test --workspace --release` and `cargo clippy --workspace --all-targe
 * New settings key → use the exact C# key string and default; read it where C# reads it (some are read once
   per process).
 * New UI text → add an i18n key only if the original resx has one; otherwise follow the Designer text.
-* Packaging: `packaging/appimage/build-appimage.sh` (AppImage, glibc 2.28 baseline via cargo-zigbuild).
+* Packaging: `packaging/appimage/build-appimage.sh` (AppImage `L-ai-SERctrl-<v>-x86_64.AppImage`, glibc 2.28 baseline via cargo-zigbuild).
+* Branding: app name const `lg_base::APP_NAME`; own version = `CARGO_PKG_VERSION` (display only). Compatibility values stay at 7.14.1 (`settings::CURRENT_VERSION`, `.lps` assembly name, NRBF `ASM_VERSION`). Artwork: `resources/branding/` (SVG sources + PNG), renderer `app/examples/render_artwork.rs`.

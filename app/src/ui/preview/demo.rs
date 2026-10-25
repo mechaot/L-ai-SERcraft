@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Gallery "Preview" tab: both renderers side by side with sample programs, a fake moving cursor
 //! and a fake "program run" that marks commands as executed (exercises the invalidation path).
 

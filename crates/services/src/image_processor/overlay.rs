@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Pixel drawing helpers of the previews (GDI+ `Graphics` calls reproduced by direct pixel writes).
 //!
 //! `PreviewLineByLine` draws 1 px white lines with alpha on an opaque grey bitmap. GDI+ draws

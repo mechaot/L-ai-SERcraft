@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Algorithm ported from Mono libgdiplus, see NOTICE.md
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Emulation of the parts of GDI+ `GraphicsPath` used by `CsPotrace` (AddLine, AddBezier,
 //! Flatten, PathPoints), all in f32.
 //!

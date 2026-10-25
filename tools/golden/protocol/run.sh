@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 # Rebuild the protocol oracle against the Mono-built original LaserGRBL and regenerate tests/golden/protocol/*.txt|.scn.
 # Usage: run.sh [scenario ...]   (no args = all scenarios/*.scn)
 set -euo pipefail

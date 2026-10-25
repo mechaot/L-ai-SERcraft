@@ -1,9 +1,12 @@
 #!/bin/sh
-# AppRun: AppImage entry point. Args: passed through to lasergrbl. Output: exit code of app.
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
+# AppRun: AppImage entry point. Args: passed through to laiserctrl. Output: exit code of app.
 # Find AppDir, fall back to script dir if runtime did not set APPDIR.
 APPDIR="${APPDIR:-$(dirname "$(readlink -f "$0")")}"
 export APPDIR
 # Resources live inside image.
-export LASERGRBL_RESOURCES="$APPDIR/usr/share/lasergrbl/resources"
+export LASERGRBL_RESOURCES="$APPDIR/usr/share/laiserctrl/resources"
 # GL/X11/Wayland libs come from host. Do not touch LD_LIBRARY_PATH.
-exec "$APPDIR/usr/bin/lasergrbl" "$@"
+exec "$APPDIR/usr/bin/laiserctrl" "$@"

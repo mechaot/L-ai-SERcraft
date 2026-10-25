@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Logger/Logger.cs` (session log) and `Logger/ComLogger.cs` (TX/RX log).
 
 mod async_file;
@@ -70,8 +74,8 @@ pub fn log_exception(context: &str, err: &dyn std::fmt::Display) {
 /// `Logger.Start`: write the START banner (+ OS line).
 pub fn start() {
     let bits = if cfg!(target_pointer_width = "64") { "64bit" } else { "32bit" };
-    let (a, b, c) = crate::settings::CURRENT_VERSION;
-    log_multi_line("Program", &format!("------- LaserGRBL v{a}.{b}.{c} [{bits}] START -------"));
+    // own app version, not CURRENT_VERSION (that one is the LaserGRBL compat version)
+    log_multi_line("Program", &format!("------- {} v{} [{bits}] START -------", crate::APP_NAME, env!("CARGO_PKG_VERSION")));
     log_multi_line("Program", &format!("OS {}", os_info()));
 }
 

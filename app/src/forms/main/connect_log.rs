@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `ConnectLogForm.cs` (+Designer): connection, file/progress and manual command / log group boxes.
 
 use eframe::egui::{self, Align, Layout, RichText, Ui, Vec2};

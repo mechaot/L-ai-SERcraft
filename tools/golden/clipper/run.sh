@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 # Regenerate tests/golden/clipper/*.txt from the original ClipperLib (LaserGRBL.exe under Mono).
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

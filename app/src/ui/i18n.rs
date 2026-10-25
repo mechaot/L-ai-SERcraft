@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Localization (replaces .resx `ResourceManager` + WinForms `ApplyResources`).
 //!
 //! Catalogs are `resources/i18n/<culture>.json`, embedded. Lookup per key: current culture, then `en`,

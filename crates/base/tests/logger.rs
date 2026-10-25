@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Logger + ComLogger output tests.
 
 use lg_base::logger;
@@ -19,7 +23,7 @@ fn logger_files() {
     let t = std::fs::read_to_string(logger::log_file_path()).unwrap();
     let lines: Vec<&str> = t.split("\r\n").collect();
     assert_eq!(lines[0], "old500");
-    assert!(t.contains("\tProgram     \t------- LaserGRBL v7.14.1 ["), "{t}");
+    assert!(t.contains("\tProgram     \t------- L-ai-SERctrl v1.2.1 ["), "{t}");
     assert!(t.contains("\tTest        \tline one\r\n"));
     assert!(t.contains("\tTest        \tline two\r\n"));
     assert!(t.contains("\tCtx         \tboom\r\n"));

@@ -2663,8 +2663,8 @@ Vendored libraries are not listed (see PLAN.md §6).
 | `method MNItalian_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method MNSpanish_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method SetLanguage` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
-| `method helpOnLineToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
-| `method aboutToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
+| `method helpOnLineToolStripMenuItem_Click` | N/A | removed: no online-links section in the help menu |
+| `method aboutToolStripMenuItem_Click` | N/A | removed: no online-links section in the help menu |
 | `method splitContainer1_SplitterMoved` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method settingsToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method openSessionLogToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
@@ -2679,7 +2679,7 @@ Vendored libraries are not listed (see PLAN.md §6).
 | `method MNGrblEmulator_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method styleToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method grblConfigurationToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
-| `method donateToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
+| `method donateToolStripMenuItem_Click` | N/A | removed: no Donate entry in the help menu |
 | `method OnKeyUp` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method ProcessCmdKey` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method MnReOpenFile_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
@@ -2717,7 +2717,7 @@ Vendored libraries are not listed (see PLAN.md §6).
 | `method orturSupportAndFeedbackToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method TTLinkToNews_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method MnWiFiDiscovery_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
-| `method facebookCommunityToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
+| `method facebookCommunityToolStripMenuItem_Click` | N/A | removed: no online-links section in the help menu |
 | `method greekToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method turkishToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method BtnUnlockFromStuck_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |

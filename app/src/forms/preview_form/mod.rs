@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `PreviewForm.cs` + Designer: right-hand panel of the main window. Job preview on top,
 //! toolbar below (reset, homing, unlock, zero, custom buttons flow, resume, stop).
 //! Custom button editor: [`custom_button_form`]; button behaviour helpers: [`custom_button_ib`].

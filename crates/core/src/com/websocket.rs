@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `ComWrapper/LaserWebESP8266.cs` on top of `tungstenite` (client).
 //!
 //! One IO thread owns the websocket: it drains the outgoing channel, then reads with a short socket

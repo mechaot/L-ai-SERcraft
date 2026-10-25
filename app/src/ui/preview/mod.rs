@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Job preview panels (WP-U2a): ports of `GrblPanel3D.cs` (OpenGL), `GrblPanel.cs` (GDI fallback),
 //! `IGrblPanel.cs` and `Obj3D/*`. See `README.md` in this folder.
 //!
@@ -277,7 +281,7 @@ impl PreviewPanel {
                 if self.backend == Backend::Auto {
                     settings::set_current_graphic_mode(GraphicMode::Gdi);
                 }
-                log::info!("OpenGL {:?}->{:?} LaserGRBL, Legacy Preview", settings::requested_graphic_mode(), GraphicMode::Gdi);
+                log::info!("OpenGL {:?}->{:?} {}, Legacy Preview", settings::requested_graphic_mode(), GraphicMode::Gdi, lg_base::APP_NAME);
             }
             self.cpu.show(ui, input, &mut events);
         } else {

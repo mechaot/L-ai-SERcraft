@@ -1,5 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Widget gallery: shows every theme color, icon, widget and dialog for visual checks.
-//! Start with `lasergrbl --gallery`.
+//! Start with `laiserctrl --gallery`.
 
 use eframe::egui::{self, Color32, RichText, Ui, Vec2};
 

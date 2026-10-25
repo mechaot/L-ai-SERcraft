@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `lg-gcode`: G-code commands, state builder, `GrblFile` (analysis, raster/vector generators),
 //! `GrblConfST`, `GrblVersionInfo`. Ports `GrblCommand.cs`, `StateBuilder.cs`, `GrblFile.cs` and
 //! the config types of `Core/GrblCore.cs`.

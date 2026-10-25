@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Golden tests against the original LaserGRBL run under Mono + libgdiplus.
 //! Data: `tests/golden/raster/{input,output,manifest.txt}` (see `tools/golden/raster/run.sh`).
 //!

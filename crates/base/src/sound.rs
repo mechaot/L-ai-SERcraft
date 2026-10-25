@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Sound/SoundEvent.cs`: play event sounds without blocking the caller.
 //!
 //! C# uses `SoundPlayer.PlaySync` on a pool thread. Here a thread runs the first available external

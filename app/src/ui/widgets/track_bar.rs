@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Themed port of the WinForms `TrackBar` (used by `JogForm` speed and `LabelTB` overrides) with ticks.
 
 use eframe::egui::{self, Key, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, Widget};

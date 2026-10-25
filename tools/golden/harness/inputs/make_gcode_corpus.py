@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 """One-off generator for gcode_parse/corpus.txt (checked-in input; run.sh does not call this)."""
 import sys, pathlib
 

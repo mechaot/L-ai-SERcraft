@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 #![allow(dead_code, clippy::collapsible_if, clippy::collapsible_match, clippy::too_many_arguments, clippy::type_complexity)]
 //! Raster import dialogs (WP-U3): `RasterConverter/RasterToLaserForm.cs`,
 //! `ConvertSizeAndOptionForm.cs`, `ResolutionHelperForm.cs`.

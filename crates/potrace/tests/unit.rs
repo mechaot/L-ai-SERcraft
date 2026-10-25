@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Small unit tests: GDI+ path emulation, Hilbert, GDI+ export smoke test.
 
 use lg_potrace::{Curve, CurveKind, DPoint, GraphicsPath, Hilbert, export_to_gdiplus};

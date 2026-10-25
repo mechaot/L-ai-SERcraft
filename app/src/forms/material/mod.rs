@@ -1,8 +1,12 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 #![allow(dead_code, clippy::collapsible_if, clippy::collapsible_match, clippy::too_many_arguments, clippy::type_complexity)]
 //! Named layer presets (replaces the C# material helper `PSHelper/*`, intentional deviation).
 //!
 //! The preset DB is a shared handle ([`SharedPresetDb`]); [`default_presets`] is the process wide
-//! instance loaded from `<config dir>/LaserGRBL/LayerPresets.json`. [`PresetEditor`] lists and
+//! instance loaded from `<config dir>/L-ai-SERctrl/LayerPresets.json`. [`PresetEditor`] lists and
 //! deletes presets, [`PresetPickerForm`] is the picker of the raster import "P/S helper" button.
 
 use lg_services::layer_presets::PresetDb;

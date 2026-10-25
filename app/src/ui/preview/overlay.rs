@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Text overlays shared by both panels (C# `DrawOverlay`, `MeasureText`, `FormatCoord`).
 
 use eframe::egui::{self, Color32, FontId, Painter, Pos2, Rect, Vec2};

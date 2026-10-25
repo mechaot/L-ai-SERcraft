@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 #![allow(dead_code)] // consumed by the main window wiring (WP-U1)
 #![allow(clippy::collapsible_if, clippy::too_many_arguments, clippy::type_complexity, clippy::large_enum_variant)] // style lints off: mirrors C# shapes
 //! WP-U4b dialogs: one module per C# form. Each form is a struct with

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `PlaceholderTextbox.cs`, `TextInput.cs`, `GrblTextBox.cs` and `ColoredBorderControl.cs`.
 
 use eframe::egui::{self, text_edit::TextEditState, text::{CCursor, CCursorRange}, Color32, Frame, Id, Key, Margin, Modifiers, Response, RichText, Stroke, TextEdit, Ui, Widget};

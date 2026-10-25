@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `UserControls/GrblPanel3D.cs`: OpenGL job preview as an egui widget.
 //!
 //! Geometry/GL live in [`super::scene`] and [`super::gl`]; this file holds the camera, input handling,

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Replacement for `MyDatagridView.cs` (a `DataGridView` with a WinForms crash workaround that has no
 //! egui equivalent) -- here a small themed table helper on top of `egui_extras::TableBuilder`.
 

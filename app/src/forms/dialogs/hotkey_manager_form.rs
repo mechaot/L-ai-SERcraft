@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `HotkeyManagerForm.cs` + `HotkeyManagerForm.Designer.cs`: shortcut editor.
 //!
 //! The form edits a copy of the list (`HotKeysManager::get_edit_list`); the caller applies the saved

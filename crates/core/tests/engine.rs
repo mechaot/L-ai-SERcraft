@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Engine tests against a recording fake link (deterministic replies) and against the in-process emulator.
 //! Expected command strings were derived by reading `Core/GrblCore.cs`.
 

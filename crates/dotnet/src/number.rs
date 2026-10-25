@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Digit-string number model shared by all formatters (mirrors .NET Fx `NumberBuffer`).
 
 /// Decimal digit buffer: value = 0.DIGITS * 10^scale.

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `UserControls/NumericInput/*`: `DecimalInputRanged`, `IntegerInputRanged`, `NumericUpDown`.
 //!
 //! Text is edited in a buffer kept in egui memory; value committed on focus loss / Enter (C#

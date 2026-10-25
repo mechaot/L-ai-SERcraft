@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `lg-services`: non-UI services of LaserGRBL that do not need the `GrblCore` engine.
 //!
 //! * [`image_processor`] - `RasterConverter/ImageProcessor.cs` (preview + G-code generation threads)

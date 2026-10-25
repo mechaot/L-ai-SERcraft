@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Shared application state: the engine, its event channel, custom buttons and hotkeys.
 //!
 //! Replaces the C# static/global wiring (`MainForm.Core`, `CustomButtons`, `HotKeysManager` owned by `GrblCore`).

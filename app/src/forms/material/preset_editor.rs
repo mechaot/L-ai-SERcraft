@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! List editor of the layer presets: read-only table, delete per row.
 //!
 //! Not part of the C# app (replaces `PSHelper/PSEditorForm.cs`). Delete is immediate and saved.

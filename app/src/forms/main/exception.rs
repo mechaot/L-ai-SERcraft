@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `ExceptionManager.cs` (+Designer): panic hook that logs and queues a report, and the dialog.
 
 use std::sync::Mutex;
@@ -68,7 +72,7 @@ pub fn register_handler() {
 /// `core`: the engine when it exists. Returns the lines before the exception data.
 pub fn header(core: Option<&GrblCore>) -> String {
     let mut sb = String::new();
-    sb.push_str(&format!("LaserGrbl v{}\n", env!("CARGO_PKG_VERSION")));
+    sb.push_str(&format!("{} v{}\n", lg_base::APP_NAME, env!("CARGO_PKG_VERSION")));
     if let Some(c) = core {
         let ver = GrblCore::configuration().grbl_version().map(|v| format!("{v:?}")).unwrap_or_default();
         sb.push_str(&format!("{} v{}\n", c.firmware().variant_name(), ver));
@@ -159,6 +163,6 @@ mod tests {
 
     #[test]
     fn header_mentions_version() {
-        assert!(header(None).starts_with("LaserGrbl v7.14.1"));
+        assert!(header(None).starts_with("L-ai-SERctrl v1.2.1"));
     }
 }

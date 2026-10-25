@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `WiFiDiscovery/DiscoveryForm.cs` + `DiscoveryForm.Designer.cs`: find the engraver on the LAN.
 //!
 //! The scan itself is `lg_services::wifi_discovery::scan_ip` on a worker thread.

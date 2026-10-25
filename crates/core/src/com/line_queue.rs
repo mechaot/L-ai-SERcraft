@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Shared line buffer between a reader thread and `read_line_blocking` (replaces the blocking C# reads).
 
 use std::collections::VecDeque;

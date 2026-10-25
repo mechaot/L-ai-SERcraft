@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2010-2017 Angus Johnson (Clipper)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+// Clipper parts: Boost Software License 1.0, see NOTICE.md
+
 //! Port of `PolyTree` / `PolyNode` from `Clipper/Clipper.cs`.
 //! C# object graph becomes an arena: node 0 is the tree (root) itself, others are `PolyNode`s.
 

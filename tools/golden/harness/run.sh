@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 # Rebuild the golden harness against the Mono-built original LaserGRBL and regenerate tests/golden/**.
 # Idempotent: output dirs of each area are wiped and rewritten. Usage: run.sh [area ...]
 set -euo pipefail

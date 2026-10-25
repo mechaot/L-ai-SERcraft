@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports the menu bar of `MainForm.Designer.cs` + `MainForm.AssignIcons/TimerUpdate/*_Click` (menu part).
 
 use eframe::egui::{self, Button, Ui};
@@ -426,19 +430,6 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
                 out.push(MenuAction::ToggleExtendedLog);
             }
             ui.separator();
-            if item(ui, Some("mdi-help-circle"), false, &tr_plain("MainForm.helpOnLineToolStripMenuItem.Text"), true, None) {
-                out.push(MenuAction::OpenLink("https://lasergrbl.com/usage/"));
-            }
-            if item(ui, Some("mdi-frequently-asked-questions"), false, &tr_plain("MainForm.aboutToolStripMenuItem.Text"), true, None) {
-                out.push(MenuAction::OpenLink("https://lasergrbl.com/faq/"));
-            }
-            if item(ui, Some("mdi-facebook"), false, &tr_plain("MainForm.facebookCommunityToolStripMenuItem.Text"), true, None) {
-                out.push(MenuAction::OpenLink("https://www.facebook.com/groups/486886768471991"));
-            }
-            ui.separator();
-            if item(ui, Some("mdi-gift"), false, &tr_plain("MainForm.donateToolStripMenuItem.Text"), true, None) {
-                out.push(MenuAction::OpenLink("https://lasergrbl.com/donate"));
-            }
             if item(ui, Some("mdi-license"), false, &tr_plain("MainForm.licenseToolStripMenuItem.Text"), true, None) {
                 out.push(MenuAction::ShowLicense);
             }

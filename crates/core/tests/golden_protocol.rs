@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Protocol golden test: replays every `tests/golden/protocol/*.scn` scenario on the Rust core and
 //! compares the trace byte for byte with `*.txt`, which the ORIGINAL C# `GrblCore` (Mono) produced
 //! (`tools/golden/protocol/run.sh`).

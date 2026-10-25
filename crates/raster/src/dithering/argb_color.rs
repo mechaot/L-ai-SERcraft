@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2015 Cyotek Ltd. (dithering classes)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+// Cyotek parts: MIT License, see NOTICE.md
+
 //! Port of `RasterConverter/Dithering/ArgbColor.cs` (Cyotek, MIT).
 
 /// 32-bit ARGB color; field order mirrors the C# explicit layout (B,G,R,A in memory).

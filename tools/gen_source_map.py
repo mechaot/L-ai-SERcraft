@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 """Regenerate the per-file table of docs/SOURCE_MAP.md from the `//!` module headers.
 
 Usage: python3 -I tools/gen_source_map.py [--check]
@@ -28,8 +31,8 @@ def header(path: str) -> str:
         for line in fh:
             s = line.strip()
             if not s.startswith("//!"):
-                # inner attributes / blanks may precede the header
-                if not parts and (not s or s.startswith("#![")):
+                # inner attributes, blanks and plain `//` comments (SPDX/copyright) may precede the header
+                if not parts and (not s or s.startswith("#![") or (s.startswith("//") and not s.startswith("///"))):
                     continue
                 # header ends at first non-doc line
                 break

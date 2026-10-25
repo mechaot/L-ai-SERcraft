@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Hershey Fonts: originally created by Dr. A. V. Hershey at the U. S. National Bureau of Standards
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Glyph tables copied verbatim from Hershey/Hershey.cs (`hor` and `ver`).
 
 pub(crate) static HOR: [&[&str]; 95] = [

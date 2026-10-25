@@ -1,3 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2010-2017 Angus Johnson (Clipper)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+// Clipper parts: Boost Software License 1.0, see NOTICE.md
+
 //! Port of `ClipperBase` + `Clipper` from `Clipper/Clipper.cs` (Clipper 6.4.2, `use_lines`).
 //! C# linked object graph (TEdge / OutRec / OutPt / LocalMinima / Maxima) is held in index arenas.
 //! `NIL` is the C# `null`. Traversal order is kept identical to the C# code.

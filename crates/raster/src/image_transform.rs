@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `RasterConverter/ImageTransform.cs` (pixel ops on straight-alpha `RgbaImage`).
 
 use crate::color_matrix::{ColorMatrix, ColorMatrixMode, apply_color_matrix};

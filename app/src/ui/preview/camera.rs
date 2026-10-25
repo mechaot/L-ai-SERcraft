@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Orthographic camera + ruler math of `GrblPanel3D.cs` (SetWorldPosition, resize, AutoSizeDrawing,
 //! CenterZoom, mouse wheel, `GetRulerStep`, `HumanReadableLength`). Pure math, unit tested.
 

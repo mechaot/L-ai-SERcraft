@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2004-2006 Jeremy Roberts, Will Gray (Expression Evaluator)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Tools/ExpressionEvaluator.cs`: infix expression evaluator for custom-button G-code.
 //!
 //! Keeps the C# quirks: string work stack (intermediate results round-trip through 15-digit

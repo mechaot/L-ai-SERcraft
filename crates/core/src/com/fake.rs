@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Fake link for tests: records everything the core writes and lets the test inject received lines.
 //!
 //! Not part of the C# code. `FakeCom::with_responder` can answer written lines synchronously, which is

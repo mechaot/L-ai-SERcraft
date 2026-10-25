@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! Hatch fill in layered conversion: rect, cross, open path, circle, transform, passes, colour filter.
 
 use lg_svg2gcode::{ColorFilter, GCodeFromSvg, HatchFill, LayerParams, SvgConvOptions};

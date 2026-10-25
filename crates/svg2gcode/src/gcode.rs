@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2015-2018 Sven Hasemann (GRBL-Plotter code)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `SvgConverter/gcodeRelated.cs` (static class `gcode`: G-code writer with modal compression).
 //!
 //! The C# class is fully static; here the same state lives in [`Gcode`], owned by the converter.

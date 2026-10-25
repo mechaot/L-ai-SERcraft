@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `LaserSelector.cs` + `LaserSelector.Designer.cs`: "Select Laser" dialog shown on connect when
 //! more than one laser module is alive (`laser_life::on_connect` -> `NeedSelection`).
 

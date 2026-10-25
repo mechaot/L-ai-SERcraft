@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- © 2026 Andreas Pösch, GPL-3.0-or-later, original artwork. L-ai-SERctrl app icon. Original artwork (no LaserGRBL logo material). Render: app/examples/render_artwork.rs -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1f29"/>
+      <stop offset="1" stop-color="#262e3b"/>
+    </linearGradient>
+    <radialGradient id="hit" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="0.3" stop-color="#8cc4ff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#3d8bff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="url(#bg)"/>
+  <circle cx="128" cy="166" r="64" fill="#151a22" stroke="#3f4a5b" stroke-width="4"/>
+  <g stroke="#3d8bff" stroke-width="7" stroke-linecap="round" opacity="0.75"><line x1="65.6" y1="180.0" x2="190.4" y2="180.0"/><line x1="70.5" y1="194.0" x2="185.5" y2="194.0"/><line x1="79.7" y1="208.0" x2="176.3" y2="208.0"/><line x1="97.0" y1="222.0" x2="159.0" y2="222.0"/></g>
+  <line x1="69" y1="166" x2="128" y2="166" stroke="#a8d4ff" stroke-width="7" stroke-linecap="round"/>
+  <rect x="98" y="30" width="60" height="40" rx="9" fill="#2c3442" stroke="#566278" stroke-width="4"/>
+  <path d="M113 70 L143 70 L136 86 L120 86 Z" fill="#364051" stroke="#566278" stroke-width="4" stroke-linejoin="round"/>
+  <line x1="128" y1="86" x2="128" y2="166" stroke="#3d8bff" stroke-width="18" opacity="0.5" filter="url(#glow)"/>
+  <line x1="128" y1="86" x2="128" y2="166" stroke="#b5dbff" stroke-width="6"/>
+  <circle cx="128" cy="166" r="30" fill="url(#hit)"/>
+</svg>

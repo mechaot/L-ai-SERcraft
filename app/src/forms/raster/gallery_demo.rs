@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Gallery tab "Raster import": opens [`RasterImport`] on a bundled test image with a throwaway
 //! `GrblFile` and prints the resulting G-code line count (dev tool, no C# counterpart).
 

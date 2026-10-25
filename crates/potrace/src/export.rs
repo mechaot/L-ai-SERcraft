@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) Dileep.M (CsPotrace export code)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `CsPotrace/CsPotraceExport.cs`: `Export2GDIPlus` rendered with tiny-skia.
 //!
 //! NOTE: GDI+ anti-aliasing (SmoothingMode.HighQuality) differs from tiny-skia, so the pixels are

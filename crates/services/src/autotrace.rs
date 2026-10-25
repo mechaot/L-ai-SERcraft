@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Autotrace/Autotrace.cs`: run the external `autotrace` binary on a bitmap.
 //!
 //! The Windows build ships `Autotrace/autotrace.exe`; here the system binary is used (PLAN
@@ -5,7 +9,7 @@
 //! `<exe>/Autotrace/autotrace.exe` when present, else `autotrace` from `PATH`.
 //! `AutotraceTest.cs` is a developer test form (N/A).
 //!
-//! Deviation: the temp PNG goes to `<temp>/LaserGRBL/Autotrace/` (C# used `<data>\Autotrace\`).
+//! Deviation: the temp PNG goes to `<temp>/L-ai-SERctrl/Autotrace/` (C# used `<data>\Autotrace\`).
 
 use image::RgbaImage;
 use std::path::{Path, PathBuf};
@@ -43,7 +47,7 @@ impl std::error::Error for AutotraceError {}
 
 /// C# `Autotrace.TempPath`: folder of the temporary PNGs (created on use).
 ///
-/// Returns `<temp>/LaserGRBL/Autotrace`.
+/// Returns `<temp>/L-ai-SERctrl/Autotrace`.
 pub fn temp_path() -> PathBuf {
     lg_base::paths::temp_path().join("Autotrace")
 }

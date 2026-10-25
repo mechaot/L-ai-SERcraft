@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `UserControls/LabelTB.cs`: override slider (Rapid / Linear / Power) with label and reset button.
 
 use eframe::egui::{Response, Ui};

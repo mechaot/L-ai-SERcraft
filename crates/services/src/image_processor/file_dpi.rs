@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `Bitmap.HorizontalResolution` of the file (GDI+ reads it from the image header).
 //!
 //! The `image` crate does not expose DPI, so the headers are parsed minimally: PNG `pHYs`,

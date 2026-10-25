@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `GrblFile.cs` (core part): command list, load/save, analysis, quadrant, events.
 //!
 //! Sibling modules add the generators (`generators.rs`), raster line-to-line (`l2l.rs`),

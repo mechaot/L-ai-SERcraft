@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Port of `Settings.cs`: global key/value store with debounced save.
 //!
 //! Differences to C#: values are `serde_json::Value` in `LaserGRBL.Settings.json` (enums by variant

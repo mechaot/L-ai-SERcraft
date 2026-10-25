@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 """Generate PORTING.md: one section per original C# file, one row per declared member.
 
 Usage: gen_porting_checklist.py <original LaserGRBL project dir> <output PORTING.md>

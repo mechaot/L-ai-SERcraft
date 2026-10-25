@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 #![allow(clippy::collapsible_if)]
 //! Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the
 //! dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs.
@@ -87,7 +91,7 @@ struct DevScript {
     did_connect: bool,
     did_run: bool,
     shot_requested: bool,
-    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed actions (hold, resume, door, reset, emuhide, presets, layer=N, layeroff=N, fill=N, nofill=N, cross=N, nocross=N, pershape=N, nopershape=N, cmd=..).
+    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed actions (hold, resume, door, reset, emuhide, presets, license, layer=N, layeroff=N, fill=N, nofill=N, cross=N, nocross=N, pershape=N, nopershape=N, cmd=..).
     seq: Vec<(f32, String, bool)>,
 }
 
@@ -434,6 +438,7 @@ impl MainForm {
                     "reset" => core.grbl_reset(),
                     "emuhide" => lasergrbl_core::emulator::EmulatorUiHost::hide_ui(&*self.emulator),
                     "presets" => self.overlays.push_back(Overlay::Material(PresetEditor::new(default_presets()))),
+                    "license" => self.overlays.push_back(Overlay::License(LicenseForm::new())),
                     a => {
                         if let Some(n) = a.strip_prefix("layer=") {
                             self.params.dev_select_layer(n.parse().unwrap_or(0), true);
@@ -994,7 +999,7 @@ impl MainForm {
                 if self.multi_run_shown {
                     lasergrbl_core::sincro_start::signal();
                 } else {
-                    self.msgs.push(MsgTag::RunMulti, MessageBox::new("Warning: this command will start/resume all job in any running LaserGRBL instance!", "Warning").buttons(MessageBoxButtons::OkCancel).icon(MessageBoxIcon::Warning));
+                    self.msgs.push(MsgTag::RunMulti, MessageBox::new(format!("Warning: this command will start/resume all job in any running {} instance!", lg_base::APP_NAME), "Warning").buttons(MessageBoxButtons::OkCancel).icon(MessageBoxIcon::Warning));
                 }
             }
             MenuAction::PowerVsSpeed => self.overlays.push_back(Overlay::PowerVsSpeed(Box::new(PowerVsSpeedForm::new(core.loaded_file())))),

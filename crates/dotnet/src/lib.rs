@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `lg-dotnet`: bit-exact .NET Framework 4.x number/time/char semantics for the LaserGRBL port.
 //!
 //! No C# file maps here directly; used wherever the original relies on `ToString`, `Parse`,

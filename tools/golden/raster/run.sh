@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 # Regenerate tests/golden/raster/* with the original LaserGRBL built under Mono.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"

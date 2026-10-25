@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Andreas Pösch
+
 """Generate oracle input lists (deterministic) into tests/golden/svg_unit/."""
 import random, pathlib, sys
 

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Golden test: full SVG conversions vs the original (Mono) in tests/golden/svg/ (WP-H).
 
 use lg_svg2gcode::{ColorFilter, Firmware, GCodeFromSvg, PointF, SvgConvOptions};

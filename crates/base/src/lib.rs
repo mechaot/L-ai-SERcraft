@@ -1,6 +1,13 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound.
 //!
 //! Foundation crate of the LaserGRBL Rust port (WP-C1a).
+
+/// Product name shown in the UI, window title, logs and reports.
+pub const APP_NAME: &str = "L-ai-SERctrl";
 
 pub mod paths;
 pub mod settings;

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! Hatch fill geometry: parallel meander lines inside closed polygons (even-odd), arc flattening.
 
 use crate::matrix::Point;

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2004-2006 Jeremy Roberts, Will Gray (Expression Evaluator)
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Infix text normalisation (`Expand`, `ScientificNotationCorrection`) of `Tools/ExpressionEvaluator.cs`.
 //! Regexes are hand-coded to keep .NET semantics and avoid dependencies.
 

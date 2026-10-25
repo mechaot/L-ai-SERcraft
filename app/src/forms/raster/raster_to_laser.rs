@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! Ports `RasterConverter/RasterToLaserForm.cs` (+ Designer): the image import dialog (tool
 //! selection, conversion parameters, crop / fill / outline tools, live preview) which hands over to
 //! [`ConvertSizeForm`] and finally drives `ImageProcessor::generate_gcode`.

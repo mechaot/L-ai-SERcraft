@@ -1,12 +1,14 @@
-# LaserGRBL (Rust port) -- CI for GitLab CE + a self-hosted docker-executor runner.
+# L-ai-SERctrl (Rust, based on LaserGRBL) -- CI for GitLab CE + a self-hosted docker-executor runner.
 #
 # .yml, not .yaml: only the .yml spelling is auto-detected.
 #
 #   lint:clippy           clippy, warnings are errors              | lint
+#   lint:headers          SPDX header check (tools/check_headers.py) | lint
 #   test:cargo            whole workspace incl. golden tests       | test
 #   build:linux-appimage  portable AppImage (glibc 2.28 baseline)  | build -> artifact
 #   build:windows         x86_64 .exe + resources, zip             | build -> artifact
 #   build:macos           universal2 (arm64 + x86_64) + resources  | build -> artifact
+#   build:source          git archive of the tree (GPLv3 s.6)      | build -> artifact
 #
 # Every build is a cross build on the Linux runner with cargo-zigbuild. The
 # three builds are independent and `allow_failure: true`: one broken platform
@@ -17,9 +19,14 @@
 # cargo-zigbuild image: it ships the macOS 11.3 SDK (SDKROOT) that linking the
 # Apple frameworks needs. Its Rust is older than ours, the job installs ours.
 #
-# Windows/macOS artifacts are unsigned. Windows: unzip, run lasergrbl.exe
-# (SmartScreen warns). macOS: untar, `xattr -dr com.apple.quarantine LaserGRBL`,
-# run LaserGRBL/lasergrbl. The resources folder must stay next to the binary.
+# Legal files: Windows zip and macOS tarball hold LICENSE.md, NOTICE.md, CHANGELOG.md and a freshly generated
+# THIRD_PARTY_LICENSES.txt (python3 + tools/gen_third_party.py) at the top of the L-ai-SERctrl folder. The
+# AppImage holds the same under usr/share/doc/laiserctrl. build:source adds the source tarball so the
+# Corresponding Source is offered next to the binaries (GPLv3 section 6).
+#
+# Windows/macOS artifacts are unsigned. Windows: unzip, run laiserctrl.exe
+# (SmartScreen warns). macOS: untar, `xattr -dr com.apple.quarantine L-ai-SERctrl`,
+# run L-ai-SERctrl/laiserctrl. The resources folder must stay next to the binary.
 #
 # No rustfmt gate: the code base is not rustfmt-formatted (long lines kept on
 # purpose), a `cargo fmt --check` job would always fail.
@@ -92,6 +99,15 @@ lint:clippy:
     - rustup component add clippy
     - cargo clippy --workspace --all-targets --locked -- -D warnings
 
+lint:headers:
+  image: $RUST_IMAGE
+  stage: lint
+  needs: []
+  script:
+    # python3 ships with most images; install only when missing
+    - command -v python3 >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends python3 >/dev/null; }
+    - python3 -I tools/check_headers.py
+
 # ---------------------------------------------------------------- test ------
 
 test:cargo:
@@ -109,7 +125,7 @@ test:cargo:
 .zig-tools:
   extends: .rust
   stage: build
-  needs: ["lint:clippy", "test:cargo"]
+  needs: ["lint:clippy", "lint:headers", "test:cargo"]
   allow_failure: true
   cache:
     - *cargo-cache
@@ -144,54 +160,55 @@ build:linux-appimage:
       if grep -q "WARNING: native build" build-appimage.log; then
         echo "zigbuild not used: AppImage would not be portable" >&2; exit 1
       fi
-      MAXG="$(objdump -T target/x86_64-unknown-linux-gnu/release/lasergrbl | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)"
+      MAXG="$(objdump -T target/x86_64-unknown-linux-gnu/release/laiserctrl | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1)"
       echo "max GLIBC required: $MAXG"
       [ "$(printf '%s\n2.28\n' "$MAXG" | sort -V | tail -1)" = "2.28" ] || { echo "binary needs glibc > 2.28" >&2; exit 1; }
     # smoke test: the packed AppImage extracts and holds the binary + resources
     - |
-      APP="dist/LaserGRBL-$VERSION-x86_64.AppImage"
+      APP="dist/L-ai-SERctrl-$VERSION-x86_64.AppImage"
       chmod +x "$APP"
       (cd "$(mktemp -d)" && "$CI_PROJECT_DIR/$APP" --appimage-extract >/dev/null \
-        && test -x squashfs-root/usr/bin/lasergrbl \
-        && test -d squashfs-root/usr/share/lasergrbl/resources \
+        && test -x squashfs-root/usr/bin/laiserctrl \
+        && test -d squashfs-root/usr/share/laiserctrl/resources \
         && test -x squashfs-root/AppRun)
       sha256sum "$APP" | tee "$APP.sha256"
   artifacts:
-    name: "LaserGRBL-linux-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    name: "L-ai-SERctrl-linux-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
     expire_in: 1 month
     paths:
-      - dist/LaserGRBL-*-x86_64.AppImage
-      - dist/LaserGRBL-*-x86_64.AppImage.sha256
+      - dist/L-ai-SERctrl-*-x86_64.AppImage
+      - dist/L-ai-SERctrl-*-x86_64.AppImage.sha256
 
 build:windows:
   extends: .zig-tools
   script:
     - rustup target add x86_64-pc-windows-gnu
     # windows-gnu linked by zig (mingw-w64 libs ship with zig)
-    - cargo zigbuild --release --locked -p lasergrbl --target x86_64-pc-windows-gnu
+    - cargo zigbuild --release --locked -p laiserctrl --target x86_64-pc-windows-gnu
     # GUI subsystem (no console window), 64 bit
-    - file target/x86_64-pc-windows-gnu/release/lasergrbl.exe | tee /dev/stderr | grep -qE 'PE32\+ executable.*\(GUI\).*x86-64'
-    # zip: LaserGRBL/lasergrbl.exe + LaserGRBL/resources (looked up next to the exe)
+    - file target/x86_64-pc-windows-gnu/release/laiserctrl.exe | tee /dev/stderr | grep -qE 'PE32\+ executable.*\(GUI\).*x86-64'
+    # zip: L-ai-SERctrl/laiserctrl.exe + L-ai-SERctrl/resources (looked up next to the exe)
     - |
-      PKG="LaserGRBL-$VERSION-windows-x86_64"
-      STAGE="$(mktemp -d)/LaserGRBL"
+      PKG="L-ai-SERctrl-$VERSION-windows-x86_64"
+      STAGE="$(mktemp -d)/L-ai-SERctrl"
       mkdir -p "$STAGE" dist
-      cp target/x86_64-pc-windows-gnu/release/lasergrbl.exe "$STAGE/"
+      cp target/x86_64-pc-windows-gnu/release/laiserctrl.exe "$STAGE/"
       cp -r resources "$STAGE/resources"
-      cp LICENSE.md "$STAGE/"
-      (cd "$(dirname "$STAGE")" && zip -qr9 "$CI_PROJECT_DIR/dist/$PKG.zip" LaserGRBL)
+      cp LICENSE.md NOTICE.md CHANGELOG.md "$STAGE/"
+      python3 -I tools/gen_third_party.py --texts "$STAGE/THIRD_PARTY_LICENSES.txt"
+      (cd "$(dirname "$STAGE")" && zip -qr9 "$CI_PROJECT_DIR/dist/$PKG.zip" L-ai-SERctrl)
       sha256sum "dist/$PKG.zip" | tee "dist/$PKG.zip.sha256"
   artifacts:
-    name: "LaserGRBL-windows-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    name: "L-ai-SERctrl-windows-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
     expire_in: 1 month
     paths:
-      - dist/LaserGRBL-*-windows-x86_64.zip
-      - dist/LaserGRBL-*-windows-x86_64.zip.sha256
+      - dist/L-ai-SERctrl-*-windows-x86_64.zip
+      - dist/L-ai-SERctrl-*-windows-x86_64.zip.sha256
 
 build:macos:
   image: $ZIGBUILD_IMAGE
   stage: build
-  needs: ["lint:clippy", "test:cargo"]
+  needs: ["lint:clippy", "lint:headers", "test:cargo"]
   allow_failure: true
   cache:
     - *cargo-cache
@@ -202,25 +219,48 @@ build:macos:
     - rustc --version && cargo --version && cargo zigbuild --version
     - echo "SDKROOT=$SDKROOT" && test -d "$SDKROOT"
     - VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/{s/^version *= *"\(.*\)"/\1/p}' Cargo.toml)"
+    # python3 runs tools/gen_third_party.py; install only when the image lacks it (needs a Debian/Ubuntu base)
+    - command -v python3 >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends python3 >/dev/null; }
   script:
     # universal2 = arm64 + x86_64 in one fat binary
-    - cargo zigbuild --release --locked -p lasergrbl --target universal2-apple-darwin
-    - BIN=target/universal2-apple-darwin/release/lasergrbl
+    - cargo zigbuild --release --locked -p laiserctrl --target universal2-apple-darwin
+    - BIN=target/universal2-apple-darwin/release/laiserctrl
     # fat Mach-O magic (no `file` needed)
     - test "$(head -c4 "$BIN" | od -An -tx1 | tr -d ' \n')" = "cafebabe"
-    # tar.gz keeps the exec bit: LaserGRBL/lasergrbl + LaserGRBL/resources
+    # tar.gz keeps the exec bit: L-ai-SERctrl/laiserctrl + L-ai-SERctrl/resources
     - |
-      PKG="LaserGRBL-$VERSION-macos-universal"
-      STAGE="$(mktemp -d)/LaserGRBL"
+      PKG="L-ai-SERctrl-$VERSION-macos-universal"
+      STAGE="$(mktemp -d)/L-ai-SERctrl"
       mkdir -p "$STAGE" dist
-      install -m755 "$BIN" "$STAGE/lasergrbl"
+      install -m755 "$BIN" "$STAGE/laiserctrl"
       cp -r resources "$STAGE/resources"
-      cp LICENSE.md "$STAGE/"
-      tar -C "$(dirname "$STAGE")" -czf "dist/$PKG.tar.gz" LaserGRBL
+      cp LICENSE.md NOTICE.md CHANGELOG.md "$STAGE/"
+      python3 -I tools/gen_third_party.py --texts "$STAGE/THIRD_PARTY_LICENSES.txt"
+      tar -C "$(dirname "$STAGE")" -czf "dist/$PKG.tar.gz" L-ai-SERctrl
       sha256sum "dist/$PKG.tar.gz" | tee "dist/$PKG.tar.gz.sha256"
   artifacts:
-    name: "LaserGRBL-macos-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    name: "L-ai-SERctrl-macos-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
     expire_in: 1 month
     paths:
-      - dist/LaserGRBL-*-macos-universal.tar.gz
-      - dist/LaserGRBL-*-macos-universal.tar.gz.sha256
+      - dist/L-ai-SERctrl-*-macos-universal.tar.gz
+      - dist/L-ai-SERctrl-*-macos-universal.tar.gz.sha256
+
+# Corresponding Source (GPLv3 section 6): the committed tree, next to the binaries.
+build:source:
+  image: $RUST_IMAGE
+  stage: build
+  needs: []
+  before_script:
+    # git ships with the rust image; install only when missing
+    - command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends git >/dev/null; }
+    - VERSION="$(sed -n '/^\[workspace.package\]/,/^\[/{s/^version *= *"\(.*\)"/\1/p}' Cargo.toml)"
+  script:
+    - mkdir -p dist
+    - git archive --format=tar.gz --prefix="L-ai-SERctrl-$VERSION/" -o "dist/L-ai-SERctrl-$VERSION-source.tar.gz" HEAD
+    - sha256sum "dist/L-ai-SERctrl-$VERSION-source.tar.gz" | tee "dist/L-ai-SERctrl-$VERSION-source.tar.gz.sha256"
+  artifacts:
+    name: "L-ai-SERctrl-source-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    expire_in: 1 month
+    paths:
+      - dist/L-ai-SERctrl-*-source.tar.gz
+      - dist/L-ai-SERctrl-*-source.tar.gz.sha256

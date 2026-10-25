@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
 //! OpenGL renderer of the job preview (replaces SharpGL display lists of `Objects3D.cs`).
 //!
 //! Lines are drawn as instanced quads (`gl_VertexID` corners, one 20 byte [`Segment`] per instance) in a

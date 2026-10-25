@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Andreas Pösch
+
 //! Named layer presets: all per-layer values of the "Parameters" dock (except `enabled`).
 //!
 //! Not part of the C# app (intentional deviation): replaces the old material database
-//! (`PSHelper/MaterialDB.cs`). Stored as JSON in `<config dir>/LaserGRBL/LayerPresets.json`.
+//! (`PSHelper/MaterialDB.cs`). Stored as JSON in `<config dir>/L-ai-SERctrl/LayerPresets.json`.
 //! A missing file yields one example preset; nothing is written until the user saves or deletes.
 
 use serde::{Deserialize, Serialize};

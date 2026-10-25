@@ -1,4 +1,8 @@
-//! LaserGRBL egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`).
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
+// Copyright (C) 2026 Andreas Pösch (Rust port and changes)
+
+//! L-ai-SERctrl egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`).
 
 // Windows: GUI app, no console window (C# `WinExe`)
 #![cfg_attr(windows, windows_subsystem = "windows")]
@@ -10,55 +14,26 @@ mod ui;
 
 use eframe::egui;
 
-/// `Program.CurrentVersion.ToString(3)`.
+/// Own app version (`Cargo.toml`); display only, never a compat value.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Window title as in `RefreshFormTitle`: "LaserGRBL v7.14.1" (+ " (for X)" for non-GRBL firmware).
+/// Window title as in `RefreshFormTitle`: "L-ai-SERctrl v1.2.1" (+ " (for X)" for non-GRBL firmware).
 ///
 /// `firmware_suffix`: Some("Marlin") for non-Grbl firmware. Returns title text.
 pub fn form_title(firmware_suffix: Option<&str>) -> String {
     match firmware_suffix {
-        Some(f) => format!("LaserGRBL v{VERSION} (for {f})"),
-        None => format!("LaserGRBL v{VERSION}"),
+        Some(f) => format!("{} v{VERSION} (for {f})", lg_base::APP_NAME),
+        None => format!("{} v{VERSION}", lg_base::APP_NAME),
     }
 }
 
-/// Decode `LaserGrbl.ico` (largest entry; PNG or BMP-DIB) into an egui icon.
+/// Decode the embedded app icon (`resources/branding/icon.png`) into an egui icon.
+///
+/// Returns the RGBA icon, or None when decoding fails.
 fn load_icon() -> Option<egui::IconData> {
-    let ico: &[u8] = include_bytes!("../../resources/grafica/LaserGrbl.ico");
-    let count = u16::from_le_bytes([*ico.get(4)?, *ico.get(5)?]) as usize;
-    let mut best: Option<(u32, usize, usize)> = None; // (w, size, offset)
-    for i in 0..count {
-        let e = ico.get(6 + i * 16..6 + i * 16 + 16)?;
-        let w = if e[0] == 0 { 256 } else { e[0] as u32 };
-        let size = u32::from_le_bytes([e[8], e[9], e[10], e[11]]) as usize;
-        let off = u32::from_le_bytes([e[12], e[13], e[14], e[15]]) as usize;
-        if best.is_none_or(|b| w > b.0) {
-            best = Some((w, size, off));
-        }
-    }
-    let (_, size, off) = best?;
-    let data = ico.get(off..off + size)?;
-    if data.starts_with(b"\x89PNG") {
-        let img = image::load_from_memory(data).ok()?.to_rgba8();
-        return Some(egui::IconData { width: img.width(), height: img.height(), rgba: img.into_raw() });
-    }
-    // 32-bit BMP DIB: 40 byte header, BGRA rows bottom-up (AND mask ign    // 32-bit BMP DIB: 40 byte header, BGRA rows bottom-up (AND mask ignored)
-    let le = |o: usize| u32::from_le_bytes([data[o], data[o + 1], data[o + 2], data[o + 3]]);
-    if data.len() < 40 || le(0) != 40 || u16::from_le_bytes([data[14], data[15]]) != 32 {
-        return None;
-    }
-    let (w, h) = (le(4) as usize, le(8) as usize / 2);
-    let px = data.get(40..40 + w * h * 4)?;
-    let mut rgba = vec![0u8; w * h * 4];
-    for y in 0..h {
-        let src = &px[(h - 1 - y) * w * 4..(h - y) * w * 4];
-        for x in 0..w {
-            let (b, g, r, a) = (src[x * 4], src[x * 4 + 1], src[x * 4 + 2], src[x * 4 + 3]);
-            rgba[(y * w + x) * 4..(y * w + x) * 4 + 4].copy_from_slice(&[r, g, b, a]);
-        }
-    }
-    Some(egui::IconData { width: w as u32, height: h as u32, rgba })
+    let png: &[u8] = include_bytes!("../../resources/branding/icon.png");
+    let img = image::load_from_memory(png).ok()?.to_rgba8();
+    Some(egui::IconData { width: img.width(), height: img.height(), rgba: img.into_raw() })
 }
 
 /// Top-level eframe app.
@@ -155,7 +130,7 @@ fn main() -> eframe::Result {
     }
     let (files, gallery) = parse_args(&argv);
     let (size, pos, maximized) = saved_geometry();
-    let mut vp = egui::ViewportBuilder::default().with_title(form_title(None)).with_inner_size(size.unwrap_or([1024.0, 768.0])).with_maximized(maximized);
+    let mut vp = egui::ViewportBuilder::default().with_title(form_title(None)).with_app_id("laiserctrl").with_inner_size(size.unwrap_or([1024.0, 768.0])).with_maximized(maximized);
     if let Some(p) = pos {
         vp = vp.with_position(p);
     }
@@ -163,7 +138,7 @@ fn main() -> eframe::Result {
         vp = vp.with_icon(icon);
     }
     let opts = eframe::NativeOptions { viewport: vp, ..Default::default() };
-    eframe::run_native("LaserGRBL", opts, Box::new(move |cc| Ok(Box::new(App::new(cc, gallery, files)))))
+    eframe::run_native(lg_base::APP_NAME, opts, Box::new(move |cc| Ok(Box::new(App::new(cc, gallery, files)))))
 }
 
 #[cfg(test)]
@@ -172,13 +147,13 @@ mod tests {
 
     #[test]
     fn title() {
-        assert_eq!(form_title(None), "LaserGRBL v7.14.1");
-        assert_eq!(form_title(Some("Marlin")), "LaserGRBL v7.14.1 (for Marlin)");
+        assert_eq!(form_title(None), "L-ai-SERctrl v1.2.1");
+        assert_eq!(form_title(Some("Marlin")), "L-ai-SERctrl v1.2.1 (for Marlin)");
     }
 
     #[test]
     fn icon_decodes() {
-        let i = load_icon().expect("ico");
+        let i = load_icon().expect("png");
         assert!(i.width >= 16 && i.rgba.len() == (i.width * i.height * 4) as usize);
     }
 }

@@ -36,7 +36,7 @@ Target: `LaserGRBL_linux` (Rust 2024 workspace, egui/eframe UI, runs on Linux an
 | `lg-base` | crates/base | `Settings.cs` (+paths DataPath/TempPath/ExePath/resource dir), `Logger/*`, `Tools/{HiResTimer,ThreadClass,Cronometro,MathHelper,MobileAverageCalculator,WordWrap,RetainedSetting}.cs`, `Utils.TimeSpanToString`, `CSV/*` (+`CSVD`), NRBF (BinaryFormatter) reader/writer (`Tools/Serializer.cs` replacement), `Sound/SoundEvent.cs`, `Telegram.cs`, `UrlManager.cs` | dotnet |
 | `lg-gcode` | crates/gcode | `GrblCommand.cs`, `StateBuilder.cs`, `GrblFile.cs` (+`ProgramRange`, L2L, generators, potrace/svg/centerline loaders), `GrblConfST`/`GrblConf`, `GrblVersionInfo`, `GPoint`, `Firmware` enum (from `Core/GrblCore.cs`) | dotnet, base, hershey, potrace, svg2gcode, raster |
 | `lasergrbl-core` | crates/core | `GrblCore` engine (+Marlin/Smoothie/Vigo, `TimeProjection`, `LaserLifeHandler`, `ThreadingMode`, `ContinuousJog`), com wrappers, `Grblv11Emulator`/`WebsocketEmulator`, hotkeys model, custom buttons model, material DB, usage counters, sincro start, project files (.lps), firmware flasher (avrdude), wifi discovery, autotrace runner, `ImageProcessor` logic | all above |
-| `lasergrbl` | app | egui UI: every Form / UserControl, preview renderer (glow + CPU fallback), icons, i18n | core + egui stack |
+| `laiserctrl` | app | egui UI: every Form / UserControl, preview renderer (glow + CPU fallback), icons, i18n | core + egui stack |
 
 Leaf crates (dotnet, clipper, potrace, expr, hershey, svg2gcode, raster) never depend on base/gcode/core.
 Things they need from settings or the GRBL configuration (e.g. `Settings.GetObject("Support Hardware PWM")`,
@@ -73,7 +73,7 @@ once per process).
   `GrblFile` lives in `Arc<RwLock<GrblFile>>` inside the core; `InUse`/loading flag semantics preserved.
 
 ### 2.2 Persistence (paths)
-* `DataPath` = `dirs::config_dir()/LaserGRBL` (Linux: `~/.config/LaserGRBL`; Windows: `%APPDATA%\LaserGRBL`,
+* `DataPath` = `dirs::config_dir()/L-ai-SERctrl` (Linux: `~/.config/L-ai-SERctrl`; Windows: `%APPDATA%\L-ai-SERctrl`; old LaserGRBL folder migrated once,
   same folder as the original). `TempPath` = `std::env::temp_dir()/LaserGRBL`.
 * Settings: same keys as C#, stored as JSON (`LaserGRBL.Settings.json`), typed get/set with default,
   debounced save 2 s after the last change, flush on exit (C# `Settings.cs` semantics incl. `IsNewFile`,
