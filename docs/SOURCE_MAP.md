@@ -161,7 +161,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/ui/widgets/data_grid.rs`](../app/src/ui/widgets/data_grid.rs) | 63 | Replacement for `MyDatagridView.cs` (a `DataGridView` with a WinForms crash workaround that has no egui equivalent) -- here a small themed table helper on top of `egui_extras::TableBuilder`. |
 | [`app/src/ui/widgets/graph.rs`](../app/src/ui/widgets/graph.rs) | 149 | Ports `Tools/Graph.cs` (rounded rect) plus small GDI+-like drawing helpers shared by widgets. |
 | [`app/src/ui/widgets/grbl_button.rs`](../app/src/ui/widgets/grbl_button.rs) | 72 | Ports `UserControls/GrblButton.cs`: flat themed button, optional icon at left. |
-| [`app/src/ui/widgets/group_box.rs`](../app/src/ui/widgets/group_box.rs) | 38 | Ports `UserControls/GrblGroupBox.cs`: group box with bold title in a themed border. |
+| [`app/src/ui/widgets/group_box.rs`](../app/src/ui/widgets/group_box.rs) | 49 | Ports `UserControls/GrblGroupBox.cs`: group box with bold title in a themed border. |
 | [`app/src/ui/widgets/image_button.rs`](../app/src/ui/widgets/image_button.rs) | 182 | Ports `UserControls/ImageButton.cs`: icon button with themed border, hover/pressed look, caption. |
 | [`app/src/ui/widgets/input_box.rs`](../app/src/ui/widgets/input_box.rs) | 90 | Ports `Tools/InputBox.cs`: modal "prompt + text + OK/Cancel" dialog with optional validator. |
 | [`app/src/ui/widgets/label_tb.rs`](../app/src/ui/widgets/label_tb.rs) | 118 | Ports `UserControls/LabelTB.cs`: override slider (Rapid / Linear / Power) with label and reset button. |

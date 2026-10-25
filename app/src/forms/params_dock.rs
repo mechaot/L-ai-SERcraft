@@ -20,7 +20,7 @@ use crate::forms::form_util::*;
 use crate::forms::material::{default_presets, SharedPresetDb};
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
 use crate::ui::preview::LayerView;
-use crate::ui::widgets::{flat_combo, grbl_group_box, DecimalInputRanged, ImageButton};
+use crate::ui::widgets::{flat_combo, grbl_group_box_wide, DecimalInputRanged, ImageButton};
 use crate::ui::{tr, tr_fmt, tr_plain};
 
 /// i18n prefix of the old SVG form (captions and tooltips are reused).
@@ -727,7 +727,7 @@ impl ParamsDock {
     ///
     /// `ui`: parent. `edited`: set on any change that needs a re-apply.
     fn layer_group(&mut self, ui: &mut Ui, edited: &mut bool) {
-        grbl_group_box(ui, &tr_plain("ParamsDock.Layer"), |ui| {
+        grbl_group_box_wide(ui, &tr_plain("ParamsDock.Layer"), |ui| {
             let items: Vec<String> = (0..self.layers.len()).map(|i| self.layer_text(i)).collect();
             let mut sel = Some(self.selected);
             let w = ui.available_width().max(60.0);
@@ -764,7 +764,7 @@ impl ParamsDock {
     ///
     /// `ui`: parent. `actions`: collects editor requests. `edited`: set on a preset pick.
     fn preset_group(&mut self, ui: &mut Ui, actions: &mut Vec<ParamsAction>, edited: &mut bool) {
-        grbl_group_box(ui, &tr_plain("ParamsDock.Preset"), |ui| {
+        grbl_group_box_wide(ui, &tr_plain("ParamsDock.Preset"), |ui| {
             let mut items = vec![tr_plain("ParamsDock.PresetNone")];
             items.extend(self.presets.iter().map(|p| p.name.clone()));
             let mut sel = Some(self.preset_index().map_or(0, |i| i + 1));
@@ -824,7 +824,7 @@ impl ParamsDock {
     fn speed_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         let lim_rate = self.border_max;
         let mut v = self.cur().border_speed;
-        grbl_group_box(ui, &ctl_text(P, "GbSpeed"), |ui| {
+        grbl_group_box_wide(ui, &ctl_text(P, "GbSpeed"), |ui| {
             ui.horizontal(|ui| {
                 label(ui, P, "LblBorderTracing");
                 if int_input(ui, "params-border", &mut v, 1, lim_rate, false, 55.0).is_some() {
@@ -841,7 +841,7 @@ impl ParamsDock {
     /// `ui`: parent. `edited`: set on any change.
     fn laser_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         let pwm_max = self.power_max_limit;
-        grbl_group_box(ui, &ctl_text(P, "GbLaser"), |ui| {
+        grbl_group_box_wide(ui, &ctl_text(P, "GbLaser"), |ui| {
             let items: Vec<String> = LASER_OPTIONS.iter().map(|o| o.0.to_owned()).collect();
             // laser mode row
             ui.horizontal(|ui| {
@@ -883,7 +883,7 @@ impl ParamsDock {
     ///
     /// `ui`: parent. `edited`: set on any committed change.
     fn fill_group(&mut self, ui: &mut Ui, edited: &mut bool) {
-        grbl_group_box(ui, &tr_plain("ParamsDock.Fill"), |ui| {
+        grbl_group_box_wide(ui, &tr_plain("ParamsDock.Fill"), |ui| {
             let mut on = self.cur().fill;
             if ui.checkbox(&mut on, tr_plain("ParamsDock.FillEnabled")).changed() {
                 self.cur_mut().fill = on;
@@ -928,7 +928,7 @@ impl ParamsDock {
     ///
     /// `ui`: parent. `edited`: set on change.
     fn filter_group(&mut self, ui: &mut Ui, edited: &mut bool) {
-        grbl_group_box(ui, &ctl_text(P, "gbFilter"), |ui| {
+        grbl_group_box_wide(ui, &ctl_text(P, "gbFilter"), |ui| {
             let items: Vec<String> = FILTER_OPTIONS.iter().map(|f| filter_name(*f).to_owned()).collect();
             ui.horizontal(|ui| {
                 label(ui, P, "labelFilter");
@@ -1020,6 +1020,7 @@ mod tests {
 
     #[test]
     fn edit_during_job_keeps_dirty() {
+        let _g = settings_guard();
         let p = write_svg("editjob");
         let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
@@ -1039,6 +1040,7 @@ mod tests {
 
     #[test]
     fn auto_apply_once_per_edit_and_waits_for_can_load() {
+        let _g = settings_guard();
         let p = write_svg("autoonce");
         let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);

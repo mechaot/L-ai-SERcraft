@@ -20,7 +20,7 @@ pub use color_slider::{ColorSlider, Orientation, SliderColors, SliderSchema};
 pub use combo::{enum_combo, flat_combo};
 pub use data_grid::{data_grid, GridColumn};
 pub use grbl_button::GrblButton;
-pub use group_box::grbl_group_box;
+pub use group_box::{grbl_group_box, grbl_group_box_wide};
 pub use image_button::ImageButton;
 pub use input_box::{InputBox, InputBoxResult};
 pub use label_tb::{LabelTb, OverrideKind};

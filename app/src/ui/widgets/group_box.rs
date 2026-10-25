@@ -36,3 +36,14 @@ pub fn grbl_group_box<R>(ui: &mut Ui, title: &str, add_contents: impl FnOnce(&mu
     }
     out
 }
+
+/// Same as [`grbl_group_box`] but frame spans full available width.
+///
+/// `ui`: parent. `title`: bold caption. `add_contents`: body. Returns the body's value.
+pub fn grbl_group_box_wide<R>(ui: &mut Ui, title: &str, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
+    grbl_group_box(ui, title, |ui| {
+        // inner width already excludes margins; fill it
+        ui.set_min_width(ui.available_width());
+        add_contents(ui)
+    })
+}
