@@ -727,7 +727,7 @@ impl ParamsDock {
         format!("{off}{label} ({})", info.shapes)
     }
 
-    /// Layer picker, enable checkbox, passes and the sync button.
+    /// Layer picker, enable checkbox and the sync button.
     ///
     /// `ui`: parent. `edited`: set on any change that needs a re-apply.
     fn layer_group(&mut self, ui: &mut Ui, edited: &mut bool) {
@@ -748,12 +748,6 @@ impl ParamsDock {
                 if ui.checkbox(&mut en, tr_plain("ParamsDock.Enabled")).changed() {
                     self.cur_mut().enabled = en;
                     self.revision += 1;
-                    *edited = true;
-                }
-                ui.label(tr_plain("ParamsDock.PassesLabel"));
-                let mut passes = self.cur().passes;
-                if int_input(ui, "params-passes", &mut passes, 1, 100, false, 40.0).is_some() {
-                    self.cur_mut().passes = passes;
                     *edited = true;
                 }
             });
@@ -822,12 +816,15 @@ impl ParamsDock {
         });
     }
 
-    /// Border speed input.
+    /// Border speed and passes inputs.
     ///
     /// `ui`: parent. `edited`: set on a committed edit.
     fn speed_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         let lim_rate = self.border_max;
         let mut v = self.cur().border_speed;
+        let mut passes = self.cur().passes;
+        // passes only per loaded layer: load_svg resets the defaults layer to 1
+        let has_source = self.source.is_some();
         grbl_group_box_wide(ui, &ctl_text(P, "GbSpeed"), |ui| {
             ui.horizontal(|ui| {
                 label(ui, P, "LblBorderTracing");
@@ -836,8 +833,17 @@ impl ParamsDock {
                 }
                 label(ui, P, "LblBorderTracingmm");
             });
+            if has_source {
+                ui.horizontal(|ui| {
+                    ui.label(tr_plain("ParamsDock.PassesLabel"));
+                    if int_input(ui, "params-passes", &mut passes, 1, 100, false, 40.0).is_some() {
+                        *edited = true;
+                    }
+                });
+            }
         });
         self.cur_mut().border_speed = v;
+        self.cur_mut().passes = passes;
     }
 
     /// Laser mode, S-MIN and S-MAX.
