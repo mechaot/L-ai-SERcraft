@@ -348,6 +348,7 @@
  "ParamsDock.PresetInfo": "{0} pass(es) · {1} mm/min · {2} % · {3}",
  "ParamsDock.PresetNameHint": "Preset name",
  "ParamsDock.PresetNone": "(none)",
+ "ParamsDock.SpeedLabel": "Laser",
  "ParamsDock.SavePresetTip": "Save the layer settings under this name (same name overwrites)",
  "ParamsDock.SyncLayers": "Sync layer settings",
  "ParamsDock.SyncLayersTip": "Copy these settings (all but Enabled) to all other layers",

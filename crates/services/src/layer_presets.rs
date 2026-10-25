@@ -29,7 +29,7 @@ fn default_filter() -> String {
 
 /// Serde default of [`LayerPreset::fill_distance`] (mm).
 fn default_fill_distance() -> f64 {
-    0.1
+    0.2
 }
 
 /// Serde default for flags that are on unless stored otherwise. Returns true.
@@ -361,7 +361,7 @@ mod tests {
         let f = d.join(FILE_NAME);
         std::fs::write(&f, r#"{"version":1,"presets":[{"name":"x","passes":1,"speed":100,"power_pct":10.0,"laser_on":"M3"}]}"#).unwrap();
         let p = PresetDb::load_from(&f).presets()[0].clone();
-        assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (false, 0.1, 0.0, false));
+        assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (false, 0.2, 0.0, false));
         // old JSON without the field: per shape on
         assert!(p.fill_per_shape);
     }

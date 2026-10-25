@@ -116,7 +116,7 @@ fn default_true() -> bool {
 
 /// Serde default of [`LayerUi::fill_distance`] (mm).
 fn default_fill_distance() -> f32 {
-    0.1
+    0.2
 }
 
 /// Saved layer values of one SVG file.
@@ -827,7 +827,7 @@ impl ParamsDock {
         let has_source = self.source.is_some();
         grbl_group_box_wide(ui, &ctl_text(P, "GbSpeed"), |ui| {
             ui.horizontal(|ui| {
-                label(ui, P, "LblBorderTracing");
+                ui.label(tr_plain("ParamsDock.SpeedLabel"));
                 if int_input(ui, "params-border", &mut v, 1, lim_rate, false, 55.0).is_some() {
                     *edited = true;
                 }
@@ -1152,7 +1152,7 @@ mod tests {
     #[test]
     fn old_stored_layer_loads_without_fill_fields() {
         let l: LayerUi = serde_json::from_str(r#"{"enabled":true,"passes":1,"border_speed":1000,"max_power":500,"laser_on":0,"filter":0}"#).unwrap();
-        assert_eq!((l.fill, l.fill_distance, l.fill_angle, l.fill_cross), (false, 0.1, 0, false));
+        assert_eq!((l.fill, l.fill_distance, l.fill_angle, l.fill_cross), (false, 0.2, 0, false));
     }
 
     #[test]

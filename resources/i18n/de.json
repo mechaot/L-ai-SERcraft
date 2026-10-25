@@ -189,6 +189,7 @@
  "ParamsDock.PresetInfo": "{0} Durchgang/Durchgänge · {1} mm/min · {2} % · {3}",
  "ParamsDock.PresetNameHint": "Name der Voreinstellung",
  "ParamsDock.PresetNone": "(keine)",
+ "ParamsDock.SpeedLabel": "Laser",
  "ParamsDock.SavePresetTip": "Ebeneneinstellungen unter diesem Namen speichern (gleicher Name überschreibt)",
  "ParamsDock.SyncLayers": "Ebeneneinstellungen synchronisieren",
  "ParamsDock.SyncLayersTip": "Diese Einstellungen (außer Aktiv) auf alle anderen Ebenen kopieren",
