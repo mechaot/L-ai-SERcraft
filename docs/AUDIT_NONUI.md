@@ -47,7 +47,7 @@ button logic, wifi discovery, flash/autotrace runners, Settings/Logger/Serialize
 | `RasterConverter/ImageProcessor.cs` | services/image_processor/* | FIXED: `filesize` float product (R9) |
 | `HotKeysManager.cs` | services/hotkeys.rs | OK |
 | `CustomButton.cs` (model) | services/custom_button.rs | OK |
-| `PSHelper/MaterialDB.cs` | services/material_db.rs | OK (R10) |
+| `PSHelper/MaterialDB.cs` | services/layer_presets.rs | REPLACED (R10): named layer presets, intentional deviation |
 | `Tools/Project.cs` | services/project.rs | OK (R11) |
 | `Tools/Json.cs` | services/json.rs | FIXED: `\uXXXX` hex parsing accepted a sign |
 | `AutoUpdate/GitHub.cs`, `Tools/Json.cs` | removed | intentional: no update check (Json reader was only used by it) |
@@ -126,8 +126,7 @@ button logic, wifi discovery, flash/autotrace runners, Settings/Logger/Serialize
 * R9 `ImageProcessor`: GDI+ drawing of previews is done with direct pixel writes / tiny-skia; the error text of the
   centerline preview uses system fonts through resvg; `Thread.Abort` is replaced by a cooperative exit flag;
   `FileDPI` is parsed from PNG/JPEG/BMP headers (GDI+ semantics, e.g. 11811 ppm -> 299 dpi).
-* R10 `MaterialDB`: `OrderBy` culture compare is approximated (`culture_compare`, verified on the standard DB);
-  the bundled `StandardMaterials.psh` is used when the data-dir copy is missing; nothing downloads it.
+* R10 `MaterialDB`: replaced by named layer presets (`layer_presets.rs`, `LayerPresets.json`); intentional deviation, the C# material data (906 rows) is dropped.
 * R11 `Project`: `ConvertImageToBase64` stores the file bytes instead of GDI+ re-encoding the image.
 * R12 Autotrace: system `autotrace` binary (setting `Autotrace Path`), temp PNG under `<temp>/LaserGRBL/Autotrace`.
 * R13 Wi-Fi discovery: `ip`/`/proc/net/arp`/`getent`/system `ping` replace `NetworkInterface`, `SendARP`,

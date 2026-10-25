@@ -21,7 +21,7 @@ use crate::forms::generators::shake_test::ShakeTest;
 use crate::forms::legal_disclaimer::{LegalDisclaimer, LegalOutcome};
 use crate::forms::license::LicenseForm;
 use crate::forms::main::exception::{ExceptionDialog, ExceptionResult};
-use crate::forms::material::MaterialEditor;
+use crate::forms::material::PresetEditor;
 use crate::forms::raster::{RasterImport, RasterOutcome};
 use crate::forms::save_options::{SaveOptionForm, SaveOptionOutcome};
 use crate::forms::splash::SplashScreen;
@@ -46,7 +46,7 @@ pub enum Overlay {
     Settings(SettingsForm),
     GrblConfig(GrblConfig),
     Hotkeys(HotkeyManagerForm),
-    Material(MaterialEditor),
+    Material(PresetEditor),
     SaveOptions(SaveOptionForm),
     License(LicenseForm),
     Raster(Box<RasterImport>),

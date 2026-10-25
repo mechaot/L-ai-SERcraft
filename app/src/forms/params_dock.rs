@@ -7,7 +7,7 @@ use eframe::egui::{self, Grid, RichText, Ui};
 use lasergrbl_core::GrblCore;
 use lg_dotnet::Decimal;
 use lg_gcode::GrblFile;
-use lg_services::material_db::{culture_compare, MaterialRow};
+use lg_services::layer_presets::LayerPreset;
 use lg_svg2gcode::{ColorFilter, LayerInfo, LayerParams};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -17,7 +17,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use crate::forms::form_util::*;
-use crate::forms::material::default_db;
+use crate::forms::material::{default_presets, SharedPresetDb};
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
 use crate::ui::preview::LayerView;
 use crate::ui::widgets::{flat_combo, grbl_group_box, ImageButton};
@@ -26,8 +26,8 @@ use crate::ui::{tr, tr_fmt, tr_plain};
 /// i18n prefix of the old SVG form (captions and tooltips are reused).
 const P: &str = "SvgConverter.ConvertSizeAndOptionForm.";
 
-/// Setting that stores the selected material row id.
-const MATERIAL_KEY: &str = "ParametersDock.MaterialId";
+/// Setting that stores the selected preset name.
+const PRESET_KEY: &str = "ParametersDock.Preset";
 
 /// Setting that stores the per-file layer settings (JSON array of [`StoredSet`]).
 const SETS_KEY: &str = "ParametersDock.LayerSets";
@@ -67,8 +67,8 @@ enum Msg {
 /// What the dock asks the main window to do.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParamsAction {
-    /// Open the material database editor.
-    OpenMaterialEditor,
+    /// Open the layer preset list editor.
+    OpenPresetEditor,
 }
 
 /// Editable values of one layer.
@@ -85,8 +85,9 @@ struct LayerUi {
     laser_on: usize,
     /// Index into [`FILTER_OPTIONS`].
     filter: usize,
-    /// Selected material row id.
-    material_id: Option<String>,
+    /// Name of the selected preset (old stored sets with `material_id` still load).
+    #[serde(default)]
+    preset: Option<String>,
 }
 
 /// Saved layer values of one SVG file.
@@ -159,10 +160,14 @@ pub struct ParamsDock {
     selected: usize,
     /// Upper limit of the speed input.
     border_max: i32,
-    /// Upper limit of the S-MAX input (also the 100 % base of material power).
+    /// Upper limit of the S-MAX input (also the 100 % base of preset power).
     power_max_limit: i32,
-    /// Visible material rows, sorted for the dropdown.
-    materials: Vec<MaterialRow>,
+    /// Shared preset database.
+    presets_db: SharedPresetDb,
+    /// Snapshot of the presets, sorted for the dropdown.
+    presets: Vec<LayerPreset>,
+    /// Edit buffer of the preset name field.
+    preset_name: String,
     source: Option<SvgSource>,
     /// Edited since the last successful generation.
     dirty: bool,
@@ -180,10 +185,17 @@ pub struct ParamsDock {
 }
 
 impl ParamsDock {
-    /// Build the dock: values from settings, material list, restored material id.
+    /// Build the dock on the process wide preset DB.
     ///
     /// Returns the dock without a source.
     pub fn new() -> Self {
+        Self::with_presets(default_presets())
+    }
+
+    /// Build the dock: values from settings, preset list, restored preset name.
+    ///
+    /// `db`: preset database. Returns the dock without a source.
+    pub fn with_presets(db: SharedPresetDb) -> Self {
         let mut d = ParamsDock {
             limits: Limits::from_config(),
             support_pwm: true,
@@ -191,7 +203,9 @@ impl ParamsDock {
             selected: 0,
             border_max: 0,
             power_max_limit: 0,
-            materials: Vec::new(),
+            presets_db: db,
+            presets: Vec::new(),
+            preset_name: String::new(),
             source: None,
             dirty: false,
             edit_seq: 0,
@@ -203,11 +217,14 @@ impl ParamsDock {
             revision: 0,
         };
         d.load_values();
-        d.refresh_materials();
-        // restore selection by id, values stay as stored
-        let id: Option<String> = lg_base::settings::get(MATERIAL_KEY, None);
-        let found = id.filter(|id| d.materials.iter().any(|r| &r.id == id));
-        d.cur_mut().material_id = found;
+        d.refresh_presets();
+        // restore selection by name, values stay as stored
+        let name: Option<String> = lg_base::settings::get(PRESET_KEY, None);
+        let found = name.and_then(|n| d.presets.iter().find(|p| p.name.eq_ignore_ascii_case(&n)).map(|p| p.name.clone()));
+        if let Some(n) = &found {
+            d.preset_name = n.clone();
+        }
+        d.cur_mut().preset = found;
         d
     }
 
@@ -227,7 +244,7 @@ impl ParamsDock {
             max_power: lg_base::settings::get("GrayScaleConversion.Gcode.LaserOptions.PowerMax", self.limits.max_pwm),
             laser_on: if laser_on_s == "M3" || !self.limits.laser_mode { 0 } else { 1 },
             filter: 0,
-            material_id: None,
+            preset: None,
         }
     }
 
@@ -470,59 +487,90 @@ impl ParamsDock {
         Some(LayerView { revision: self.revision, highlight, hidden })
     }
 
-    /// Rebuild the dropdown rows from the material database (after the editor closed).
-    pub fn refresh_materials(&mut self) {
-        let db = default_db();
-        let mut rows: Vec<MaterialRow> = db.lock().unwrap_or_else(|e| e.into_inner()).materials.rows().iter().filter(|r| r.visible).cloned().collect();
-        rows.sort_by(|a, b| {
-            culture_compare(&a.model, &b.model)
-                .then_with(|| culture_compare(&a.material, &b.material))
-                .then_with(|| culture_compare(&a.action, &b.action))
-                .then_with(|| culture_compare(&a.thickness, &b.thickness))
-        });
-        self.materials = rows;
+    /// Rebuild the dropdown list from the preset database (after the editor closed).
+    pub fn refresh_presets(&mut self) {
+        self.presets = self.presets_db.lock().unwrap_or_else(|e| e.into_inner()).presets().to_vec();
     }
 
-    /// Index into `materials` of the selected layer's material row. Returns None when none/vanished.
-    fn material_index(&self) -> Option<usize> {
-        let id = self.cur().material_id.as_ref()?;
-        self.materials.iter().position(|r| &r.id == id)
+    /// Index into `presets` of the selected layer's preset. Returns None when none/vanished.
+    fn preset_index(&self) -> Option<usize> {
+        let n = self.cur().preset.as_ref()?;
+        self.presets.iter().position(|p| p.name.eq_ignore_ascii_case(n))
     }
 
-    /// Dropdown text of a material row.
+    /// Load all values of preset `i` into the selected layer and mark dirty.
     ///
-    /// `r`: row. Returns "model · material · action · thickness".
-    fn material_text(r: &MaterialRow) -> String {
-        format!("{} · {} · {} · {}", r.model, r.material, r.action, r.thickness)
-    }
-
-    /// Take speed, power and passes of material row `i` (C# `BtnPSHelper_Click` tail) and mark dirty.
-    ///
-    /// `i`: index into `materials`.
-    fn select_material(&mut self, i: usize) {
-        let Some(r) = self.materials.get(i).cloned() else { return };
-        let max = self.power_max_limit;
+    /// `i`: index into `presets`.
+    fn select_preset(&mut self, i: usize) {
+        let Some(p) = self.presets.get(i).cloned() else { return };
+        let (max, border_max) = (self.power_max_limit, self.border_max);
+        let new_laser = LASER_OPTIONS.iter().position(|o| o.1 == p.laser_on).unwrap_or(0);
+        let new_filter = FILTER_OPTIONS.iter().position(|f| filter_name(*f) == p.filter).unwrap_or(0);
         let c = self.cur_mut();
-        c.border_speed = r.speed;
-        c.max_power = max * r.power / 100;
-        c.passes = r.cycles.clamp(1, 100);
-        c.material_id = Some(r.id.clone());
-        lg_base::settings::set(MATERIAL_KEY, Some(r.id.clone()));
+        c.passes = p.passes.clamp(1, 100);
+        c.border_speed = if border_max > 0 { p.speed.clamp(1, border_max) } else { p.speed };
+        c.max_power = p.power_s(max);
+        let laser_changed = c.laser_on != new_laser;
+        c.laser_on = new_laser;
+        c.filter = new_filter;
+        c.preset = Some(p.name.clone());
+        lg_base::settings::set(PRESET_KEY, Some(p.name.clone()));
+        self.preset_name = p.name;
+        // keep the M4 warning working
+        if laser_changed {
+            self.on_laser_mode_changed();
+        }
         self.mark_dirty();
     }
 
-    /// Drop the material selection (dropdown "(none)"); values stay.
-    fn deselect_material(&mut self) {
-        self.cur_mut().material_id = None;
-        lg_base::settings::delete(MATERIAL_KEY);
+    /// Drop the preset selection (dropdown "(none)"); values stay, no regen.
+    fn deselect_preset(&mut self) {
+        self.cur_mut().preset = None;
+        lg_base::settings::delete(PRESET_KEY);
     }
 
-    /// True when speed or S-MAX differ from the selected material row.
+    /// Save the selected layer's values under the name in the name field (same name overwrites).
+    ///
+    /// No G-code change, so the dock is not marked dirty. Errors go to `last_error`.
+    fn save_preset(&mut self) {
+        let name = self.preset_name.trim().to_owned();
+        let c = self.cur().clone();
+        let p = LayerPreset {
+            name: name.clone(),
+            passes: c.passes,
+            speed: c.border_speed,
+            power_pct: LayerPreset::pct_from_s(c.max_power, self.power_max_limit),
+            laser_on: LASER_OPTIONS[c.laser_on].1.to_owned(),
+            filter: filter_name(FILTER_OPTIONS[c.filter]).to_owned(),
+        };
+        let res = self.presets_db.lock().unwrap_or_else(|e| e.into_inner()).upsert(p);
+        match res {
+            Ok(()) => {
+                self.refresh_presets();
+                // adopt the stored spelling
+                let stored = self.presets_db.lock().unwrap_or_else(|e| e.into_inner()).find(&name).map_or(name, |p| p.name.clone());
+                lg_base::settings::set(PRESET_KEY, Some(stored.clone()));
+                self.preset_name = stored.clone();
+                self.cur_mut().preset = Some(stored);
+                self.save_set();
+                self.last_error = None;
+            }
+            Err(e) => self.last_error = Some(e),
+        }
+    }
+
+    /// True when the layer values differ from the selected preset.
     ///
     /// Returns false without a selection.
-    fn material_modified(&self) -> bool {
+    fn preset_modified(&self) -> bool {
         let c = self.cur();
-        self.material_index().and_then(|i| self.materials.get(i)).is_some_and(|r| r.speed != c.border_speed || self.power_max_limit * r.power / 100 != c.max_power)
+        self.preset_index().and_then(|i| self.presets.get(i)).is_some_and(|p| {
+            p.passes != c.passes
+                || p.speed != c.border_speed
+                || p.power_s(self.power_max_limit) != c.max_power
+                || p.laser_on != LASER_OPTIONS[c.laser_on].1
+                || p.filter != filter_name(FILTER_OPTIONS[c.filter])
+        })
     }
 
     /// Copy the selected layer's values (not `enabled`) to every other layer and mark dirty.
@@ -582,7 +630,7 @@ impl ParamsDock {
                 self.layer_group(ui, &mut edited);
                 ui.add_space(4.0);
             }
-            self.material_group(ui, &mut actions, &mut edited);
+            self.preset_group(ui, &mut actions, &mut edited);
             ui.add_space(4.0);
             self.speed_group(ui, &mut edited);
             ui.add_space(4.0);
@@ -620,6 +668,10 @@ impl ParamsDock {
             if flat_combo(ui, "params-layer", &mut sel, &items, w).changed() {
                 self.selected = sel.unwrap_or(self.selected);
                 self.revision += 1;
+                // name field follows the layer's preset
+                if let Some(n) = self.cur().preset.clone() {
+                    self.preset_name = n;
+                }
             }
             ui.horizontal(|ui| {
                 let mut en = self.cur().enabled;
@@ -642,40 +694,55 @@ impl ParamsDock {
         });
     }
 
-    /// Material dropdown, info text and editor button.
+    /// Preset dropdown, info text, editor button and save-as-name row.
     ///
-    /// `ui`: parent. `actions`: collects editor requests. `edited`: set on a material pick.
-    fn material_group(&mut self, ui: &mut Ui, actions: &mut Vec<ParamsAction>, edited: &mut bool) {
-        grbl_group_box(ui, &tr_plain("ParamsDock.Material"), |ui| {
-            let mut items = vec![tr_plain("ParamsDock.MaterialNone")];
-            items.extend(self.materials.iter().map(Self::material_text));
-            let mut sel = Some(self.material_index().map_or(0, |i| i + 1));
+    /// `ui`: parent. `actions`: collects editor requests. `edited`: set on a preset pick.
+    fn preset_group(&mut self, ui: &mut Ui, actions: &mut Vec<ParamsAction>, edited: &mut bool) {
+        grbl_group_box(ui, &tr_plain("ParamsDock.Preset"), |ui| {
+            let mut items = vec![tr_plain("ParamsDock.PresetNone")];
+            items.extend(self.presets.iter().map(|p| p.name.clone()));
+            let mut sel = Some(self.preset_index().map_or(0, |i| i + 1));
             ui.horizontal(|ui| {
                 let w = (ui.available_width() - 44.0).max(60.0);
-                let r = flat_combo(ui, "params-material", &mut sel, &items, w);
+                let r = flat_combo(ui, "params-preset", &mut sel, &items, w);
                 if r.changed() {
                     match sel.unwrap_or(0) {
-                        0 => self.deselect_material(),
+                        0 => self.deselect_preset(),
                         n => {
-                            self.select_material(n - 1);
+                            self.select_preset(n - 1);
                             *edited = true;
                         }
                     }
                 }
-                if ui.add(ImageButton::new("mdi-database").size(egui::Vec2::splat(17.0))).on_hover_text(tr("ParamsDock.EditMaterials")).clicked() {
-                    actions.push(ParamsAction::OpenMaterialEditor);
+                if ui.add(ImageButton::new("mdi-database").size(egui::Vec2::splat(17.0))).on_hover_text(tr("ParamsDock.EditPresets")).clicked() {
+                    actions.push(ParamsAction::OpenPresetEditor);
                 }
             });
-            // passes + remarks of the selected row
-            if let Some(r) = self.material_index().and_then(|i| self.materials.get(i)) {
-                let mut info = tr_fmt("ParamsDock.Passes", &[&r.cycles]);
-                if !r.remarks().is_empty() {
-                    info = format!("{info} - {}", r.remarks());
-                }
+            // info of the selected preset
+            if let Some(p) = self.preset_index().and_then(|i| self.presets.get(i)) {
+                let info = tr_fmt("ParamsDock.PresetInfo", &[&p.passes, &p.speed, &format!("{:.1}", p.power_pct), &p.laser_on]);
                 ui.label(RichText::new(info).small());
-                if self.material_modified() {
+                if self.preset_modified() {
                     ui.label(RichText::new(tr_plain("ParamsDock.Modified")).small().italics());
                 }
+            }
+            // save row
+            let mut save = false;
+            ui.horizontal(|ui| {
+                let w = (ui.available_width() - 28.0).max(60.0);
+                let r = ui.add(egui::TextEdit::singleline(&mut self.preset_name).id(egui::Id::unique("params-preset-name")).hint_text(tr_plain("ParamsDock.PresetNameHint")).desired_width(w));
+                let can_save = !self.preset_name.trim().is_empty();
+                // Enter in the field saves too
+                if r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) && can_save {
+                    save = true;
+                }
+                let btn = ui.add_enabled(can_save, ImageButton::new("mdi-content-save").size(egui::Vec2::splat(17.0)));
+                if btn.on_hover_text(tr("ParamsDock.SavePresetTip")).clicked() {
+                    save = true;
+                }
+            });
+            if save {
+                self.save_preset();
             }
         });
     }
@@ -799,8 +866,14 @@ fn file_name(p: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use lg_services::layer_presets::{PresetDb, EXAMPLE_NAME};
     use std::sync::RwLock;
     use std::time::{Duration, Instant};
+
+    /// Dock on an in-memory DB holding the example (never touches the real config file).
+    fn new_dock() -> ParamsDock {
+        ParamsDock::with_presets(Arc::new(Mutex::new(PresetDb::in_memory(vec![LayerPreset::example()]))))
+    }
 
     fn new_file() -> SharedFile {
         Arc::new(RwLock::new(GrblFile::new()))
@@ -827,7 +900,7 @@ mod tests {
     #[test]
     fn edit_during_job_keeps_dirty() {
         let p = write_svg("editjob");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(wait(&mut d));
         d.mark_dirty();
@@ -846,7 +919,7 @@ mod tests {
     #[test]
     fn auto_apply_once_per_edit_and_waits_for_can_load() {
         let p = write_svg("autoonce");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(wait(&mut d));
         // program busy: wait, attempt not consumed
@@ -866,14 +939,10 @@ mod tests {
         assert!(!d.job_running());
     }
 
-    fn row(id: &str, power: i32, speed: i32) -> MaterialRow {
-        MaterialRow { id: id.into(), visible: true, model: "M".into(), material: "Wood".into(), thickness: "3".into(), action: "Cut".into(), power, speed, cycles: 2, remarks: None }
-    }
-
     #[test]
     fn defaults_from_empty_settings() {
         let _g = settings_guard();
-        let d = ParamsDock::new();
+        let d = new_dock();
         assert_eq!((d.cur().border_speed, d.cur().max_power), (1000, 1000));
         // empty config reports laser mode on, stored "M3" wins
         assert_eq!(d.cur().laser_on, 0);
@@ -886,33 +955,76 @@ mod tests {
     fn laser_mode_m4_restored_only_in_laser_mode() {
         let _g = settings_guard();
         lg_base::settings::set("GrayScaleConversion.Gcode.LaserOptions.LaserOn", "M4");
-        assert_eq!(ParamsDock::new().cur().laser_on, 1);
+        assert_eq!(new_dock().cur().laser_on, 1);
     }
 
     #[test]
     fn percent_text_like_dotnet() {
         let _g = settings_guard();
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         assert_eq!(d.perc_text(1000), "100.0 %");
         d.limits.max_pwm = 0;
         assert_eq!(d.perc_text(10), "");
     }
 
     #[test]
-    fn material_pick_scales_power_and_tracks_modified() {
+    fn preset_pick_sets_all_values_and_tracks_modified() {
         let _g = settings_guard();
-        let mut d = ParamsDock::new();
-        d.materials = vec![row("a", 25, 750)];
-        d.select_material(0);
-        assert_eq!((d.cur().border_speed, d.cur().max_power, d.cur().passes), (750, 250, 2));
-        assert!(d.dirty && !d.material_modified());
+        let mut d = new_dock();
+        d.select_preset(0);
+        let c = d.cur();
+        assert_eq!((c.border_speed, c.max_power, c.passes, c.laser_on, c.filter), (1000, 450, 1, 1, 0));
+        assert_eq!(c.preset.as_deref(), Some(EXAMPLE_NAME));
+        assert_eq!(d.preset_name, EXAMPLE_NAME);
+        assert!(d.dirty && !d.preset_modified());
         d.cur_mut().border_speed = 800;
-        assert!(d.material_modified());
-        // id persisted
-        assert_eq!(lg_base::settings::get(MATERIAL_KEY, None::<String>), Some("a".to_owned()));
-        d.deselect_material();
-        assert!(!d.material_modified());
-        assert_eq!(lg_base::settings::get(MATERIAL_KEY, None::<String>), None);
+        assert!(d.preset_modified());
+        // name persisted
+        assert_eq!(lg_base::settings::get(PRESET_KEY, None::<String>), Some(EXAMPLE_NAME.to_owned()));
+        d.deselect_preset();
+        assert!(!d.preset_modified());
+        assert_eq!(lg_base::settings::get(PRESET_KEY, None::<String>), None);
+    }
+
+    #[test]
+    fn save_preset_overwrites_same_name() {
+        let _g = settings_guard();
+        let f = std::env::temp_dir().join(format!("lg-params-presets-{}", std::process::id())).join("LayerPresets.json");
+        let _ = std::fs::remove_file(&f);
+        let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
+        let mut d = ParamsDock::with_presets(db);
+        d.preset_name = "Test".into();
+        d.cur_mut().border_speed = 500;
+        d.save_preset();
+        assert!(d.last_error.is_none());
+        d.preset_name = "test".into();
+        d.cur_mut().border_speed = 600;
+        d.save_preset();
+        let again = PresetDb::load_from(&f);
+        let hits: Vec<_> = again.presets().iter().filter(|p| p.name.eq_ignore_ascii_case("test")).collect();
+        assert_eq!(hits.len(), 1);
+        assert_eq!((hits[0].speed, hits[0].name.as_str()), (600, "test"));
+        assert_eq!(d.presets.len(), 2);
+        assert_eq!(d.cur().preset.as_deref(), Some("test"));
+        assert!(!d.preset_modified());
+        let _ = std::fs::remove_file(&f);
+    }
+
+    #[test]
+    fn save_preset_rejects_empty_name() {
+        let _g = settings_guard();
+        let mut d = new_dock();
+        d.preset_name = "  ".into();
+        d.save_preset();
+        assert!(d.last_error.is_some());
+        assert_eq!(d.presets.len(), 1);
+    }
+
+    #[test]
+    fn old_stored_layer_with_material_id_still_loads() {
+        let json = r#"{"enabled":true,"passes":2,"border_speed":900,"max_power":300,"laser_on":0,"filter":0,"material_id":"abc"}"#;
+        let l: LayerUi = serde_json::from_str(json).unwrap();
+        assert_eq!((l.passes, l.border_speed, l.preset), (2, 900, None));
     }
 
     #[test]
@@ -920,7 +1032,7 @@ mod tests {
         let _g = settings_guard();
         let p = write_svg("persist");
         let file = new_file();
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.cur_mut().border_speed = 1500;
         d.cur_mut().max_power = 800;
         d.cur_mut().laser_on = 1;
@@ -941,7 +1053,7 @@ mod tests {
     fn apply_clears_dirty_and_edit_sets_it() {
         let _g = settings_guard();
         let p = write_svg("dirty");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(d.needs_apply());
         assert!(wait(&mut d));
@@ -963,7 +1075,7 @@ mod tests {
         for l in ["G0 X1", "G1 X2", "G1 X3"] {
             file.write().unwrap().commands_mut().push(lg_gcode::GrblCommand::new(l));
         }
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(file.clone(), p.to_str().unwrap(), true, false);
         assert!(wait(&mut d));
         let first = file.read().unwrap().count();
@@ -982,7 +1094,7 @@ mod tests {
     #[test]
     fn apply_without_source_does_nothing() {
         let _g = settings_guard();
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         assert!(!d.apply());
         assert!(d.poll().is_none());
     }
@@ -1004,7 +1116,7 @@ mod tests {
     fn layers_listed_and_sync_copies_all_but_enabled() {
         let _g = settings_guard();
         let p = write_layer_svg("sync");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(wait(&mut d));
         assert_eq!(d.layers.len(), 2);
@@ -1013,13 +1125,13 @@ mod tests {
         d.cur_mut().border_speed = 321;
         d.cur_mut().passes = 3;
         d.cur_mut().max_power = 77;
-        d.cur_mut().material_id = Some("m".into());
+        d.cur_mut().preset = Some("m".into());
         d.dirty = false;
         d.sync_layers();
         assert!(d.dirty);
         let l = &d.layers[1].1;
         assert_eq!((l.border_speed, l.passes, l.max_power), (321, 3, 77));
-        assert_eq!(l.material_id.as_deref(), Some("m"));
+        assert_eq!(l.preset.as_deref(), Some("m"));
         assert!(!l.enabled);
         let _ = std::fs::remove_file(&p);
     }
@@ -1029,7 +1141,7 @@ mod tests {
         let _g = settings_guard();
         let p = write_layer_svg("store");
         let path = p.to_str().unwrap();
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), path, false, false);
         assert!(wait(&mut d));
         d.layers[1].1.border_speed = 555;
@@ -1039,7 +1151,7 @@ mod tests {
         assert!(d.apply());
         assert!(wait(&mut d));
         // reopen with a fresh dock
-        let mut d2 = ParamsDock::new();
+        let mut d2 = new_dock();
         d2.load_svg(new_file(), path, false, false);
         assert!(wait(&mut d2));
         assert_eq!((d2.layers[1].1.border_speed, d2.layers[1].1.passes), (555, 4));
@@ -1069,7 +1181,7 @@ mod tests {
     fn all_layers_disabled_refuses_apply() {
         let _g = settings_guard();
         let p = write_layer_svg("off");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(wait(&mut d));
         for (_, l) in d.layers.iter_mut() {
@@ -1086,7 +1198,7 @@ mod tests {
     fn layer_view_highlights_selected_and_hides_disabled() {
         let _g = settings_guard();
         let p = write_layer_svg("view");
-        let mut d = ParamsDock::new();
+        let mut d = new_dock();
         assert!(d.layer_view().is_none());
         d.load_svg(new_file(), p.to_str().unwrap(), false, false);
         assert!(wait(&mut d));
@@ -1111,6 +1223,7 @@ mod tests {
 mod e2e {
     use super::*;
     use lg_gcode::Firmware;
+    use lg_services::layer_presets::{PresetDb, EXAMPLE_NAME};
     use std::time::{Duration, Instant};
 
     /// Three layers: ungrouped (X 5..10), Cut (red X 20..30, black X 45..50), Engrave (X 60..80, nested group).
@@ -1149,7 +1262,11 @@ mod e2e {
         pub fn new() -> Self {
             let (tx, _rx) = crossbeam_channel::unbounded();
             let core = GrblCore::new(Firmware::Grbl, tx);
-            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::new(), texts: Vec::new() };
+            // temp-file DB with only the example: never the real config file
+            let f = std::env::temp_dir().join(format!("lg-e2e-presets-{}", std::process::id())).join("LayerPresets.json");
+            let _ = std::fs::remove_file(&f);
+            let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
+            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::with_presets(db), texts: Vec::new() };
             h.frame(vec![]);
             h
         }
@@ -1365,19 +1482,15 @@ mod e2e {
         let all = h.all_lines();
         assert!(!all.iter().any(|l| l == "M3 S0"), "stale M3: {all:?}");
 
-        // --- material pick: speed, power % of max PWM and passes of the row
-        // bundled StandardMaterials.psh guarantees rows
-        {
-            let r = h.dock.materials.first().cloned().expect("material rows");
-            h.pick(&tr_plain("ParamsDock.MaterialNone"), &ParamsDock::material_text(&r));
-            assert_eq!(h.dock.cur().material_id.as_deref(), Some(r.id.as_str()));
-            h.settle();
-            let cut = h.layer_lines(1).unwrap();
-            let pd = pen_downs(&cut);
-            assert_eq!(pd.len(), 2 * r.cycles.clamp(1, 100) as usize, "passes from material: {cut:?}");
-            assert!(pd.iter().all(|s| *s == (1000 * r.power / 100) as f64), "power from material {}%: {cut:?}", r.power);
-            assert!(words(&cut, 'F').contains(&(r.speed as f64)), "speed from material {}: {cut:?}", r.speed);
-        }
+        // --- preset pick: passes, speed, power %, mode and filter of the example
+        h.pick(&tr_plain("ParamsDock.PresetNone"), EXAMPLE_NAME);
+        assert_eq!(h.dock.cur().preset.as_deref(), Some(EXAMPLE_NAME));
+        h.settle();
+        let cut = h.layer_lines(1).unwrap();
+        assert_eq!(pen_downs(&cut), [450.0; 2], "2 paths x 1 pass at 45 %: {cut:?}");
+        assert!(words(&cut, 'F').contains(&1000.0), "speed from preset: {cut:?}");
+        // M4 was already active on all layers: no stale M3 appears
+        assert!(!h.all_lines().iter().any(|l| l == "M3 S0"), "stale M3: {:?}", h.all_lines());
 
         // --- reopen: per-file store restores everything, identical G-code
         let before = h.all_lines();

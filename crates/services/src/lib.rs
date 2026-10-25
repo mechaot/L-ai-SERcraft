@@ -5,7 +5,7 @@
 //! * [`project`] - `Tools/Project.cs` (.lps)
 //! * [`hotkeys`] - `HotKeysManager.cs`
 //! * [`custom_button`] - `CustomButton.cs`
-//! * [`material_db`] - `PSHelper/MaterialDB.cs`
+//! * [`layer_presets`] - named layer presets (replaces `PSHelper/MaterialDB.cs`)
 //! * [`flash_grbl`] - logic of `Firmware/FlashGrbl.cs`
 //! * [`wifi_discovery`] - `WiFiDiscovery/IPAddressHelper.cs` + scan logic of `DiscoveryForm.cs`
 //!
@@ -19,7 +19,7 @@ pub mod custom_button;
 pub mod flash_grbl;
 pub mod hotkeys;
 pub mod image_processor;
-pub mod material_db;
+pub mod layer_presets;
 pub mod project;
 pub mod wifi_discovery;
 

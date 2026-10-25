@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
 use super::{form_modal_x, get_enum, tip, ConvertSizeForm, RasterOutcome, ResolutionHelperForm, SettingEnum, UsageDelta};
-use crate::forms::material::{default_db, SharedMaterialDb};
+use crate::forms::material::{default_presets, SharedPresetDb};
 use crate::ui::dialog::{DialogResult, MessageBox, MessageBoxButtons, MessageBoxHost, MessageBoxIcon};
 use crate::ui::i18n::{tr, tr_plain};
 use crate::ui::theme::Theme;
@@ -362,7 +362,7 @@ pub struct RasterImport {
     rx: Receiver<ImageProcessorEvent>,
     c: Ctl,
     tools: Tools,
-    db: SharedMaterialDb,
+    db: SharedPresetDb,
     /// `Load` event done (processor resumed).
     started: bool,
     prevent_close: bool,
@@ -401,13 +401,13 @@ impl RasterImport {
     /// load error text. The caller must call `Project`-independent bookkeeping (`Core.LastOpenFile`)
     /// before, like `GrblCore.OpenFile` does.
     pub fn open(file: Arc<RwLock<GrblFile>>, path: impl AsRef<Path>, append: bool) -> Result<Self, String> {
-        Self::open_with_db(file, path, append, default_db())
+        Self::open_with_db(file, path, append, default_presets())
     }
 
-    /// Like [`open`](Self::open) with an explicit material database for the P/S helper.
+    /// Like [`open`](Self::open) with an explicit preset database for the P/S helper.
     ///
-    /// `db`: shared material database (`GrblCore.MaterialDB`). Other arguments as `open`.
-    pub fn open_with_db(file: Arc<RwLock<GrblFile>>, path: impl AsRef<Path>, append: bool, db: SharedMaterialDb) -> Result<Self, String> {
+    /// `db`: shared layer preset database. Other arguments as `open`.
+    pub fn open_with_db(file: Arc<RwLock<GrblFile>>, path: impl AsRef<Path>, append: bool, db: SharedPresetDb) -> Result<Self, String> {
         let (tx, rx) = crossbeam_channel::unbounded();
         // GetImageSize() = PbConverted.Size - 20
         let mut ip = ImageProcessor::new(file, &path.as_ref().to_string_lossy(), (PB_W - 20, PB_H - 20), append, tx)?;

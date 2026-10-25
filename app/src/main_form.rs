@@ -41,7 +41,7 @@ use crate::forms::main::exception::{self, ExceptionDialog, ExceptionResult};
 use crate::forms::main::jog::JogForm;
 use crate::forms::main::menus::{self, MenuAction, MenuState};
 use crate::forms::main::status_bar::{StatusAction, StatusBar};
-use crate::forms::material::{default_db, MaterialEditor};
+use crate::forms::material::{default_presets, PresetEditor};
 use crate::forms::preview_form::PreviewForm;
 use crate::forms::raster::RasterImport;
 use crate::forms::save_options::{SaveOptionForm, SaveOptionOutcome, SaveOptions};
@@ -87,7 +87,7 @@ struct DevScript {
     did_connect: bool,
     did_run: bool,
     shot_requested: bool,
-    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed core actions (hold, resume, door, reset, cmd=..).
+    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed actions (hold, resume, door, reset, emuhide, presets, layer=N, layeroff=N, cmd=..).
     seq: Vec<(f32, String, bool)>,
 }
 
@@ -161,6 +161,8 @@ impl MainForm {
     ///
     /// `args`: command line arguments (without the program name).
     pub fn new(args: Vec<String>) -> Self {
+        // presets auto-load at start
+        let _ = default_presets();
         let firmware: Firmware = settings::get("Firmware Type", Firmware::Grbl);
         let state = AppState::new(firmware);
         let mut overlays = VecDeque::new();
@@ -288,7 +290,7 @@ impl MainForm {
         let _ = preview_actions;
         for a in params_actions {
             match a {
-                ParamsAction::OpenMaterialEditor => self.overlays.push_back(Overlay::Material(MaterialEditor::new(default_db()))),
+                ParamsAction::OpenPresetEditor => self.overlays.push_back(Overlay::Material(PresetEditor::new(default_presets()))),
             }
         }
 
@@ -431,6 +433,7 @@ impl MainForm {
                     "door" => core.safety_door(),
                     "reset" => core.grbl_reset(),
                     "emuhide" => lasergrbl_core::emulator::EmulatorUiHost::hide_ui(&*self.emulator),
+                    "presets" => self.overlays.push_back(Overlay::Material(PresetEditor::new(default_presets()))),
                     a => {
                         if let Some(n) = a.strip_prefix("layer=") {
                             self.params.dev_select_layer(n.parse().unwrap_or(0), true);
@@ -568,9 +571,9 @@ impl MainForm {
         let is_material = matches!(front, Overlay::Material(_));
         if let Some(res) = front.show(ctx) {
             self.overlays.pop_front();
-            // material DB may have changed
+            // presets may have changed
             if is_material {
-                self.params.refresh_materials();
+                self.params.refresh_presets();
             }
             self.overlay_closed(res);
         }
@@ -947,7 +950,7 @@ impl MainForm {
             MenuAction::Unlock => core.send_unlock_command(),
             MenuAction::GrblConfig => self.overlays.push_back(Overlay::GrblConfig(GrblConfig::open(&core))),
             MenuAction::Settings => self.overlays.push_back(Overlay::Settings(SettingsForm::open(&core))),
-            MenuAction::MaterialDb => self.overlays.push_back(Overlay::Material(MaterialEditor::new(default_db()))),
+            MenuAction::MaterialDb => self.overlays.push_back(Overlay::Material(PresetEditor::new(default_presets()))),
             MenuAction::LaserUsage => self.overlays.push_back(Overlay::LaserUsage(Box::new(LaserUsage::open()))),
             MenuAction::Hotkeys => self.overlays.push_back(Overlay::Hotkeys(hotkey_manager_form::HotkeyManagerForm::open(&self.state.hotkeys))),
             MenuAction::Exit => ctx.send_viewport_cmd(egui::ViewportCommand::Close),
