@@ -91,7 +91,8 @@ RasterImport dialog (app/forms/raster) ──► lg_services::ImageProcessor
                                                      GrblFile::load_image_centerline (autotrace → lg-svg2gcode)
 SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
                                                      (auto regen: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
-                                                      not used by the golden paths; returns each layer's command range for the preview highlight/hide)
+                                                      not used by the golden paths; returns each layer's command range for the preview highlight/hide;
+                                                      optional per-layer hatch fill (hatch.rs) of closed curves, emitted as normal burn lines after each pass's outline)
 ```
 
 ### 3.5 Persistence

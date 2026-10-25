@@ -8,7 +8,7 @@ use lasergrbl_core::GrblCore;
 use lg_dotnet::Decimal;
 use lg_gcode::GrblFile;
 use lg_services::layer_presets::LayerPreset;
-use lg_svg2gcode::{ColorFilter, LayerInfo, LayerParams};
+use lg_svg2gcode::{ColorFilter, HatchFill, LayerInfo, LayerParams};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::Range;
@@ -20,7 +20,7 @@ use crate::forms::form_util::*;
 use crate::forms::material::{default_presets, SharedPresetDb};
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
 use crate::ui::preview::LayerView;
-use crate::ui::widgets::{flat_combo, grbl_group_box, ImageButton};
+use crate::ui::widgets::{flat_combo, grbl_group_box, DecimalInputRanged, ImageButton};
 use crate::ui::{tr, tr_fmt, tr_plain};
 
 /// i18n prefix of the old SVG form (captions and tooltips are reused).
@@ -72,7 +72,7 @@ pub enum ParamsAction {
 }
 
 /// Editable values of one layer.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct LayerUi {
     /// Layer is converted (and shown) when true.
     enabled: bool,
@@ -88,10 +88,27 @@ struct LayerUi {
     /// Name of the selected preset (old stored sets with `material_id` still load).
     #[serde(default)]
     preset: Option<String>,
+    /// Hatch fill of closed shapes on.
+    #[serde(default)]
+    fill: bool,
+    /// Fill line distance in mm.
+    #[serde(default = "default_fill_distance")]
+    fill_distance: f32,
+    /// Fill angle in degrees, 0..=360.
+    #[serde(default)]
+    fill_angle: i32,
+    /// Second hatch rotated +90 degrees.
+    #[serde(default)]
+    fill_cross: bool,
+}
+
+/// Serde default of [`LayerUi::fill_distance`] (mm).
+fn default_fill_distance() -> f32 {
+    0.1
 }
 
 /// Saved layer values of one SVG file.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct StoredSet {
     path: String,
     saved_unix_secs: u64,
@@ -245,6 +262,10 @@ impl ParamsDock {
             laser_on: if laser_on_s == "M3" || !self.limits.laser_mode { 0 } else { 1 },
             filter: 0,
             preset: None,
+            fill: false,
+            fill_distance: default_fill_distance(),
+            fill_angle: 0,
+            fill_cross: false,
         }
     }
 
@@ -313,6 +334,21 @@ impl ParamsDock {
         self.revision += 1;
     }
 
+    /// Dev hook (`LASERGRBL_DEV_SEQ` `fill=N` / `nofill=N` / `cross=N` / `nocross=N`): set fill flags of layer `i`.
+    ///
+    /// `i`: layer index. `fill`: new fill flag (None = keep). `cross`: new cross flag (None = keep).
+    pub fn dev_set_fill(&mut self, i: usize, fill: Option<bool>, cross: Option<bool>) {
+        let Some((_, l)) = self.layers.get_mut(i) else { return };
+        if let Some(f) = fill {
+            l.fill = f;
+        }
+        if let Some(c) = cross {
+            l.fill_cross = c;
+        }
+        self.mark_dirty();
+        self.revision += 1;
+    }
+
     /// Dev hook (`LASERGRBL_DEV_SEQ` `layer=N` / `layeroff=N`): select layer `i`, or disable it.
     ///
     /// `i`: layer index. `select`: true = select it, false = disable it (selection unchanged).
@@ -345,6 +381,7 @@ impl ParamsDock {
                 power_max: l.max_power,
                 laser_on: LASER_OPTIONS[l.laser_on].1.to_owned(),
                 filter: FILTER_OPTIONS[l.filter],
+                fill: l.fill.then_some(HatchFill { distance_mm: l.fill_distance as f64, angle_deg: l.fill_angle as f64, cross: l.fill_cross }),
             })
             .collect()
     }
@@ -513,6 +550,10 @@ impl ParamsDock {
         let laser_changed = c.laser_on != new_laser;
         c.laser_on = new_laser;
         c.filter = new_filter;
+        c.fill = p.fill;
+        c.fill_distance = p.fill_distance.clamp(0.01, 10.0) as f32;
+        c.fill_angle = (p.fill_angle.round() as i32).clamp(0, 360);
+        c.fill_cross = p.fill_cross;
         c.preset = Some(p.name.clone());
         lg_base::settings::set(PRESET_KEY, Some(p.name.clone()));
         self.preset_name = p.name;
@@ -542,6 +583,10 @@ impl ParamsDock {
             power_pct: LayerPreset::pct_from_s(c.max_power, self.power_max_limit),
             laser_on: LASER_OPTIONS[c.laser_on].1.to_owned(),
             filter: filter_name(FILTER_OPTIONS[c.filter]).to_owned(),
+            fill: c.fill,
+            fill_distance: round2(c.fill_distance as f64),
+            fill_angle: c.fill_angle as f64,
+            fill_cross: c.fill_cross,
         };
         let res = self.presets_db.lock().unwrap_or_else(|e| e.into_inner()).upsert(p);
         match res {
@@ -570,6 +615,10 @@ impl ParamsDock {
                 || p.power_s(self.power_max_limit) != c.max_power
                 || p.laser_on != LASER_OPTIONS[c.laser_on].1
                 || p.filter != filter_name(FILTER_OPTIONS[c.filter])
+                || p.fill != c.fill
+                || round2(p.fill_distance) != round2(c.fill_distance as f64)
+                || p.fill_angle.round() as i32 != c.fill_angle
+                || p.fill_cross != c.fill_cross
         })
     }
 
@@ -635,6 +684,8 @@ impl ParamsDock {
             self.speed_group(ui, &mut edited);
             ui.add_space(4.0);
             self.laser_group(ui, &mut edited);
+            ui.add_space(4.0);
+            self.fill_group(ui, &mut edited);
             ui.add_space(4.0);
             self.filter_group(ui, &mut edited);
             ui.add_space(8.0);
@@ -721,6 +772,11 @@ impl ParamsDock {
             // info of the selected preset
             if let Some(p) = self.preset_index().and_then(|i| self.presets.get(i)) {
                 let info = tr_fmt("ParamsDock.PresetInfo", &[&p.passes, &p.speed, &format!("{:.1}", p.power_pct), &p.laser_on]);
+                let mut info = info;
+                if p.fill {
+                    let cross = if p.fill_cross { " x" } else { "" };
+                    info.push_str(&tr_fmt("ParamsDock.PresetFillInfo", &[&format!("{:.2}", p.fill_distance), &p.fill_angle.round(), &cross]));
+                }
                 ui.label(RichText::new(info).small());
                 if self.preset_modified() {
                     ui.label(RichText::new(tr_plain("ParamsDock.Modified")).small().italics());
@@ -808,6 +864,46 @@ impl ParamsDock {
         });
     }
 
+    /// Hatch fill of closed shapes: switch, line distance, angle, cross hatch.
+    ///
+    /// `ui`: parent. `edited`: set on any committed change.
+    fn fill_group(&mut self, ui: &mut Ui, edited: &mut bool) {
+        grbl_group_box(ui, &tr_plain("ParamsDock.Fill"), |ui| {
+            let mut on = self.cur().fill;
+            if ui.checkbox(&mut on, tr_plain("ParamsDock.FillEnabled")).changed() {
+                self.cur_mut().fill = on;
+                *edited = true;
+            }
+            // inputs only matter while fill is on
+            ui.add_enabled_ui(on, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(tr_plain("ParamsDock.FillDistance"));
+                    let mut d = self.cur().fill_distance;
+                    let out = DecimalInputRanged::new(&mut d).range(0.01, 10.0).decimals(2).width(55.0).id(egui::Id::unique("params-fill-distance")).show(ui);
+                    if out.committed.is_some() {
+                        self.cur_mut().fill_distance = d;
+                        *edited = true;
+                    }
+                    ui.label("mm");
+                });
+                ui.horizontal(|ui| {
+                    ui.label(tr_plain("ParamsDock.FillAngle"));
+                    let mut a = self.cur().fill_angle;
+                    if int_input(ui, "params-fill-angle", &mut a, 0, 360, false, 43.0).is_some() {
+                        self.cur_mut().fill_angle = a;
+                        *edited = true;
+                    }
+                    ui.label("°");
+                });
+                let mut cross = self.cur().fill_cross;
+                if ui.checkbox(&mut cross, tr_plain("ParamsDock.FillCross")).changed() {
+                    self.cur_mut().fill_cross = cross;
+                    *edited = true;
+                }
+            });
+        });
+    }
+
     /// Color filter combo.
     ///
     /// `ui`: parent. `edited`: set on change.
@@ -854,6 +950,11 @@ impl Default for ParamsDock {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Round to 2 decimals. `v`: value. Returns the rounded value.
+fn round2(v: f64) -> f64 {
+    (v * 100.0).round() / 100.0
 }
 
 /// File name part of a path text.
@@ -984,6 +1085,41 @@ mod tests {
         d.deselect_preset();
         assert!(!d.preset_modified());
         assert_eq!(lg_base::settings::get(PRESET_KEY, None::<String>), None);
+    }
+
+    #[test]
+    fn fill_values_roundtrip_through_preset() {
+        let _g = settings_guard();
+        let mut d = new_dock();
+        {
+            let c = d.cur_mut();
+            (c.fill, c.fill_distance, c.fill_angle, c.fill_cross) = (true, 0.25, 45, true);
+        }
+        d.preset_name = "Hatch".into();
+        d.save_preset();
+        assert!(!d.preset_modified());
+        let p = d.presets.iter().find(|p| p.name == "Hatch").unwrap().clone();
+        assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (true, 0.25, 45.0, true));
+        // edit one value: modified
+        d.cur_mut().fill_angle = 50;
+        assert!(d.preset_modified());
+        // loading the preset restores the values
+        let i = d.presets.iter().position(|p| p.name == "Hatch").unwrap();
+        d.deselect_preset();
+        d.cur_mut().fill = false;
+        d.select_preset(i);
+        let c = d.cur();
+        assert_eq!((c.fill, c.fill_angle, c.fill_cross), (true, 45, true));
+        assert!((c.fill_distance - 0.25).abs() < 1e-6);
+        // layer params carry the fill
+        let lp = d.layer_params();
+        assert_eq!(lp[0].fill, Some(HatchFill { distance_mm: 0.25f32 as f64, angle_deg: 45.0, cross: true }));
+    }
+
+    #[test]
+    fn old_stored_layer_loads_without_fill_fields() {
+        let l: LayerUi = serde_json::from_str(r#"{"enabled":true,"passes":1,"border_speed":1000,"max_power":500,"laser_on":0,"filter":0}"#).unwrap();
+        assert_eq!((l.fill, l.fill_distance, l.fill_angle, l.fill_cross), (false, 0.1, 0, false));
     }
 
     #[test]
@@ -1246,6 +1382,8 @@ mod e2e {
         pub dock: ParamsDock,
         /// Text shapes of the last frame: (text, screen rect).
         texts: Vec<(String, egui::Rect)>,
+        /// Core events (the preview bumps its rebuild counter on `FileLoaded`).
+        rx: crossbeam_channel::Receiver<lasergrbl_core::CoreEvent>,
     }
 
     /// Collect text shapes recursively. `s`: shape. `out`: sink.
@@ -1260,13 +1398,13 @@ mod e2e {
     impl Harness {
         /// Build core + dock. Returns the harness.
         pub fn new() -> Self {
-            let (tx, _rx) = crossbeam_channel::unbounded();
+            let (tx, rx) = crossbeam_channel::unbounded();
             let core = GrblCore::new(Firmware::Grbl, tx);
             // temp-file DB with only the example: never the real config file
             let f = std::env::temp_dir().join(format!("lg-e2e-presets-{}", std::process::id())).join("LayerPresets.json");
             let _ = std::fs::remove_file(&f);
             let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
-            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::with_presets(db), texts: Vec::new() };
+            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::with_presets(db), texts: Vec::new(), rx };
             h.frame(vec![]);
             h
         }
@@ -1358,6 +1496,11 @@ mod e2e {
             let f = self.core.loaded_file();
             let g = f.read().unwrap();
             Some(g.commands()[r.start as usize..r.end as usize].iter().map(|c| c.command().to_owned()).collect())
+        }
+
+        /// Number of `FileLoaded` events since the last call. Each one makes `PreviewForm` rebuild its scene.
+        pub fn file_loaded_events(&self) -> usize {
+            self.rx.try_iter().filter(|e| matches!(e, lasergrbl_core::CoreEvent::FileLoaded { .. })).count()
         }
 
         /// Whole program text lines.
@@ -1498,6 +1641,92 @@ mod e2e {
         h2.dock.load_svg(h2.core.loaded_file(), p.to_str().unwrap(), false, false);
         assert!(h2.wait());
         assert_eq!(h2.all_lines(), before);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    /// Modal G0/G1 moves of program lines. `lines`: G-code. Returns (is_g1, x, y) per move.
+    fn moves(lines: &[String]) -> Vec<(bool, f64, f64)> {
+        let (mut x, mut y, mut g1) = (0.0, 0.0, false);
+        let mut out = Vec::new();
+        for l in lines {
+            if l.starts_with("G0") || l.starts_with("G1") {
+                g1 = l.starts_with("G1");
+            } else if !(l.starts_with('X') || l.starts_with('Y')) {
+                continue;
+            }
+            x = words(std::slice::from_ref(l), 'X').first().copied().unwrap_or(x);
+            y = words(std::slice::from_ref(l), 'Y').first().copied().unwrap_or(y);
+            out.push((g1, x, y));
+        }
+        out
+    }
+
+    /// Rect 20x10 (X 10..30, Y 70..80 in G-code) and an open polyline (Y 90), one layer.
+    const FILL_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100">
+  <g id="a"><rect x="10" y="20" width="20" height="10" style="stroke:#000000;fill:none"/>
+  <polyline points="50,10 70,10 70,15" style="stroke:#000000;fill:none"/></g>
+</svg>"##;
+
+    /// Fill G1 segments of a program: moves not present in `base`, as (G0 start, G1 end) pairs.
+    fn fill_pairs(all: &[String], base: &[String]) -> Vec<((f64, f64), (f64, f64))> {
+        let (m, b) = (moves(all), moves(base));
+        // outline and trailing moves are identical, fill moves sit between
+        let pre = b.iter().zip(&m).take_while(|(a, c)| a == c).count();
+        let extra = m.len() - b.len();
+        m[pre..pre + extra].chunks(2).filter(|c| c.len() == 2 && !c[0].0 && c[1].0).map(|c| ((c[0].1, c[0].2), (c[1].1, c[1].2))).collect()
+    }
+
+    #[test]
+    fn fill_and_cross_toggle_lines() {
+        let _g = settings_guard();
+        let p = std::env::temp_dir().join(format!("lg-e2e-fill-{}.svg", std::process::id()));
+        std::fs::write(&p, FILL_SVG).unwrap();
+        let mut h = Harness::new();
+        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        assert!(h.wait());
+        h.frame(vec![]);
+        let base = h.all_lines();
+        let loads = h.file_loaded_events();
+        assert!(loads >= 1, "initial load must raise FileLoaded");
+
+        // fill on, 1 mm, 0 deg: horizontal rows inside the rect, none near the open polyline
+        h.click_text(&tr_plain("ParamsDock.FillEnabled"));
+        h.type_into("params-fill-distance", "1");
+        h.type_into("params-fill-angle", "0");
+        h.settle();
+        let fill = h.all_lines();
+        assert!(fill.len() > base.len());
+        assert!(h.file_loaded_events() >= 1, "fill on must make the preview rebuild");
+        let rows = fill_pairs(&fill, &base);
+        assert_eq!(rows.len(), 10, "{rows:?}");
+        for (a, b) in &rows {
+            assert!((a.1 - b.1).abs() < 1e-3, "horizontal: {a:?} {b:?}");
+            for q in [a, b] {
+                assert!(q.0 >= 10.0 - 1e-3 && q.0 <= 30.0 + 1e-3 && q.1 >= 70.0 - 1e-3 && q.1 <= 80.0 + 1e-3, "inside rect: {q:?}");
+            }
+        }
+
+        // cross on: vertical rows appear
+        h.click_text(&tr_plain("ParamsDock.FillCross"));
+        h.settle();
+        let cross = h.all_lines();
+        assert!(cross.len() > fill.len());
+        assert!(h.file_loaded_events() >= 1, "cross on must make the preview rebuild");
+        let rows = fill_pairs(&cross, &base);
+        assert_eq!(rows.len(), 10 + 20, "{rows:?}");
+        assert!(rows.iter().any(|(a, b)| (a.0 - b.0).abs() < 1e-3 && (a.1 - b.1).abs() > 1.0), "vertical rows missing");
+
+        // cross off: back to the plain fill, exactly
+        h.click_text(&tr_plain("ParamsDock.FillCross"));
+        h.settle();
+        assert_eq!(h.all_lines(), fill);
+        assert!(h.file_loaded_events() >= 1, "cross off must make the preview rebuild");
+
+        // fill off: back to the plain outline, exactly
+        h.click_text(&tr_plain("ParamsDock.FillEnabled"));
+        h.settle();
+        assert_eq!(h.all_lines(), base);
+        assert!(h.file_loaded_events() >= 1, "fill off must make the preview rebuild");
         let _ = std::fs::remove_file(&p);
     }
 

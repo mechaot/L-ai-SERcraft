@@ -24,6 +24,11 @@ fn default_filter() -> String {
     "All".to_owned()
 }
 
+/// Serde default of [`LayerPreset::fill_distance`] (mm).
+fn default_fill_distance() -> f64 {
+    0.1
+}
+
 /// One named set of layer values.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct LayerPreset {
@@ -40,6 +45,18 @@ pub struct LayerPreset {
     /// Color filter name: "All" | "Red" | "Green" | "Blue" | "Black".
     #[serde(default = "default_filter")]
     pub filter: String,
+    /// Hatch fill of closed shapes on.
+    #[serde(default)]
+    pub fill: bool,
+    /// Fill line distance in mm, 0.01..=10.
+    #[serde(default = "default_fill_distance")]
+    pub fill_distance: f64,
+    /// Fill angle in degrees, 0..=360.
+    #[serde(default)]
+    pub fill_angle: f64,
+    /// Second hatch rotated +90 degrees.
+    #[serde(default)]
+    pub fill_cross: bool,
 }
 
 /// Power base for a max PWM value.
@@ -52,7 +69,7 @@ fn base_of(max_pwm: i32) -> i32 {
 impl LayerPreset {
     /// The built-in example preset. Returns "Plywood 4mm engrave" (1 pass, 1000 mm/min, 45 %, M4, All).
     pub fn example() -> Self {
-        Self { name: EXAMPLE_NAME.to_owned(), passes: 1, speed: 1000, power_pct: 45.0, laser_on: "M4".to_owned(), filter: default_filter() }
+        Self { name: EXAMPLE_NAME.to_owned(), passes: 1, speed: 1000, power_pct: 45.0, laser_on: "M4".to_owned(), filter: default_filter(), fill: false, fill_distance: default_fill_distance(), fill_angle: 0.0, fill_cross: false }
     }
 
     /// S value of the preset.
@@ -187,6 +204,9 @@ impl PresetDb {
         p.passes = p.passes.clamp(1, 100);
         p.speed = p.speed.max(1);
         p.power_pct = p.power_pct.clamp(0.1, 100.0);
+        // NaN falls back to the default
+        p.fill_distance = if p.fill_distance.is_finite() { p.fill_distance.clamp(0.01, 10.0) } else { default_fill_distance() };
+        p.fill_angle = if p.fill_angle.is_finite() { p.fill_angle.clamp(0.0, 360.0) } else { 0.0 };
         let key = p.name.to_lowercase();
         match self.presets.iter().position(|o| o.name.trim().to_lowercase() == key) {
             Some(i) => self.presets[i] = p,
@@ -239,7 +259,7 @@ mod tests {
     }
 
     fn preset(name: &str, speed: i32) -> LayerPreset {
-        LayerPreset { name: name.into(), passes: 2, speed, power_pct: 30.0, laser_on: "M3".into(), filter: "Red".into() }
+        LayerPreset { name: name.into(), passes: 2, speed, power_pct: 30.0, laser_on: "M3".into(), filter: "Red".into(), fill: false, fill_distance: 0.1, fill_angle: 0.0, fill_cross: false }
     }
 
     #[test]
@@ -285,6 +305,12 @@ mod tests {
         db.upsert(p).unwrap();
         let c = db.find("c").unwrap();
         assert_eq!((c.passes, c.speed, c.power_pct), (100, 1, 0.1));
+        // fill values clamp
+        let mut p = preset("d", 1);
+        (p.fill_distance, p.fill_angle) = (0.0, 999.0);
+        db.upsert(p).unwrap();
+        let d = db.find("d").unwrap();
+        assert_eq!((d.fill_distance, d.fill_angle), (0.01, 360.0));
     }
 
     #[test]
@@ -316,6 +342,15 @@ mod tests {
         let f = d.join(FILE_NAME);
         std::fs::write(&f, r#"{"version":1,"presets":[{"name":"x","passes":1,"speed":100,"power_pct":10.0,"laser_on":"M3"}]}"#).unwrap();
         assert_eq!(PresetDb::load_from(&f).presets()[0].filter, "All");
+    }
+
+    #[test]
+    fn missing_fill_fields_default() {
+        let d = tmp("nofill");
+        let f = d.join(FILE_NAME);
+        std::fs::write(&f, r#"{"version":1,"presets":[{"name":"x","passes":1,"speed":100,"power_pct":10.0,"laser_on":"M3"}]}"#).unwrap();
+        let p = PresetDb::load_from(&f).presets()[0].clone();
+        assert_eq!((p.fill, p.fill_distance, p.fill_angle, p.fill_cross), (false, 0.1, 0.0, false));
     }
 
     #[test]

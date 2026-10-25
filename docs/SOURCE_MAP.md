@@ -17,7 +17,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | vectorize (potrace) output, SVG and centerline loaders | `crates/gcode/src/vector.rs`; path ordering `crates/gcode/src/optimize.rs` |
 | cutting / power-speed / shake test patterns | `crates/gcode/src/generators.rs` (+ text via `crates/hershey`) |
 | potrace tracing, fill patterns, curve→G-code (incl. G2/G3 biarcs) | `crates/potrace/src/{trace,clipper,export_gcode,biarc/*}.rs` |
-| SVG parsing / transforms / G-code writer | `crates/svg2gcode/src/{convert,gcode,matrix,bezier}.rs` |
+| SVG parsing / transforms / G-code writer | `crates/svg2gcode/src/{convert,gcode,matrix,bezier,hatch}.rs` |
 | image filters before generation (resize, grayscale, threshold, dithering) | `crates/raster/src/{image_transform,resize,color_matrix,dithering/*}.rs` |
 | raster dialog pipeline (preview + generation parameters) | `crates/services/src/image_processor/{mod,job,overlay}.rs` |
 | number text in G-code | `crates/dotnet` (`fmt_double_custom`, `fmt_decimal`, …) — never `format!` floats |
@@ -123,10 +123,10 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/main/mod.rs`](../app/src/forms/main/mod.rs) | 11 | Main window pieces: `MainForm` menus and status bar, `ConnectLogForm`, `JogForm`, `CommandLog`, `ExceptionManager`, and the dialog host used by `main_form.rs`. |
 | [`app/src/forms/main/status_bar.rs`](../app/src/forms/main/status_bar.rs) | 219 | Ports the `StatusBar` of `MainForm` (labels, buffer bar, overrides) and the status part of `TimerUpdate`. |
 | [`app/src/forms/material/mod.rs`](../app/src/forms/material/mod.rs) | 26 | Named layer presets: shared handle `SharedPresetDb`, process wide `default_presets()` (replaces `PSHelper/*`, intentional deviation). |
-| [`app/src/forms/material/preset_editor.rs`](../app/src/forms/material/preset_editor.rs) | 127 | List editor of the layer presets: read-only table, immediate delete (replaces `PSEditorForm.cs`). |
+| [`app/src/forms/material/preset_editor.rs`](../app/src/forms/material/preset_editor.rs) | 133 | List editor of the layer presets: read-only table, immediate delete (replaces `PSEditorForm.cs`). |
 | [`app/src/forms/material/preset_picker.rs`](../app/src/forms/material/preset_picker.rs) | 103 | Preset picker of the raster import P/S helper button (replaces `PSHelperForm.cs`). |
 | [`app/src/forms/mod.rs`](../app/src/forms/mod.rs) | 20 | Forms of the application (one module per C# form). |
-| [`app/src/forms/params_dock.rs`](../app/src/forms/params_dock.rs) | 1545 | "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm` (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`). Not part of the C# app (intentional deviation). |
+| [`app/src/forms/params_dock.rs`](../app/src/forms/params_dock.rs) | 1774 | "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm` (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`). Not part of the C# app (intentional deviation). |
 | [`app/src/forms/preview_form/custom_button_form.rs`](../app/src/forms/preview_form/custom_button_form.rs) | 384 | Ports `CustomButtonForm.cs` + Designer: modal editor to create / edit one custom button. |
 | [`app/src/forms/preview_form/custom_button_ib.rs`](../app/src/forms/preview_form/custom_button_ib.rs) | 353 | UI side of `CustomButton.cs` / `PreviewForm.CustomButtonIB`: click/press/release semantics, icon choice, PNG image rendering and the drag-reorder helpers. |
 | [`app/src/forms/preview_form/gallery_demo.rs`](../app/src/forms/preview_form/gallery_demo.rs) | 81 | Gallery tab "PreviewForm": the form with a core on the built-in emulator and the standard buttons. |
@@ -140,7 +140,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/splash.rs`](../app/src/forms/splash.rs) | 80 | Ports `SplashScreenForm.cs` (+ Designer): borderless, top-most splash with logo, version and 2 s timer. |
 | [`app/src/forms/svg_mode.rs`](../app/src/forms/svg_mode.rs) | 113 | Ports `SvgConverter/SvgModeForm.cs` (+ Designer): choose "Load as Vector" / "Load as Image" for an SVG. |
 | [`app/src/main.rs`](../app/src/main.rs) | 184 | LaserGRBL egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`). |
-| [`app/src/main_form.rs`](../app/src/main_form.rs) | 1202 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
+| [`app/src/main_form.rs`](../app/src/main_form.rs) | 1210 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
 | [`app/src/ui/dialog.rs`](../app/src/ui/dialog.rs) | 415 | Modal-form framework: WinForms `ShowDialog`, `MessageBox.Show`, `OpenFileDialog/SaveFileDialog`. |
 | [`app/src/ui/fonts.rs`](../app/src/ui/fonts.rs) | 113 | Font setup: egui default fonts plus a system CJK fallback font when one exists. |
 | [`app/src/ui/gallery.rs`](../app/src/ui/gallery.rs) | 434 | Widget gallery: shows every theme color, icon, widget and dialog for visual checks. Start with `lasergrbl --gallery`. |
@@ -358,7 +358,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/services/src/image_processor/mod.rs`](../crates/services/src/image_processor/mod.rs) | 723 | Port of `RasterConverter/ImageProcessor.cs`. |
 | [`crates/services/src/image_processor/overlay.rs`](../crates/services/src/image_processor/overlay.rs) | 255 | Pixel drawing helpers of the previews (GDI+ `Graphics` calls reproduced by direct pixel writes). |
 | [`crates/services/src/image_processor/tests.rs`](../crates/services/src/image_processor/tests.rs) | 342 | Unit tests of the image processor (preview + generator wiring). |
-| [`crates/services/src/layer_presets.rs`](../crates/services/src/layer_presets.rs) | 341 | Named layer presets (passes, speed, power %, laser mode, filter) stored in `LayerPresets.json`; replaces `PSHelper/MaterialDB.cs` (intentional deviation). |
+| [`crates/services/src/layer_presets.rs`](../crates/services/src/layer_presets.rs) | 376 | Named layer presets (passes, speed, power %, laser mode, filter) stored in `LayerPresets.json`; replaces `PSHelper/MaterialDB.cs` (intentional deviation). |
 | [`crates/services/src/lib.rs`](../crates/services/src/lib.rs) | 49 | `lg-services`: non-UI services of LaserGRBL that do not need the `GrblCore` engine. |
 | [`crates/services/src/project.rs`](../crates/services/src/project.rs) | 592 | Port of `Tools/Project.cs`: LaserGRBL project files (`.lps`). |
 | [`crates/services/src/wifi_discovery.rs`](../crates/services/src/wifi_discovery.rs) | 897 | Port of `WiFiDiscovery/IPAddressHelper.cs` and the non-UI parts of `DiscoveryForm.cs`. |
@@ -370,10 +370,12 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/svg2gcode/src/bezier.rs`](../crates/svg2gcode/src/bezier.rs) | 72 | Port of `SvgConverter/BezierTools.cs` (adaptive cubic bezier flattening). |
 | [`crates/svg2gcode/src/color.rs`](../crates/svg2gcode/src/color.rs) | 97 | `System.Drawing.ColorTranslator.FromHtml` (+ `ColorConverter` string rules) as used by `parseRgb` in GCodeFromSVG.cs. |
 | [`crates/svg2gcode/src/color_table.rs`](../crates/svg2gcode/src/color_table.rs) | 211 | Colour name tables dumped from System.Drawing (Mono) KnownColor / HTML system colours: (lower-case name, r, g, b). |
-| [`crates/svg2gcode/src/convert.rs`](../crates/svg2gcode/src/convert.rs) | 1683 | Port of `SvgConverter/GCodeFromSVG.cs` (SVG -> G-code). Floats stay `f32`, doubles `f64`. |
+| [`crates/svg2gcode/src/convert.rs`](../crates/svg2gcode/src/convert.rs) | 1753 | Port of `SvgConverter/GCodeFromSVG.cs` (SVG -> G-code). Floats stay `f32`, doubles `f64`. |
 | [`crates/svg2gcode/src/gcode.rs`](../crates/svg2gcode/src/gcode.rs) | 680 | Port of `SvgConverter/gcodeRelated.cs` (static class `gcode`: G-code writer with modal compression). |
-| [`crates/svg2gcode/src/lib.rs`](../crates/svg2gcode/src/lib.rs) | 53 | `lg-svg2gcode`: port of LaserGRBL `SvgConverter/{GCodeFromSVG,gcodeRelated,BezierTools}.cs` plus the WPF `Matrix`/`Point`/`Vector` and `ColorTranslator.FromHtml` pieces they rely on. |
+| [`crates/svg2gcode/src/hatch.rs`](../crates/svg2gcode/src/hatch.rs) | 268 | Per-layer hatch fill geometry (not in the C# app): `HatchFill`, `hatch_segments` (even-odd, active edge table, meander), `fill_segments` (+ cross), `flatten_arc`. |
+| [`crates/svg2gcode/src/lib.rs`](../crates/svg2gcode/src/lib.rs) | 55 | `lg-svg2gcode`: port of LaserGRBL `SvgConverter/{GCodeFromSVG,gcodeRelated,BezierTools}.cs` plus the WPF `Matrix`/`Point`/`Vector` and `ColorTranslator.FromHtml` pieces they rely on. |
 | [`crates/svg2gcode/src/matrix.rs`](../crates/svg2gcode/src/matrix.rs) | 438 | Port of WPF `System.Windows.Media.Matrix`, `Point`, `Vector` (WindowsBase) used by GCodeFromSVG.cs / BezierTools.cs. |
+| [`crates/svg2gcode/tests/fill.rs`](../crates/svg2gcode/tests/fill.rs) | 138 | Hatch fill in layered conversion: rect, cross, open path, circle, transform, passes, colour filter. |
 | [`crates/svg2gcode/tests/golden_svg.rs`](../crates/svg2gcode/tests/golden_svg.rs) | 93 | Golden test: full SVG conversions vs the original (Mono) in tests/golden/svg/ (WP-H). |
 | [`crates/svg2gcode/tests/layers.rs`](../crates/svg2gcode/tests/layers.rs) | 123 | Layered conversion tests: layer listing, regression vs plain conversion, per-layer values. |
 | [`crates/svg2gcode/tests/unit_convert.rs`](../crates/svg2gcode/tests/unit_convert.rs) | 78 | Extra full conversions vs Mono (tools/golden/svg2gcode -> tests/golden/svg_unit/convert/). |

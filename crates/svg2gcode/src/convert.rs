@@ -5,6 +5,7 @@
 use crate::bezier::flatten_to;
 use crate::color::from_html;
 use crate::gcode::{Gcode, SvgConvOptions};
+use crate::hatch::{HatchFill, fill_segments, flatten_arc};
 use crate::matrix::{Matrix, Point};
 use crate::SvgError;
 use lg_dotnet::{f64_to_i32, fmt_float, is_number, parse_double};
@@ -37,7 +38,7 @@ pub struct LayerInfo {
 }
 
 /// Per-layer conversion values.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct LayerParams {
     /// Layer is converted when true.
     pub enabled: bool,
@@ -51,12 +52,14 @@ pub struct LayerParams {
     pub laser_on: String,
     /// Colour filter for this layer.
     pub filter: ColorFilter,
+    /// Hatch fill of closed curves (`None` = off).
+    pub fill: Option<HatchFill>,
 }
 
 impl LayerParams {
     /// Layer values equal to the global options. `o`: options. `filter`: colour filter. Returns params.
     pub fn from_options(o: &SvgConvOptions, filter: ColorFilter) -> Self {
-        LayerParams { enabled: true, passes: 1, border_speed: o.border_speed, power_max: o.power_max, laser_on: o.laser_on.clone(), filter }
+        LayerParams { enabled: true, passes: 1, border_speed: o.border_speed, power_max: o.power_max, laser_on: o.laser_on.clone(), filter, fill: None }
     }
 }
 
@@ -402,6 +405,7 @@ pub struct GCodeFromSvg {
     last_set_gcx: f64,
     last_set_gcy: f64,
     distance: f64,
+    fill_rec: Option<Vec<Vec<Point>>>,
     layers: Vec<LayerParams>,
     layer_ranges: Vec<Option<std::ops::Range<usize>>>,
 }
@@ -466,6 +470,7 @@ impl GCodeFromSvg {
             last_set_gcx: 0.0,
             last_set_gcy: 0.0,
             distance: 0.0,
+            fill_rec: None,
             layers: Vec::new(),
             layer_ranges: Vec::new(),
         }
@@ -556,8 +561,22 @@ impl GCodeFromSvg {
             let start = this.gcode_string.len();
             this.gcode.set_layer(opts, &lp, &mut this.gcode_string);
             this.load_color_filter = lp.filter;
-            for _ in 0..lp.passes.max(1) {
-                body(this)?;
+            let mut segs = Vec::new();
+            for pass in 0..lp.passes.max(1) {
+                // record output geometry in the first pass only
+                if pass == 0 && lp.fill.is_some() {
+                    this.fill_rec = Some(Vec::new());
+                }
+                let r = body(this);
+                if pass == 0
+                    && let Some(f) = lp.fill
+                {
+                    // hatch once from closed outlines, reuse for later passes
+                    let polys = closed_polys(this.fill_rec.take().unwrap_or_default());
+                    segs = fill_segments(&polys, &f);
+                }
+                r?;
+                this.emit_fill(&segs);
             }
             this.layer_ranges.push(Some(start..this.gcode_string.len()));
             Ok(())
@@ -1529,6 +1548,26 @@ impl GCodeFromSvg {
         self.gcode.move_to_rapid(&mut self.gcode_string, coord, cmt);
         self.pen_is_down = false;
         self.is_reduce_ok = false;
+        // new polyline for fill
+        if let Some(rec) = self.fill_rec.as_mut() {
+            rec.push(vec![coord]);
+        }
+    }
+
+    /// Emit hatch segments as burn lines (pen up, rapid, pen down, G1). `segs`: (start, end) in output coords.
+    fn emit_fill(&mut self, segs: &[(Point, Point)]) {
+        for &(a, b) in segs {
+            self.gcode_pen_up("");
+            self.gcode.move_to_rapid(&mut self.gcode_string, a, "");
+            self.gcode_pen_down("");
+            self.gcode.move_to(&mut self.gcode_string, b, "");
+            self.last_gcx = b.x;
+            self.last_gcy = b.y;
+            self.last_set_gcx = b.x;
+            self.last_set_gcy = b.y;
+        }
+        self.gcode_pen_up("");
+        self.is_reduce_ok = false;
     }
 
     /// `gcodeStopPath`. `cmt`: comment.
@@ -1564,6 +1603,13 @@ impl GCodeFromSvg {
         }
         self.last_gcx = coord.x;
         self.last_gcy = coord.y;
+        // record geometry even when reduction dropped the point
+        if let Some(rec) = self.fill_rec.as_mut() {
+            match rec.last_mut() {
+                Some(poly) => poly.push(coord),
+                None => rec.push(vec![coord]),
+            }
+        }
     }
 
     /// `gcodeArcToCCW`: G3 arc. `x`,`y`: end. `i`,`j`: center offset. `cmt`: comment. `avoid_g23`: split arc.
@@ -1575,6 +1621,16 @@ impl GCodeFromSvg {
             self.gcode.move_to(&mut self.gcode_string, Point::new(self.last_gcx, self.last_gcy), cmt);
         }
         self.gcode.arc(&mut self.gcode_string, 3, xy, ij, cmt, avoid_g23);
+        // record flattened arc from last recorded point
+        let (lx, ly) = (self.last_gcx, self.last_gcy);
+        if let Some(rec) = self.fill_rec.as_mut() {
+            if rec.is_empty() {
+                rec.push(vec![Point::new(lx, ly)]);
+            }
+            let poly = rec.last_mut().expect("poly");
+            let last = *poly.last().expect("pt");
+            poly.extend(flatten_arc(last, xy, Point::new(last.x + ij.x, last.y + ij.y), true));
+        }
     }
 
     /// `gcodePenUp`. `cmt`: comment.
@@ -1598,6 +1654,20 @@ impl GCodeFromSvg {
     fn unused_flags(&self) -> (bool, bool, f32) {
         (self.svg_pause_element, self.svg_pause_pen_down, self.gcode_reduce_val)
     }
+}
+
+/// Closed outlines of recorded polylines. `rec`: polylines. Returns polygons.
+///
+/// Closed = some vertex at index >= 2 equals vertex 0 within 1e-3 (covers close-path extension past the start).
+fn closed_polys(rec: Vec<Vec<Point>>) -> Vec<Vec<Point>> {
+    rec.into_iter()
+        .filter_map(|mut pts| {
+            let p0 = *pts.first()?;
+            let i = (2..pts.len()).find(|&i| (pts[i].x - p0.x).abs() < 1e-3 && (pts[i].y - p0.y).abs() < 1e-3)?;
+            pts.truncate(i + 1);
+            Some(pts)
+        })
+        .collect()
 }
 
 /// `GetBezierApproximationOld` as a free function. `cp`: control points. `n`: output segment count. Returns n+1 points.

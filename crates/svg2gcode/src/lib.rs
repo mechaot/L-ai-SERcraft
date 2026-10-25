@@ -6,11 +6,13 @@ mod color;
 mod color_table;
 mod convert;
 mod gcode;
+mod hatch;
 mod matrix;
 
 pub use bezier::flatten_to;
 pub use color::{ParsedColor, from_html as color_from_html};
 pub use convert::{ColorFilter, GCodeFromSvg, LayerInfo, LayerParams, LayerRanges, list_layers_from_file, list_layers_from_text, PointF, bezier_approximation_old, convert_to_pixel, get_text_between, parse_transform_string};
+pub use hatch::{HatchFill, fill_segments, flatten_arc, hatch_segments};
 pub use gcode::{Firmware, Gcode, SvgConvOptions};
 pub use matrix::{Matrix, NotInvertible, Point, Vector};
 

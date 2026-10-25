@@ -68,15 +68,16 @@ impl PresetEditor {
                 .striped(true)
                 .max_scroll_height(height)
                 .min_scrolled_height(height.min(22.0 * rows.len() as f32 + 24.0))
-                .column(Column::initial(220.0).resizable(true)) // name
+                .column(Column::initial(170.0).resizable(true)) // name
                 .column(Column::initial(55.0)) // passes
                 .column(Column::initial(105.0)) // speed
                 .column(Column::initial(80.0)) // power
                 .column(Column::initial(50.0)) // mode
                 .column(Column::initial(60.0)) // filter
+                .column(Column::initial(130.0)) // fill
                 .column(Column::remainder().at_least(24.0)) // delete
                 .header(20.0, |mut h| {
-                    for k in ["ColName", "ColPasses", "ColSpeed", "ColPower", "ColMode", "ColFilter"] {
+                    for k in ["ColName", "ColPasses", "ColSpeed", "ColPower", "ColMode", "ColFilter", "ColFill"] {
                         h.col(|ui| {
                             ui.strong(tr(&format!("Presets.{k}")));
                         });
@@ -103,6 +104,11 @@ impl PresetEditor {
                         });
                         row.col(|ui| {
                             ui.label(&p.filter);
+                        });
+                        row.col(|ui| {
+                            // "x" marks cross hatch
+                            let t = if p.fill { format!("{:.2} mm · {}°{}", p.fill_distance, p.fill_angle.round(), if p.fill_cross { " · x" } else { "" }) } else { "—".to_owned() };
+                            ui.label(t);
                         });
                         row.col(|ui| {
                             if ui.add(crate::ui::widgets::ImageButton::new("mdi-delete").size(egui::Vec2::splat(16.0))).on_hover_text(tr("Presets.Delete")).clicked() {

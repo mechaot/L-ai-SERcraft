@@ -87,7 +87,7 @@ struct DevScript {
     did_connect: bool,
     did_run: bool,
     shot_requested: bool,
-    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed actions (hold, resume, door, reset, emuhide, presets, layer=N, layeroff=N, cmd=..).
+    /// `LASERGRBL_DEV_SEQ="6:hold,9:resume,10:cmd=G0 X999"`: timed actions (hold, resume, door, reset, emuhide, presets, layer=N, layeroff=N, fill=N, nofill=N, cross=N, nocross=N, cmd=..).
     seq: Vec<(f32, String, bool)>,
 }
 
@@ -439,6 +439,14 @@ impl MainForm {
                             self.params.dev_select_layer(n.parse().unwrap_or(0), true);
                         } else if let Some(n) = a.strip_prefix("layeroff=") {
                             self.params.dev_select_layer(n.parse().unwrap_or(0), false);
+                        } else if let Some(n) = a.strip_prefix("fill=") {
+                            self.params.dev_set_fill(n.parse().unwrap_or(0), Some(true), None);
+                        } else if let Some(n) = a.strip_prefix("nofill=") {
+                            self.params.dev_set_fill(n.parse().unwrap_or(0), Some(false), None);
+                        } else if let Some(n) = a.strip_prefix("nocross=") {
+                            self.params.dev_set_fill(n.parse().unwrap_or(0), None, Some(false));
+                        } else if let Some(n) = a.strip_prefix("cross=") {
+                            self.params.dev_set_fill(n.parse().unwrap_or(0), None, Some(true));
                         } else if let Some(c) = a.strip_prefix("cmd=") {
                             core.enqueue_command(&lg_gcode::GrblCommand::with_options(c, 0, true));
                         }
