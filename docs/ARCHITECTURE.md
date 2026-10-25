@@ -89,8 +89,8 @@ RasterImport dialog (app/forms/raster) ──► lg_services::ImageProcessor
                                                      GrblFile::load_image_potrace (vectorize → lg-potrace
                                                         trace → lg-clipper fill → biarc G-code)
                                                      GrblFile::load_image_centerline (autotrace → lg-svg2gcode)
-SVG file ──► ParamsDock (right dock, Apply) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
-                                                     (Apply: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
+SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
+                                                     (auto regen: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
                                                       not used by the golden paths; returns each layer's command range for the preview highlight/hide)
 ```
 

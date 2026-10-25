@@ -1,6 +1,6 @@
 //! "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm`
 //! (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked
-//! here and "Apply" regenerates the G-code. Settings are kept per SVG layer (top-level `<g>`).
+//! here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`).
 //! Not part of the C# app (intentional deviation).
 
 use eframe::egui::{self, Grid, RichText, Ui};
@@ -140,6 +140,8 @@ type Ranges = Vec<Option<Range<u32>>>;
 
 /// Running G-code generation.
 struct ApplyJob {
+    /// `edit_seq` when the job started.
+    seq: u64,
     handle: JoinHandle<()>,
     /// Set by the worker when the conversion succeeded.
     ok: Arc<AtomicBool>,
@@ -164,6 +166,10 @@ pub struct ParamsDock {
     source: Option<SvgSource>,
     /// Edited since the last successful generation.
     dirty: bool,
+    /// Bumped on every edit that needs a regen.
+    edit_seq: u64,
+    /// `edit_seq` of the last automatic attempt.
+    auto_seq: u64,
     job: Option<ApplyJob>,
     last_error: Option<String>,
     msgs: MessageBoxHost<Msg>,
@@ -188,6 +194,8 @@ impl ParamsDock {
             materials: Vec::new(),
             source: None,
             dirty: false,
+            edit_seq: 0,
+            auto_seq: 0,
             job: None,
             last_error: None,
             msgs: MessageBoxHost::default(),
@@ -275,7 +283,7 @@ impl ParamsDock {
         self.apply();
     }
 
-    /// Forget the SVG (another file type was opened). Values stay, Apply gets disabled.
+    /// Forget the SVG (another file type was opened). Values stay, auto regen stops.
     pub fn clear_source(&mut self) {
         self.source = None;
         self.dirty = false;
@@ -299,7 +307,7 @@ impl ParamsDock {
             self.selected = i;
         } else {
             self.layers[i].1.enabled = false;
-            self.dirty = true;
+            self.mark_dirty();
         }
         self.revision += 1;
     }
@@ -322,6 +330,25 @@ impl ParamsDock {
                 filter: FILTER_OPTIONS[l.filter],
             })
             .collect()
+    }
+
+    /// Mark the dock dirty and bump the edit counter (an edit needs a regen).
+    fn mark_dirty(&mut self) {
+        self.dirty = true;
+        self.edit_seq += 1;
+    }
+
+    /// Start a regen for the latest edit, at most once per edit, never in a loop.
+    ///
+    /// `can_load`: `core.can_load_new_file()`; false while a program runs, then wait (attempt not consumed).
+    /// A failed generation is not retried until the next edit; Run retries via `request_run`.
+    fn auto_apply(&mut self, can_load: bool) {
+        // nothing new, program busy, or a job runs / nothing to do
+        if self.auto_seq == self.edit_seq || !can_load || !self.is_dirty_idle() {
+            return;
+        }
+        self.auto_seq = self.edit_seq;
+        self.apply();
     }
 
     /// Persist the settings and start the G-code generation on a worker.
@@ -369,7 +396,7 @@ impl ParamsDock {
         });
         match handle {
             Some(handle) => {
-                self.job = Some(ApplyJob { handle, ok, ranges });
+                self.job = Some(ApplyJob { seq: self.edit_seq, handle, ok, ranges });
                 self.last_error = None;
                 true
             }
@@ -415,7 +442,8 @@ impl ParamsDock {
         let _ = job.handle.join();
         let ok = job.ok.load(Ordering::SeqCst);
         if ok {
-            self.dirty = false;
+            // edits made during the job keep the dock dirty
+            self.dirty = self.edit_seq != job.seq;
             self.last_error = None;
             self.generated = std::mem::take(&mut *job.ranges.lock().unwrap_or_else(|e| e.into_inner()));
             self.revision += 1;
@@ -480,7 +508,7 @@ impl ParamsDock {
         c.passes = r.cycles.clamp(1, 100);
         c.material_id = Some(r.id.clone());
         lg_base::settings::set(MATERIAL_KEY, Some(r.id.clone()));
-        self.dirty = true;
+        self.mark_dirty();
     }
 
     /// Drop the material selection (dropdown "(none)"); values stay.
@@ -506,7 +534,7 @@ impl ParamsDock {
                 *l = LayerUi { enabled: l.enabled, ..src.clone() };
             }
         }
-        self.dirty = true;
+        self.mark_dirty();
     }
 
     /// C# `RefreshPerc`: "P1" text of a power value, empty without a valid MaxPWM.
@@ -538,7 +566,7 @@ impl ParamsDock {
 
     /// Dock body.
     ///
-    /// `ui`: panel ui. `core`: for the Apply enable state. Returns requests for the main window.
+    /// `ui`: panel ui. `core`: for `can_load_new_file` (auto regen). Returns requests for the main window.
     pub fn show(&mut self, ui: &mut Ui, core: &GrblCore) -> Vec<ParamsAction> {
         let mut actions = Vec::new();
         // config changes after connecting
@@ -562,11 +590,12 @@ impl ParamsDock {
             ui.add_space(4.0);
             self.filter_group(ui, &mut edited);
             ui.add_space(8.0);
-            self.apply_row(ui, core);
+            self.status_row(ui);
         });
         if edited {
-            self.dirty = true;
+            self.mark_dirty();
         }
+        self.auto_apply(core.can_load_new_file());
         actions
     }
 
@@ -609,11 +638,6 @@ impl ParamsDock {
             let btn = ui.add_enabled(self.layers.len() > 1, egui::Button::new(tr_plain("ParamsDock.SyncLayers")).min_size(egui::vec2(ui.available_width(), 22.0)));
             if btn.on_hover_text(tr_plain("ParamsDock.SyncLayersTip")).clicked() {
                 self.sync_layers();
-            }
-            // disabled layer that is not in the program yet
-            let missing = self.layers.iter().enumerate().any(|(i, (_, l))| l.enabled && self.generated.get(i).is_some_and(Option::is_none));
-            if missing {
-                ui.label(RichText::new(tr_plain("ParamsDock.ReenableHint")).small().italics());
             }
         });
     }
@@ -738,17 +762,11 @@ impl ParamsDock {
         });
     }
 
-    /// Apply button and status lines.
+    /// Hint and status lines.
     ///
-    /// `ui`: parent. `core`: for `can_load_new_file`.
-    fn apply_row(&mut self, ui: &mut Ui, core: &GrblCore) {
-        let any = self.any_enabled();
-        let enabled = self.dirty && self.source.is_some() && self.job.is_none() && core.can_load_new_file() && any;
-        let btn = egui::Button::new(tr_plain("ParamsDock.Apply")).min_size(egui::vec2(ui.available_width(), 26.0));
-        if ui.add_enabled(enabled, btn).clicked() {
-            self.apply();
-        }
-        if self.source.is_some() && !any {
+    /// `ui`: parent.
+    fn status_row(&mut self, ui: &mut Ui) {
+        if self.source.is_some() && !self.any_enabled() {
             ui.label(RichText::new(tr_plain("ParamsDock.NoLayerEnabled")).small().italics());
         }
         // status line
@@ -804,6 +822,48 @@ mod tests {
             assert!(t.elapsed() < Duration::from_secs(5), "worker timeout");
             std::thread::sleep(Duration::from_millis(5));
         }
+    }
+
+    #[test]
+    fn edit_during_job_keeps_dirty() {
+        let p = write_svg("editjob");
+        let mut d = ParamsDock::new();
+        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        assert!(wait(&mut d));
+        d.mark_dirty();
+        assert!(d.apply());
+        // edit while the job runs
+        d.mark_dirty();
+        assert!(wait(&mut d));
+        assert!(d.dirty);
+        d.auto_apply(true);
+        assert!(d.job_running());
+        assert!(wait(&mut d));
+        assert!(!d.dirty);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn auto_apply_once_per_edit_and_waits_for_can_load() {
+        let p = write_svg("autoonce");
+        let mut d = ParamsDock::new();
+        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        assert!(wait(&mut d));
+        // program busy: wait, attempt not consumed
+        d.mark_dirty();
+        d.auto_apply(false);
+        assert!(!d.job_running());
+        d.auto_apply(true);
+        assert!(d.job_running());
+        assert!(wait(&mut d));
+        // failing generation is not retried without a new edit
+        let _ = std::fs::remove_file(&p);
+        d.mark_dirty();
+        d.auto_apply(true);
+        assert!(d.job_running());
+        assert!(!wait(&mut d));
+        d.auto_apply(true);
+        assert!(!d.job_running());
     }
 
     fn row(id: &str, power: i32, speed: i32) -> MaterialRow {
@@ -889,7 +949,7 @@ mod tests {
         // edit marks dirty again
         d.dirty = true;
         assert!(d.needs_apply() && d.is_dirty_idle());
-        // clear_source disables apply
+        // clear_source stops auto regen
         d.clear_source();
         assert!(!d.needs_apply());
         let _ = std::fs::remove_file(&p);
@@ -1046,7 +1106,7 @@ mod tests {
     }
 }
 
-/// End-to-end: drive the dock through egui input events, press Apply, check the G-code.
+/// End-to-end: drive the dock through egui input events, edit, let auto regen run, check the G-code.
 #[cfg(test)]
 mod e2e {
     use super::*;
@@ -1160,13 +1220,19 @@ mod e2e {
             }
         }
 
-        /// Click Apply and wait. Panics when Apply did not start a generation.
-        pub fn apply(&mut self) {
-            assert!(self.dock.dirty, "apply clicked while not dirty");
-            self.click_text(&tr_plain("ParamsDock.Apply"));
-            assert!(self.dock.job.is_some() || !self.dock.dirty, "Apply click did not start generation");
-            assert!(self.wait(), "generation failed");
-            assert!(!self.dock.dirty);
+        /// Wait until auto regen caught up with all edits. Panics when no regen was triggered or one failed.
+        pub fn settle(&mut self) {
+            assert!(self.dock.job.is_some() || self.dock.dirty, "edit did not trigger regen");
+            let t = Instant::now();
+            // frames keep running: the next show() starts the follow-up regen
+            while !(self.dock.job.is_none() && !self.dock.dirty) {
+                if let Some(ok) = self.dock.poll() {
+                    assert!(ok, "generation failed");
+                }
+                assert!(t.elapsed() < Duration::from_secs(10), "settle timeout");
+                std::thread::sleep(Duration::from_millis(5));
+                self.frame(vec![]);
+            }
         }
 
         /// G-code lines of layer `i` (None = layer not generated).
@@ -1253,7 +1319,7 @@ mod e2e {
         h.pick("M3 - Constant Power", "M4 - Dynamic Power");
         h.type_into("params-passes", "3");
         h.pick("All", "Red");
-        h.apply();
+        h.settle();
         let cut = h.layer_lines(1).unwrap();
         assert!(cut.iter().any(|l| l == "M4 S0"), "mode switch missing: {cut:?}");
         let all = h.all_lines();
@@ -1275,7 +1341,7 @@ mod e2e {
         assert_eq!(h.dock.selected, 2);
         h.click_text(&tr_plain("ParamsDock.Enabled"));
         assert!(!h.dock.layers[2].1.enabled);
-        h.apply();
+        h.settle();
         assert!(h.layer_lines(2).is_none());
         assert!(xs(&h.all_lines()).iter().all(|x| *x < 60), "engrave still in program");
 
@@ -1284,7 +1350,7 @@ mod e2e {
         h.pick(&h.dock.layer_text(2), &h.dock.layer_text(1));
         h.pick("Red", "All");
         h.click_text(&tr_plain("ParamsDock.SyncLayers"));
-        h.apply();
+        h.settle();
         for i in 0..3 {
             let l = h.layer_lines(i).unwrap();
             let pd = pen_downs(&l);
@@ -1305,7 +1371,7 @@ mod e2e {
             let r = h.dock.materials.first().cloned().expect("material rows");
             h.pick(&tr_plain("ParamsDock.MaterialNone"), &ParamsDock::material_text(&r));
             assert_eq!(h.dock.cur().material_id.as_deref(), Some(r.id.as_str()));
-            h.apply();
+            h.settle();
             let cut = h.layer_lines(1).unwrap();
             let pd = pen_downs(&cut);
             assert_eq!(pd.len(), 2 * r.cycles.clamp(1, 100) as usize, "passes from material: {cut:?}");
@@ -1350,7 +1416,7 @@ mod e2e {
         h.pick(&labels[0], &labels[1]);
         h.type_into("params-border", "700");
         h.pick("M3 - Constant Power", "M4 - Dynamic Power");
-        h.apply();
+        h.settle();
         let all = h.all_lines();
         // laser on = M3/M4 line per pen down, laser off = M5
         let cut = h.layer_lines(1).unwrap();

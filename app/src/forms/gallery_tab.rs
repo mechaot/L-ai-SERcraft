@@ -217,7 +217,7 @@ mod tests {
         for k in ["$this.Text", "BtnAccept.Text", "CbIHaveRead.Text", "LblFree.Text", "LblHaveFun.Text", "LblNotToy.Text", "LlTranslate.Text"] {
             keys.push(format!("LegalDisclaimer.{k}"));
         }
-        keys.extend(["Title", "Material", "MaterialNone", "Modified", "EditMaterials", "Apply", "NoSource", "Generating", "Passes", "ApplyFailed"].map(|k| format!("ParamsDock.{k}")));
+        keys.extend(["Title", "Material", "MaterialNone", "Modified", "EditMaterials", "NoSource", "Generating", "Passes", "ApplyFailed"].map(|k| format!("ParamsDock.{k}")));
         keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "LicenseForm.richTextBox1.Text", "LicenseForm.richTextBox2.Text"].map(String::from));
         let missing: Vec<&String> = keys.iter().filter(|k| tr(k) == k.as_str()).collect();
         assert!(missing.is_empty(), "missing keys: {missing:?}");
