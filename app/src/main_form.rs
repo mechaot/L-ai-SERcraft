@@ -855,7 +855,7 @@ impl MainForm {
     /// `RunProgram(parent)`: resume question first, then the countdown (C# order).
     fn request_run(&mut self) {
         let core = self.state.core.clone();
-        // dock edits not applied yet: generate first, run when done
+        // dock edits not generated yet (auto regen running or failed): generate first, run when done
         if self.params.needs_apply() && core.is_connected() {
             if self.params.is_dirty_idle() {
                 if core.can_load_new_file() && self.params.apply() {
