@@ -34,7 +34,7 @@ app (laisercraft binary, egui)                       forms, preview renderer, th
  │      both ↓
  ├── lg-gcode         (crates/gcode)               GrblCommand, StateBuilder, GrblFile (+generators), GrblConfST
  │      ↓
- ├── lg-base          (crates/base)                settings, paths, logger, timers/threads, CSV, NRBF, sound, telegram
+ ├── lg-base          (crates/base)                settings, paths, logger, timers/threads, CSV, NRBF, sound
  │      ↓
  └── leaf crates      lg-svg2gcode  lg-potrace(→lg-clipper)  lg-raster  lg-hershey  lg-expr
                       all ↓

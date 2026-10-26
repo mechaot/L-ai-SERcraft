@@ -24,4 +24,4 @@ Authoritative source is the code (`crates/*/src`); this is a map. All crates re-
 * `GrblFile` (+ `spawn_load`, `load_*`, `generate_*`, `save_gcode`, `count`, `estimated_time`, `range`, `draw_on_graphics`), `GrblCommand`, `GrblMessage`, `GrblRow` (`get_decoded_message`, `get_result`, `get_tool_tip`, `left_color`/`right_color` → `RowColor`, `image_index`), `config::{configuration(), set_configuration(), GrblConfST, GrblConfParam, GrblVersionInfo, Firmware, GPoint}`, csvd lookups.
 
 ## `lg_base` (crates/base)
-* `settings::{get, set, exists, delete, exiting, ...}`, `paths`, `logger`, `tools::{utils::{time_span_to_string, open_link, TimePrecision}, ...}`, `sound::play_sound(EventId)`, `telegram`, `nrbf`.
+* `settings::{get, set, exists, delete, exiting, ...}`, `paths`, `logger`, `tools::{utils::{time_span_to_string, open_link, TimePrecision}, ...}`, `sound::play_sound(EventId)`, `nrbf`.

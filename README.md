@@ -128,7 +128,7 @@ right place. After adding or renaming source files, run `python3 -I tools/gen_so
 | `crates/expr`, `crates/hershey` | custom-button expression evaluator, Hershey single-line font |
 | `crates/svg2gcode` | SVG → G-code converter |
 | `crates/raster` | image transforms and dithering |
-| `crates/base` | settings, paths, logger, timers/threads, CSV dictionaries, .NET BinaryFormatter (NRBF) reader/writer, sound, telegram |
+| `crates/base` | settings, paths, logger, timers/threads, CSV dictionaries, .NET BinaryFormatter (NRBF) reader/writer, sound |
 | `crates/gcode` | G-code command model, parser state, `GrblFile` (load/analyse/raster/vector/SVG/generators), GRBL config |
 | `crates/core` | `GrblCore` streaming engine (+ Marlin/Smoothie/Vigo), serial/telnet/websocket/emulator links, built-in GRBL emulator, laser life, multi-instance start |
 | `crates/services` | image processor, autotrace, projects, hotkeys, custom buttons, layer presets, firmware flashing, WiFi discovery |
@@ -169,8 +169,11 @@ cargo clippy --workspace --all-targets -- -D warnings
 * Not ported on purpose: automatic update check (upstream ships Windows installers only), usage statistics
   upload and other telemetry to the upstream servers, the CH340 Windows driver installer, Windows-only
   power/timer API calls.
-* Settings are stored as JSON; the Telegram bot code is stored in plain text (file permissions 0600)
-  instead of Windows DPAPI.
+* Settings are stored as JSON (instead of the Windows binary settings file). The Telegram notification
+  feature was removed.
+* The context help (info) buttons in several dialogs open the LaserGRBL documentation at lasergrbl.com, which
+  describes the same features. L-ai-SERcraft has no documentation site of its own yet: see
+  [`docs/MANUAL.md`](docs/MANUAL.md).
 * External tools (`autotrace`, `avrdude`) come from the system instead of bundled `.exe` files.
 * Layout uses egui widgets and fonts, so sizes differ slightly from WinForms; captions, options, behaviour and
   setting keys follow the original.

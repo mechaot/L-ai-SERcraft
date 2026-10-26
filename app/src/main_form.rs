@@ -1031,7 +1031,6 @@ impl MainForm {
                 }
             }
             MenuAction::ConfigureWifi => self.show_wifi_config(),
-            MenuAction::OpenLink(u) => lg_base::tools::utils::open_link(u),
             MenuAction::OpenSessionLog => {
                 if lg_base::logger::exist_log() {
                     lg_base::logger::show_log();
@@ -1120,7 +1119,7 @@ impl MainForm {
                 Actions::SaveFile => self.pending_save = Some(SaveOptions { header: false, footer: false, between: false, cycles: 1, use_lf_line_endings: false }),
                 Actions::ExecuteFile => self.request_run(),
                 Actions::AbortFile => core.abort_program(),
-                Actions::HelpOnline => lg_base::tools::utils::open_link("https://lasergrbl.com/usage/"),
+                Actions::HelpOnline => lg_base::tools::utils::open_link("https://github.com/mechaot/L-ai-SERcraft/blob/master/docs/MANUAL.md"),
                 Actions::AutoSizeDrawing => core.auto_size_drawing(),
                 Actions::ZoomInDrawing => core.zoom_in_drawing(),
                 Actions::ZoomOutDrawing => core.zoom_out_drawing(),

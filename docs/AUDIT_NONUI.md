@@ -105,7 +105,7 @@ button logic, wifi discovery, flash/autotrace runners, Settings/Logger/Serialize
   v0.0 file is read but not re-saved in the v1.0 container; XML mode does not exist upstream either.
   Custom buttons use `CustomButtons.json`; `.zbn` import/export (gzip/deflate + NRBF) stays compatible.
 * R4 Sound/Telegram: external players (`pw-play`/`paplay`/`aplay`/`afplay`/PowerShell) replace
-  `SoundPlayer`; default wav lives in `resources/sound/`; Telegram code is stored in plain text (no DPAPI);
+  `SoundPlayer`; default wav lives in `resources/sound/`; Telegram was removed;
   all `UrlManager` fields are `None` as in the public C# source, so nothing is sent unless configured.
 * R5 `LoadFile`/`SaveGCODE`: custom header/footer text is split on `\n` with a trailing `\r` removed (C# splits
   on `Environment.NewLine` only); `AddText` splits generator output on `\r`/`\n` (C# on `Environment.NewLine`

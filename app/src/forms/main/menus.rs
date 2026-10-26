@@ -86,8 +86,6 @@ pub enum MenuAction {
     InstallDriver,
     FlashFirmware,
     ConfigureWifi,
-    /// Open one of the fixed URLs.
-    OpenLink(&'static str),
     OpenSessionLog,
     ToggleExtendedLog,
     ShowLicense,
@@ -358,62 +356,19 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
             // NOTE: configurationWizardToolStripMenuItem is Visible=false and has no handler in C#
         });
 
-        // ---- Longer (shown by board detection) ----
-        if core.is_longer_board() {
+        // ---- Longer / Ortur (shown by board detection) ----
+        // vendor link entries (support, YouTube, manuals, firmware) were upstream partner pages: dropped, only the WiFi setup stays
+        if core.is_longer_board() && show_wifi_cfg {
             top_menu(ui, ico("mdi-cube-scan"), &tr_plain("MainForm.MnLonger.Text"), |ui| {
-                let links: [(&str, &'static str); 4] = [
-                    ("MnLongerUserGroup", "https://lasergrbl.com/longer-facebook/"),
-                    ("MnLongerSupportAndFeedback", "https://lasergrbl.com/longer-support/"),
-                    ("MnLongerWebsite", "https://lasergrbl.com/longer-website/"),
-                    ("MnLongerYouTube", "https://lasergrbl.com/longer-YTchannel/"),
-                ];
-                for (k, url) in links {
-                    if item(ui, None, false, &tr_plain(&format!("MainForm.{k}.Text")), true, None) {
-                        out.push(MenuAction::OpenLink(url));
-                    }
-                }
-                ui.separator();
-                if item(ui, None, false, &tr_plain("MainForm.MnLongerManuals.Text"), true, None) {
-                    out.push(MenuAction::OpenLink("https://lasergrbl.com/longer-manuals/"));
-                }
-                if item(ui, None, false, &tr_plain("MainForm.MnLongerFirmware.Text"), true, None) {
-                    out.push(MenuAction::OpenLink("https://lasergrbl.com/longer-firmware/"));
-                }
-                if show_wifi_cfg {
-                    ui.separator();
-                    if item(ui, None, false, &tr_plain("MainForm.MnConfigureLongerWiFi.Text"), core.can_read_write_config(), None) {
-                        out.push(MenuAction::ConfigureWifi);
-                    }
+                if item(ui, None, false, &tr_plain("MainForm.MnConfigureLongerWiFi.Text"), core.can_read_write_config(), None) {
+                    out.push(MenuAction::ConfigureWifi);
                 }
             });
         }
-
-        // ---- Ortur (shown by board detection) ----
-        if core.is_ortur_board() {
+        if core.is_ortur_board() && show_wifi_cfg {
             top_menu(ui, ico("mdi-opera"), &tr_plain("MainForm.MnOrtur.Text"), |ui| {
-                let links: [(&str, &str, &'static str); 4] = [
-                    ("orturSupportGroupToolStripMenuItem", "mdi-facebook", "https://lasergrbl.com/orturfacebook/"),
-                    ("orturSupportAndFeedbackToolStripMenuItem", "mdi-lifebuoy", "https://lasergrbl.com/ortursupport/"),
-                    ("orturWebsiteToolStripMenuItem", "mdi-web", "https://lasergrbl.com/orturwebsite/"),
-                    ("youtubeChannelToolStripMenuItem", "mdi-youtube", "https://lasergrbl.com/orturYTchannel/"),
-                ];
-                for (k, ic, url) in links {
-                    if item(ui, Some(ic), false, &tr_plain(&format!("MainForm.{k}.Text")), true, None) {
-                        out.push(MenuAction::OpenLink(url));
-                    }
-                }
-                ui.separator();
-                if item(ui, Some("mdi-notebook"), false, &tr_plain("MainForm.manualsDownloadToolStripMenuItem.Text"), true, None) {
-                    out.push(MenuAction::OpenLink("https://lasergrbl.com/ortur-manuals/"));
-                }
-                if item(ui, Some("mdi-chip"), false, &tr_plain("MainForm.firmwareToolStripMenuItem.Text"), true, None) {
-                    out.push(MenuAction::OpenLink("https://lasergrbl.com/ortur-firmware/"));
-                }
-                if show_wifi_cfg {
-                    ui.separator();
-                    if item(ui, Some("mdi-wifi"), false, &tr_plain("MainForm.MnConfigureOrturWiFi.Text"), core.can_read_write_config(), None) {
-                        out.push(MenuAction::ConfigureWifi);
-                    }
+                if item(ui, Some("mdi-wifi"), false, &tr_plain("MainForm.MnConfigureOrturWiFi.Text"), core.can_read_write_config(), None) {
+                    out.push(MenuAction::ConfigureWifi);
                 }
             });
         }

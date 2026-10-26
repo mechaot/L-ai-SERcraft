@@ -3,6 +3,17 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## Unreleased
+
+### Changed
+- Crash dialog and issue detector point to https://github.com/mechaot/L-ai-SERcraft/issues instead of the LaserGRBL tracker.
+- Longer and Ortur menus keep only the WiFi setup entry: the vendor links (support, YouTube, manuals, firmware) were LaserGRBL partner pages and are gone.
+- "Help online" opens the manual in this repository. The info buttons still open the LaserGRBL documentation, see README.
+- Settings texts no longer say that LaserGRBL does something; other languages fall back to English for them.
+
+### Removed
+- Unused texts of the removed donate, community, auto-update and Telegram features from all language files.
+
 ## 1.3.0 - 2026-10-26
 
 ### Changed
