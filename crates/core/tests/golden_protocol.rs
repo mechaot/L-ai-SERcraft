@@ -978,63 +978,123 @@ fn protocol_scenarios_match_the_original() {
 
 // ---------------------------------------------------------------------------------------------- emulator
 
+/// "Time" of the emulated board for the `.emu` replay: short delays pass at once, a long one (homing, >= 1 s) blocks
+/// until the script releases it. This makes the trace independent of wall clock and scheduler speed.
+struct Gate {
+    /// (released, threads parked in a long delay)
+    st: Mutex<(bool, usize)>,
+    cv: std::sync::Condvar,
+}
+
+impl Gate {
+    /// New closed gate.
+    fn new() -> Arc<Self> {
+        Arc::new(Gate { st: Mutex::new((false, 0)), cv: std::sync::Condvar::new() })
+    }
+
+    /// Emulated delay. `d`: requested duration. Short ones return at once, long ones wait for [`Gate::release`].
+    fn delay(&self, d: Duration) {
+        if d < Duration::from_secs(1) {
+            return;
+        }
+        let mut g = lock(&self.st);
+        g.1 += 1;
+        while !g.0 {
+            g = self.cv.wait(g).unwrap_or_else(|e| e.into_inner());
+        }
+        g.1 -= 1;
+    }
+
+    /// True while a long delay is blocked (false from the moment of [`Gate::release`], before the thread wakes up).
+    fn parked(&self) -> bool {
+        let g = lock(&self.st);
+        !g.0 && g.1 > 0
+    }
+
+    /// Let blocked and future long delays finish.
+    fn release(&self) {
+        lock(&self.st).0 = true;
+        self.cv.notify_all();
+    }
+}
+
+/// Wait until the emulator did everything it was asked to, or is blocked in a long delay. Event based: no sleep
+/// time is assumed, the deadline only turns a hang into a failure.
+///
+/// `emu`: emulator. `gate`: its delay gate.
+fn wait_settled(emu: &lasergrbl_core::emulator::Grblv11Emulator, gate: &Gate) {
+    let deadline = std::time::Instant::now() + Duration::from_secs(120);
+    while !(emu.is_idle() || gate.parked()) {
+        assert!(std::time::Instant::now() < deadline, "emulator did not settle");
+        std::thread::yield_now();
+    }
+}
+
 /// Replay one `.emu` script on the Rust emulator (mirror of `EmuInterp` in the C# harness).
+///
+/// The C# original cut its output into per-command groups with fixed waits, so a slow command (`$H`, 2 s) showed up
+/// in a later group. Here every command is followed by "wait until settled"; a long delay is held back by the
+/// [`Gate`] until the end of the script, and what it prints then joins the last group, as in the golden trace.
+///
+/// `text`: script. `cfg_file`: scratch config file. Returns the trace.
 fn run_emu(text: &str, cfg_file: &Path) -> String {
     use lasergrbl_core::emulator::{add_emulator_message_handler, clear_emulator_message_handlers, Grblv11Emulator};
     let outq: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
-    let last_out = Arc::new(Mutex::new(std::time::Instant::now()));
     let add = {
-        let (q, l) = (outq.clone(), last_out.clone());
-        move |s: String| {
-            lock(&q).push(s);
-            *lock(&l) = std::time::Instant::now();
-        }
+        let q = outq.clone();
+        move |s: String| lock(&q).push(s)
     };
     clear_emulator_message_handlers();
     let a1 = add.clone();
     add_emulator_message_handler(Arc::new(move |m: Option<&str>| a1(format!("LOG {}", m.map_or("<null>".to_string(), esc)))));
     let a2 = add.clone();
     let _ = std::fs::remove_file(cfg_file);
-    let emu = Grblv11Emulator::with_config_file(Box::new(move |m: &str| a2(format!("RX {}", esc(m)))), cfg_file.to_path_buf());
-    let mut out = String::new();
-    let mut settle_ms = 400u128;
-    let settle = |out: &mut String, settle_ms: u128| {
-        let end = std::time::Instant::now() + Duration::from_secs(8);
-        std::thread::sleep(Duration::from_millis(60));
-        while std::time::Instant::now() < end {
-            if lock(&last_out).elapsed().as_millis() >= settle_ms {
-                break;
-            }
-            std::thread::sleep(Duration::from_millis(20));
-        }
-        // threads race (queued ok vs immediate lines): groups are compared sorted (byte order like StringComparer.Ordinal)
-        let mut group = std::mem::take(&mut *lock(&outq));
-        group.sort_by(|a, b| a.encode_utf16().cmp(b.encode_utf16()));
-        for s in group {
-            out.push_str(&format!("  {s}\n"));
-        }
+    let gate = Gate::new();
+    let g2 = gate.clone();
+    let emu = Grblv11Emulator::with_sleeper(Box::new(move |m: &str| a2(format!("RX {}", esc(m)))), cfg_file.to_path_buf(), Box::new(move |d| g2.delay(d)));
+    // (header, events): events of one group are compared sorted, threads race on the order inside a group
+    let mut groups: Vec<(String, Vec<String>)> = Vec::new();
+    let collect = |groups: &mut Vec<(String, Vec<String>)>| {
+        let ev = std::mem::take(&mut *lock(&outq));
+        groups.last_mut().expect("group").1.extend(ev);
     };
     for raw in text.split('\n') {
         let line = raw.trim_end_matches('\r');
         if line.trim().is_empty() || line.starts_with('#') {
             continue;
         }
-        out.push_str(&format!("> {line}\n"));
+        groups.push((format!("> {line}\n"), Vec::new()));
         let (verb, rest) = line.split_once(' ').unwrap_or((line, ""));
         match verb {
             "open" => emu.open_com(),
             "close" => emu.close_com(),
             "send" => emu.manage_message(unesc(rest).as_bytes()),
             "byte" => emu.manage_message(&[u8::from_str_radix(rest, 16).unwrap()]),
-            "wait" => std::thread::sleep(Duration::from_millis(rest.parse().unwrap())),
-            "settle" => settle_ms = rest.parse().unwrap(),
+            // timing hints of the C# script: nothing to wait for, the replay waits for events
+            "wait" | "settle" => {}
             _ => panic!("bad emu verb {verb}"),
         }
-        settle(&mut out, settle_ms);
+        wait_settled(&emu, &gate);
+        collect(&mut groups);
     }
+    // finish what a long delay held back; its output belongs to the last group
+    gate.release();
+    wait_settled(&emu, &gate);
+    collect(&mut groups);
     emu.close_com();
-    settle(&mut out, settle_ms);
+    groups.push((String::new(), Vec::new()));
+    wait_settled(&emu, &gate);
+    collect(&mut groups);
     clear_emulator_message_handlers();
+    let mut out = String::new();
+    for (head, mut ev) in groups {
+        // byte order like StringComparer.Ordinal
+        ev.sort_by(|a, b| a.encode_utf16().cmp(b.encode_utf16()));
+        out.push_str(&head);
+        for e in ev {
+            out.push_str(&format!("  {e}\n"));
+        }
+    }
     out
 }
 

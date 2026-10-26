@@ -248,6 +248,13 @@ fn repeat_on_error_resends_three_times() {
     r.core.close_com(true).unwrap();
 }
 
+/// Written realtime bytes without the timer driven status query `?`.
+///
+/// `r`: test rig. Returns the bytes in write order, `?` (63) removed (a poll may land at any time on a slow runner).
+fn realtime_bytes(r: &Rig) -> Vec<u8> {
+    r.fake.written_bytes().into_iter().filter(|b| *b != b'?').collect()
+}
+
 #[test]
 fn hold_resume_and_status_mapping() {
     let _g = setup("hold");
@@ -259,12 +266,12 @@ fn hold_resume_and_status_mapping() {
     assert_eq!(r.core.work_position().x, 0.5);
     r.fake.clear_written();
     r.core.feed_hold(false);
-    assert_eq!(r.fake.written_bytes(), vec![33]);
+    assert_eq!(realtime_bytes(&r), vec![33]);
     // user hold stays Hold, a hold we did not ask for is AutoHold
     r.fake.inject("<Hold:0|MPos:1.000,2.000,0.000>");
     wait_until("hold", || r.core.machine_status() == MacStatus::Hold);
     r.core.cycle_start_resume(false);
-    assert_eq!(r.fake.written_bytes(), vec![33, 126]);
+    assert_eq!(realtime_bytes(&r), vec![33, 126]);
     r.fake.inject("<Run|MPos:1.000,2.000,0.000>");
     wait_until("run again", || r.core.machine_status() == MacStatus::Run);
     r.fake.inject("<Hold:0|MPos:1.000,2.000,0.000>");

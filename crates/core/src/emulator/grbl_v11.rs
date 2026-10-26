@@ -29,6 +29,9 @@ const EMULATE_MISSING_OK: bool = false;
 /// Message sink (C# `SendMessage` delegate); gets text that already ends with `\n`.
 pub type SendMessage = Box<dyn Fn(&str) + Send + Sync>;
 
+/// Sleep used for the emulated board delays (command duration, homing, ...). Tests replace it to control "time".
+pub type Sleeper = Box<dyn Fn(Duration) + Send + Sync>;
+
 /// Handler of the static `EmulatorMessage` event; `None` = clear the log.
 pub type MessageHandler = Arc<dyn Fn(Option<&str>) + Send + Sync>;
 
@@ -77,6 +80,9 @@ struct Inner {
     tx_buf: Mutex<VecDeque<String>>,
     rng_state: Mutex<u64>,
     file: PathBuf,
+    /// A queued line was taken by the RX thread and its handling (incl. the log line) is not finished.
+    busy: AtomicBool,
+    sleeper: Sleeper,
 }
 
 /// The emulator. Create with a sink that receives every line the "board" sends.
@@ -116,6 +122,13 @@ impl Grblv11Emulator {
     ///
     /// `send_func`: sink. `file`: where the config is loaded from and saved to on close.
     pub fn with_config_file(send_func: SendMessage, file: PathBuf) -> Self {
+        Self::with_sleeper(send_func, file, Box::new(std::thread::sleep))
+    }
+
+    /// Same as `with_config_file` with a custom sleep function (deterministic tests).
+    ///
+    /// `send_func`: sink. `file`: config file. `sleeper`: called instead of `thread::sleep` for every emulated delay.
+    pub fn with_sleeper(send_func: SendMessage, file: PathBuf, sleeper: Sleeper) -> Self {
         // C#: try load, fallback to default table
         let conf = std::fs::read_to_string(&file)
             .ok()
@@ -132,6 +145,8 @@ impl Grblv11Emulator {
             tx_buf: Mutex::new(VecDeque::new()),
             rng_state: Mutex::new(0x2545F4914F6CDD1D),
             file,
+            busy: AtomicBool::new(false),
+            sleeper,
         });
         let rx = ThreadObject::new("Emulator RX", 0);
         let tx = ThreadObject::new("Emulator TX", 0);
@@ -203,6 +218,20 @@ impl Grblv11Emulator {
                 self.inner.rx_buf.lock().unwrap_or_else(|e| e.into_inner()).push_back(message);
             }
         }
+    }
+
+    /// True when nothing is left to do: no queued line is waiting (a paused queue does not count) and none is being
+    /// handled, and every answer was sent. Event based, no timing: lets a test wait for "done" instead of sleeping.
+    pub fn is_idle(&self) -> bool {
+        {
+            let q = self.inner.rx_buf.lock().unwrap_or_else(|e| e.into_inner());
+            // busy is set under this lock when a line is taken, so (empty, !busy) is a consistent state
+            if (!q.is_empty() && !self.inner.paused.load(Ordering::SeqCst)) || self.inner.busy.load(Ordering::SeqCst) {
+                return false;
+            }
+        }
+        // answers are queued before busy is cleared; the TX thread holds this lock until a line is sent
+        self.inner.tx_buf.lock().unwrap_or_else(|e| e.into_inner()).is_empty()
     }
 
     /// Current config copy (tests / UI).
@@ -286,7 +315,7 @@ impl Inner {
 
     fn grbl_reset(&self) {
         self.rx_buf.lock().unwrap_or_else(|e| e.into_inner()).clear();
-        std::thread::sleep(Duration::from_millis(50));
+        (self.sleeper)(Duration::from_millis(50));
         self.check.store(false, Ordering::SeqCst);
         self.paused.store(false, Ordering::SeqCst);
         {
@@ -308,6 +337,7 @@ impl Inner {
             if !q.is_empty() && !self.paused.load(Ordering::SeqCst) {
                 line = q.pop_front();
                 queue = q.len();
+                self.busy.store(true, Ordering::SeqCst);
             }
         }
         if let Some(line) = line {
@@ -332,6 +362,7 @@ impl Inner {
                 }
                 emu_log(Some(line.trim_matches('\n')));
             }));
+            self.busy.store(false, Ordering::SeqCst);
         }
         queue
     }
@@ -346,7 +377,7 @@ impl Inner {
     }
 
     fn set_config(&self, p: &str) {
-        std::thread::sleep(Duration::from_millis(10));
+        (self.sleeper)(Duration::from_millis(10));
         let ok = self.conf.lock().unwrap_or_else(|e| e.into_inner()).set_value_if_key_exist(p);
         self.enqueue_tx(if ok { "ok" } else { "error" });
     }
@@ -368,7 +399,7 @@ impl Inner {
     }
 
     fn emulate_homing(&self) {
-        std::thread::sleep(Duration::from_millis(2000));
+        (self.sleeper)(Duration::from_millis(2000));
         {
             let mut m = self.machine.lock().unwrap_or_else(|e| e.into_inner());
             m.spb.homing();
@@ -415,7 +446,7 @@ impl Inner {
                 // execute sleep (not under the lock: status stays answerable)
                 if to_sleep.total_milliseconds() > 15.0 {
                     let start = hires_timer::total_nano();
-                    std::thread::sleep(Duration::from_secs_f64(to_sleep.total_seconds().max(0.0)));
+                    (self.sleeper)(Duration::from_secs_f64(to_sleep.total_seconds().max(0.0)));
                     let stop = hires_timer::total_nano();
                     let mut m = self.machine.lock().unwrap_or_else(|e| e.into_inner());
                     m.to_sleep = m.to_sleep - TimeSpan::from_milliseconds((stop - start) as f64 / 1000.0 / 1000.0);

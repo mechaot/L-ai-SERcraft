@@ -71,7 +71,7 @@ namespace Golden
 				foreach (bool legacy in new bool[] { false, true })
 					run(svg, def, legacy);
 
-			string[] varSvgs = { "path_arc_A.svg", "path_cubic_C.svg", "shape_mixed.svg", "tf_nested_groups.svg", "shape_rect_rx.svg", "dim_mm_viewbox.svg", "shape_ellipse.svg", "path_quad_T.svg" };
+			string[] varSvgs = { "path_arc_abs.svg", "path_cubic_abs.svg", "shape_mixed.svg", "tf_nested_groups.svg", "shape_rect_rx.svg", "dim_mm_viewbox.svg", "shape_ellipse.svg", "path_quad_smooth_abs.svg" };
 			foreach (V v in Variants())
 				foreach (string svg in varSvgs)
 					foreach (bool legacy in new bool[] { false, true })
