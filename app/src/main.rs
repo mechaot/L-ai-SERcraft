@@ -2,7 +2,7 @@
 // Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
 // Copyright (C) 2026 Andreas Pösch (Rust port and changes)
 
-//! L-ai-SERctrl egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`).
+//! L-ai-SERcraft egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`).
 
 // Windows: GUI app, no console window (C# `WinExe`)
 #![cfg_attr(windows, windows_subsystem = "windows")]
@@ -17,7 +17,7 @@ use eframe::egui;
 /// Own app version (`Cargo.toml`); display only, never a compat value.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Window title as in `RefreshFormTitle`: "L-ai-SERctrl v1.2.1" (+ " (for X)" for non-GRBL firmware).
+/// Window title as in `RefreshFormTitle`: "L-ai-SERcraft v1.3.0" (+ " (for X)" for non-GRBL firmware).
 ///
 /// `firmware_suffix`: Some("Marlin") for non-Grbl firmware. Returns title text.
 pub fn form_title(firmware_suffix: Option<&str>) -> String {
@@ -130,7 +130,7 @@ fn main() -> eframe::Result {
     }
     let (files, gallery) = parse_args(&argv);
     let (size, pos, maximized) = saved_geometry();
-    let mut vp = egui::ViewportBuilder::default().with_title(form_title(None)).with_app_id("laiserctrl").with_inner_size(size.unwrap_or([1024.0, 768.0])).with_maximized(maximized);
+    let mut vp = egui::ViewportBuilder::default().with_title(form_title(None)).with_app_id("laisercraft").with_inner_size(size.unwrap_or([1024.0, 768.0])).with_maximized(maximized);
     if let Some(p) = pos {
         vp = vp.with_position(p);
     }
@@ -147,8 +147,8 @@ mod tests {
 
     #[test]
     fn title() {
-        assert_eq!(form_title(None), "L-ai-SERctrl v1.2.1");
-        assert_eq!(form_title(Some("Marlin")), "L-ai-SERctrl v1.2.1 (for Marlin)");
+        assert_eq!(form_title(None), "L-ai-SERcraft v1.3.0");
+        assert_eq!(form_title(Some("Marlin")), "L-ai-SERcraft v1.3.0 (for Marlin)");
     }
 
     #[test]

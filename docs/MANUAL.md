@@ -1,11 +1,11 @@
 # Manual: multi-layer SVG from Inkscape
 
-L-ai-SERctrl gives every layer of an SVG its own laser settings: speed, passes, power, laser mode, hatch fill
+L-ai-SERcraft gives every layer of an SVG its own laser settings: speed, passes, power, laser mode, hatch fill
 and colour filter. This page shows the workflow with a small example: a circle that is **cut** out and a
 black box in its middle that is **engraved** (filled).
 
 Example file: [`manual/layers-example.svg`](manual/layers-example.svg) (100 × 100 mm). Screenshots: Inkscape
-1.4 and L-ai-SERctrl 1.2.1.
+1.4 and L-ai-SERcraft.
 
 ## How layers are read
 
@@ -16,7 +16,7 @@ Example file: [`manual/layers-example.svg`](manual/layers-example.svg) (100 × 1
 * Layers are converted **in file order**. In the Inkscape *Layers and Objects* panel the file order runs from
   the **bottom** row to the **top** row. Put the cut layer at the top so that it is cut last, after
   the engraving. Otherwise the part may shift or fall out before it is engraved.
-* Hidden or locked Inkscape layers **are still converted**. To skip a layer, untick *Enabled* in L-ai-SERctrl.
+* Hidden or locked Inkscape layers **are still converted**. To skip a layer, untick *Enabled* in L-ai-SERcraft.
 * Text is not burned. Convert it first with *Path ▸ Object to Path*. Embedded bitmaps are ignored.
 * Save as **Inkscape SVG**. *Plain SVG* removes the layer names, so the layers then show up under their ids
   (`layer1`, `layer2`, …).
@@ -58,7 +58,7 @@ order later, drag a layer in the panel or use *Layer ▸ Raise Layer* / *Lower L
 2. Rectangle tool (`R`). Draw a square and set X = 30, Y = 30, W = 40, H = 40 mm in the toolbar.
 3. Fill: flat black, stroke: none.
 
-The black fill only shows the intention in Inkscape. L-ai-SERctrl reads the **outline** of the shape and fills
+The black fill only shows the intention in Inkscape. L-ai-SERcraft reads the **outline** of the shape and fills
 it with hatch lines when *Fill closed shapes* is on for this layer (step 6). Hatch fill needs **closed**
 shapes: rectangles, circles, ellipses, polygons and closed paths.
 
@@ -73,7 +73,7 @@ shapes: rectangles, circles, ellipses, polygons and closed paths.
 
 Save with *File ▸ Save As…*, type **Inkscape SVG (\*.svg)**.
 
-## 6. Configure in L-ai-SERctrl
+## 6. Configure in L-ai-SERcraft
 
 Open the file with *File ▸ Open File* or the folder button next to *Filename*. SVGs load directly into the
 *Parameters* dock on the right. Pick a layer in the *Layer* box. All other settings in the dock apply to

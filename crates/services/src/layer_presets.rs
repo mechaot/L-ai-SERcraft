@@ -4,7 +4,7 @@
 //! Named layer presets: all per-layer values of the "Parameters" dock (except `enabled`).
 //!
 //! Not part of the C# app (intentional deviation): replaces the old material database
-//! (`PSHelper/MaterialDB.cs`). Stored as JSON in `<config dir>/L-ai-SERctrl/LayerPresets.json`.
+//! (`PSHelper/MaterialDB.cs`). Stored as JSON in `<config dir>/L-ai-SERcraft/LayerPresets.json`.
 //! A missing file yields one example preset; nothing is written until the user saves or deletes.
 
 use serde::{Deserialize, Serialize};

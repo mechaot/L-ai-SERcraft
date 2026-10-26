@@ -1,11 +1,11 @@
 # Authors, contributors and third-party notices
 
-L-ai-SERctrl is free software under the GNU General Public License, version 3 or (at your option) any
+L-ai-SERcraft is free software under the GNU General Public License, version 3 or (at your option) any
 later version (see [LICENSE.md](LICENSE.md)). It is a modified version of LaserGRBL 7.14.1 and contains
 work of many people. This file credits them. Where the original LaserGRBL project does not state a
 license for a component, this file says "license: see original project" instead of guessing.
 
-## 1. L-ai-SERctrl
+## 1. L-ai-SERcraft
 
 - **Andreas Pösch (mechaot)**, 2026-, author of this fork: Rust/egui port of LaserGRBL, per-layer SVG
   settings, named layer presets, hatch fill, new branding, packaging.
@@ -19,7 +19,7 @@ license for a component, this file says "license: see original project" instead 
 - https://github.com/arkypita/LaserGRBL
 - https://lasergrbl.com
 
-L-ai-SERctrl is an independent project. It is not affiliated with or endorsed by Diego Settimi or the
+L-ai-SERcraft is an independent project. It is not affiliated with or endorsed by Diego Settimi or the
 LaserGRBL project. The name "LaserGRBL" is used only to identify and credit the original work.
 
 ## 3. LaserGRBL contributors and translators, as credited in the LaserGRBL README
@@ -112,9 +112,9 @@ git -C LaserGRBL log v7.14.1 --format=%an | sort -u
 - Александр
 - 毛才君
 
-## 5. Third-party code and assets included in L-ai-SERctrl
+## 5. Third-party code and assets included in L-ai-SERcraft
 
-LaserGRBL incorporated the components below. L-ai-SERctrl contains Rust ports or copies of them. Each
+LaserGRBL incorporated the components below. L-ai-SERcraft contains Rust ports or copies of them. Each
 component keeps its own authors and license. The listed locations are in this repository.
 
 | Component | Authors / copyright | License | Upstream | Location here |
@@ -134,7 +134,7 @@ component keeps its own authors and license. The listed locations are in this re
 | Grbl firmware images | The Grbl project (https://github.com/gnea/grbl) and its contributors. `02-v1.1h-custom, XY Homing` is a variant, its author is not recorded in LaserGRBL | GPL-3.0 per the Grbl project; LaserGRBL ships no notice with the images | https://github.com/gnea/grbl | `resources/firmware/*.hex` |
 | avrdude.conf | The AVRDUDE project (file begins "$Id: avrdude.conf.in 1371 2016-02-15 20:15:07Z joerg_wunsch $") | the file carries no license text; license: see original project | https://github.com/avrdudes/avrdude | `resources/firmware/avrdude.conf` |
 | Mono libgdiplus (algorithms of `GraphicsPath` flattening and ColorMatrix semantics, used as the reference for the Rust emulation) | The Mono project and libgdiplus contributors | license: see original project | https://github.com/mono/libgdiplus | `crates/potrace/src/gdi_path.rs`, `crates/raster/src/color_matrix.rs` |
-| Images, sounds, translations and CSV data | LaserGRBL and its contributors (section 3). The Grbl message tables follow the Grbl project; some image names suggest third-party icon sets, their provenance is not documented in LaserGRBL | same license as L-ai-SERctrl unless noted; where unknown: license: see original project | https://github.com/arkypita/LaserGRBL | `resources/grafica/`, `resources/icons/`, `resources/sound/`, `resources/csv/`, `resources/i18n/`, `resources/generator/`, `resources/misc/` (see `resources/README.md`) |
+| Images, sounds, translations and CSV data | LaserGRBL and its contributors (section 3). The Grbl message tables follow the Grbl project; some image names suggest third-party icon sets, their provenance is not documented in LaserGRBL | same license as L-ai-SERcraft unless noted; where unknown: license: see original project | https://github.com/arkypita/LaserGRBL | `resources/grafica/`, `resources/icons/`, `resources/sound/`, `resources/csv/`, `resources/i18n/`, `resources/generator/`, `resources/misc/` (see `resources/README.md`) |
 | Noto Sans (font used to render the text in `resources/branding/splash.png`) | The Noto Project Authors | SIL Open Font License 1.1 | https://fonts.google.com/noto | `resources/branding/splash.png` (rendered glyphs only; at runtime the app uses system fonts) |
 
 `resources/branding/` is original artwork by Andreas Pösch (GPL-3.0-or-later), not LaserGRBL material.
@@ -147,7 +147,7 @@ text for the glyph data, so none is quoted from it here.
 
 ### Not carried over
 
-LaserGRBL used these components. L-ai-SERctrl replaces them with Rust libraries, they are credited for
+LaserGRBL used these components. L-ai-SERcraft replaces them with Rust libraries, they are credited for
 their role (the LaserGRBL README names them):
 
 - [websocket-sharp](https://github.com/sta/websocket-sharp), Copyright sta.blockhead (WebSocket client)
@@ -218,6 +218,6 @@ SOFTWARE.
 
 ## 6. Rust dependencies
 
-The Rust libraries L-ai-SERctrl is built with are listed in [THIRD_PARTY_RUST.md](THIRD_PARTY_RUST.md)
+The Rust libraries L-ai-SERcraft is built with are listed in [THIRD_PARTY_RUST.md](THIRD_PARTY_RUST.md)
 (generated by `tools/gen_third_party.py`). Their license texts are bundled in release packages as
 `THIRD_PARTY_LICENSES.txt`.

@@ -10,8 +10,8 @@ use std::sync::Mutex;
 static DATA: Mutex<Option<PathBuf>> = Mutex::new(None);
 static TEMP: Mutex<Option<PathBuf>> = Mutex::new(None);
 
-/// Config folder name of the old LaserGRBL-named app (migration source).
-const OLD_DIR_NAME: &str = "LaserGRBL";
+/// Config folder names of older app names (migration sources), priority order.
+const OLD_DIR_NAMES: [&str; 2] = ["L-ai-SERctrl", "LaserGRBL"];
 
 /// Copy dir `old` into `new` once (recursive, files and subdirs). Never touches `old`.
 ///
@@ -23,6 +23,26 @@ pub fn migrate_dir(old: &Path, new: &Path) -> std::io::Result<bool> {
     }
     copy_tree(old, new)?;
     Ok(true)
+}
+
+/// Migrate the first existing old config dir under `base` into `new`.
+///
+/// `base`: config root holding the old dirs (see `OLD_DIR_NAMES`). `new`: target dir.
+/// Returns the source dir used, or `None` when nothing was copied (`new` exists or no old dir).
+fn migrate_first(base: &Path, new: &Path) -> std::io::Result<Option<PathBuf>> {
+    // new exists: nothing to do
+    if new.exists() {
+        return Ok(None);
+    }
+    // first old dir that exists wins, rest ignored
+    for name in OLD_DIR_NAMES {
+        let old = base.join(name);
+        if old.is_dir() {
+            migrate_dir(&old, new)?;
+            return Ok(Some(old));
+        }
+    }
+    Ok(None)
 }
 
 /// Recursive dir copy.
@@ -44,8 +64,8 @@ fn copy_tree(src: &Path, dst: &Path) -> std::io::Result<()> {
 
 /// Config dir of the app, created on first call (C# `GrblCore.DataPath`).
 ///
-/// Returns `<config_dir>/L-ai-SERctrl` or the override set by [`set_data_path_override`].
-/// First call copies an old `<config_dir>/LaserGRBL` folder over, once.
+/// Returns `<config_dir>/L-ai-SERcraft` or the override set by [`set_data_path_override`].
+/// First call copies an old `<config_dir>/L-ai-SERctrl` folder over (else `<config_dir>/LaserGRBL`), once.
 /// File names inside (`LaserGRBL.Settings.json`, `LayerPresets.json`, ...) are kept on purpose:
 /// same names as the original app, so migration is a plain copy.
 pub fn data_path() -> PathBuf {
@@ -54,10 +74,10 @@ pub fn data_path() -> PathBuf {
     if g.is_none() {
         let base = dirs::config_dir().unwrap_or_else(std::env::temp_dir);
         let p = base.join(crate::APP_NAME);
-        // one-time copy of the old folder; old stays untouched
-        match migrate_dir(&base.join(OLD_DIR_NAME), &p) {
-            Ok(true) => log::info!("migrated config folder {} -> {}", base.join(OLD_DIR_NAME).display(), p.display()),
-            Ok(false) => {}
+        // one-time copy of the newest old folder; old stays untouched
+        match migrate_first(&base, &p) {
+            Ok(Some(old)) => log::info!("migrated config folder {} -> {}", old.display(), p.display()),
+            Ok(None) => {}
             Err(e) => log::warn!("config folder migration failed: {e}"),
         }
         let _ = std::fs::create_dir_all(&p);
@@ -68,7 +88,7 @@ pub fn data_path() -> PathBuf {
 
 /// Temp dir of the app, created on first call (C# `GrblCore.TempPath`).
 ///
-/// Returns `<temp_dir>/L-ai-SERctrl`.
+/// Returns `<temp_dir>/L-ai-SERcraft`.
 pub fn temp_path() -> PathBuf {
     let mut g = TEMP.lock().unwrap_or_else(|e| e.into_inner());
     if g.is_none() {
@@ -91,8 +111,8 @@ pub fn exe_path() -> PathBuf {
 
 /// Find the `resources` dir.
 ///
-/// Order: `$LASERGRBL_RESOURCES`, `<exe>/resources`, `<exe>/../share/laiserctrl/resources`,
-/// `<exe>/../share/lasergrbl/resources` (old name),
+/// Order: `$LASERGRBL_RESOURCES`, `<exe>/resources`, `<exe>/../share/laisercraft/resources`,
+/// `<exe>/../share/laiserctrl/resources` and `<exe>/../share/lasergrbl/resources` (old names),
 /// `<exe>/../../resources`, compile-time workspace `resources`. Returns the first existing dir,
 /// else the compile-time one.
 pub fn resources_dir() -> PathBuf {
@@ -102,6 +122,7 @@ pub fn resources_dir() -> PathBuf {
         cands.push(PathBuf::from(v));
     }
     cands.push(exe.join("resources"));
+    cands.push(exe.join("..").join("share").join("laisercraft").join("resources"));
     cands.push(exe.join("..").join("share").join("laiserctrl").join("resources"));
     cands.push(exe.join("..").join("share").join("lasergrbl").join("resources"));
     cands.push(exe.join("..").join("..").join("resources"));
@@ -133,7 +154,7 @@ mod tests {
         set_data_path_override(d.clone());
         assert_eq!(data_path(), d);
         assert!(d.is_dir());
-        assert!(temp_path().ends_with("L-ai-SERctrl"));
+        assert!(temp_path().ends_with("L-ai-SERcraft"));
         assert!(exe_path().is_dir());
     }
 
@@ -168,6 +189,27 @@ mod tests {
         assert!(!migrate_dir(&old, &new).unwrap());
         assert!(!new.join("a.json").exists());
         assert!(!migrate_dir(&r.join("missing"), &r.join("new2")).unwrap());
+        let _ = std::fs::remove_dir_all(&r);
+    }
+
+    #[test]
+    fn migrate_first_priority() {
+        let r = std::env::temp_dir().join(format!("lg_migrate_c_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&r);
+        for (d, v) in [("LaserGRBL", "G"), ("L-ai-SERctrl", "C")] {
+            std::fs::create_dir_all(r.join(d)).unwrap();
+            std::fs::write(r.join(d).join("a.json"), v).unwrap();
+        }
+        let new = r.join("L-ai-SERcraft");
+        // ctrl beats LaserGRBL
+        assert_eq!(migrate_first(&r, &new).unwrap(), Some(r.join("L-ai-SERctrl")));
+        assert_eq!(std::fs::read_to_string(new.join("a.json")).unwrap(), "C");
+        // new exists now: nothing more
+        assert_eq!(migrate_first(&r, &new).unwrap(), None);
+        // only LaserGRBL left: fallback
+        std::fs::remove_dir_all(r.join("L-ai-SERctrl")).unwrap();
+        let new2 = r.join("new2");
+        assert_eq!(migrate_first(&r, &new2).unwrap(), Some(r.join("LaserGRBL")));
         let _ = std::fs::remove_dir_all(&r);
     }
 }

@@ -1,7 +1,19 @@
 # Changelog
 
-All notable changes to L-ai-SERctrl. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
+
+## 1.3.0 - 2026-10-26
+
+### Changed
+- Renamed from L-ai-SERctrl to L-ai-SERcraft: window title, UI texts in all languages, splash screen, docs, packages (binary `laisercraft`, app id `io.github.mechaot.laisercraft`, package files `L-ai-SERcraft-<version>-...`).
+- Config folder is now `L-ai-SERcraft`; on first start an existing `L-ai-SERctrl` folder is copied over (else the old `LaserGRBL` folder, as before).
+
+### Added
+- GitHub Actions CI (`.github/workflows/ci.yml`): lint, tests, AppImage, Windows and macOS packages, source tarball; master builds go to the rolling `nightly` pre-release, `v*` tags make a release.
+- User manual `docs/MANUAL.md`: multi-layer SVG from Inkscape (cut and fill layer) with screenshots.
+
+Commits: c5bb65a, ada09a4
 
 ## 1.2.1 - 2026-10-25
 

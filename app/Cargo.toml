@@ -1,12 +1,12 @@
 [package]
-name = "laiserctrl"
+name = "laisercraft"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
 [[bin]]
-name = "laiserctrl"
+name = "laisercraft"
 path = "src/main.rs"
 
 [dependencies]

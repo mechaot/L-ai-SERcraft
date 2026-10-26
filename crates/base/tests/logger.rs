@@ -23,7 +23,7 @@ fn logger_files() {
     let t = std::fs::read_to_string(logger::log_file_path()).unwrap();
     let lines: Vec<&str> = t.split("\r\n").collect();
     assert_eq!(lines[0], "old500");
-    assert!(t.contains("\tProgram     \t------- L-ai-SERctrl v1.2.1 ["), "{t}");
+    assert!(t.contains("\tProgram     \t------- L-ai-SERcraft v1.3.0 ["), "{t}");
     assert!(t.contains("\tTest        \tline one\r\n"));
     assert!(t.contains("\tTest        \tline two\r\n"));
     assert!(t.contains("\tCtx         \tboom\r\n"));

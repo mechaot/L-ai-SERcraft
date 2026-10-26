@@ -1,7 +1,7 @@
 # `ui/` foundation (WP-U0)
 
-Run the gallery: `cargo run -p laiserctrl -- --gallery` (or `LASERGRBL_GALLERY=1`). Tabs: Theme (all 7 schemes,
-every color), Icons (filterable), Widgets, Dialogs, i18n. `cargo test -p laiserctrl` renders every tab headless.
+Run the gallery: `cargo run -p laisercraft -- --gallery` (or `LASERGRBL_GALLERY=1`). Tabs: Theme (all 7 schemes,
+every color), Icons (filterable), Widgets, Dialogs, i18n. `cargo test -p laisercraft` renders every tab headless.
 
 ## Conventions
 * Immediate mode: widgets bind to `&mut` values. Changes show up as `response.changed()`.

@@ -128,7 +128,7 @@ button logic, wifi discovery, flash/autotrace runners, Settings/Logger/Serialize
   `FileDPI` is parsed from PNG/JPEG/BMP headers (GDI+ semantics, e.g. 11811 ppm -> 299 dpi).
 * R10 `MaterialDB`: replaced by named layer presets (`layer_presets.rs`, `LayerPresets.json`); intentional deviation, the C# material data (906 rows) is dropped.
 * R11 `Project`: `ConvertImageToBase64` stores the file bytes instead of GDI+ re-encoding the image.
-* R12 Autotrace: system `autotrace` binary (setting `Autotrace Path`), temp PNG under `<temp>/L-ai-SERctrl/Autotrace`.
+* R12 Autotrace: system `autotrace` binary (setting `Autotrace Path`), temp PNG under `<temp>/L-ai-SERcraft/Autotrace`.
 * R13 Wi-Fi discovery: `ip`/`/proc/net/arp`/`getent`/system `ping` replace `NetworkInterface`, `SendARP`,
   `Dns` and `Ping`; a worker pool replaces the 16-per-100 ms `SendAsync` pacing.
 * R14 Flash: system `avrdude` (setting `Avrdude Path`); firmware list sorted by file name; date shown as

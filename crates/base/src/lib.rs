@@ -7,7 +7,7 @@
 //! Foundation crate of the LaserGRBL Rust port (WP-C1a).
 
 /// Product name shown in the UI, window title, logs and reports.
-pub const APP_NAME: &str = "L-ai-SERctrl";
+pub const APP_NAME: &str = "L-ai-SERcraft";
 
 pub mod paths;
 pub mod settings;
