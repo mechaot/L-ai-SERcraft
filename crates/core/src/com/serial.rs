@@ -312,7 +312,14 @@ mod tests {
         // keep the slave fd open so the pty stays alive
         let c = SerialCom::new(WrapperType::UsbSerial2);
         c.configure(&ComConfig::Serial { port_name: name, baud_rate: 115200 });
-        c.open().expect("open pty");
+        // macOS/BSD: the serial library cannot configure a pty slave (ENOTTY, "Not a typewriter"); Linux must work
+        if let Err(e) = c.open() {
+            if cfg!(target_os = "linux") {
+                panic!("open pty: {e:?}");
+            }
+            eprintln!("pty_roundtrip skipped: serial library cannot open a pty on this OS ({e:?})");
+            return;
+        }
         assert!(c.is_open());
         master.write_all(b"Grbl 1.1f ['$' for help]\r\nok\n").unwrap();
         let mut got = Vec::new();
