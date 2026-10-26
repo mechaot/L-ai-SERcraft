@@ -168,6 +168,8 @@ mod tests {
 
     #[test]
     fn persistence_roundtrip() {
+        // no real config dir
+        crate::test_support::init_env();
         let dir = std::env::temp_dir().join(format!("lg_usage_{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let file = dir.join("UsageStats.json");

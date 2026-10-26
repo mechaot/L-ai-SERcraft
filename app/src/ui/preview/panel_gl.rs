@@ -749,6 +749,8 @@ mod input_tests {
 
     #[test]
     fn double_click_jogs_and_wheel_zooms() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let ctx = egui::Context::default();
         let mut panel = PreviewPanel::new(Backend::Gl);
         let mut input = PreviewInput::default();

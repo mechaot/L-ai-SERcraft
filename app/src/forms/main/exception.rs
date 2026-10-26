@@ -163,6 +163,8 @@ mod tests {
 
     #[test]
     fn header_mentions_version() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         assert!(header(None).starts_with("L-ai-SERcraft v1.3.0"));
     }
 }

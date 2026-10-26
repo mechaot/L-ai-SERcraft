@@ -289,6 +289,8 @@ mod tests {
 
     #[test]
     fn open_missing_port_fails() {
+        // no real config dir
+        crate::test_support::init_env();
         let c = SerialCom::new(WrapperType::UsbSerial);
         c.configure(&ComConfig::Serial { port_name: "/dev/lasergrbl-does-not-exist".into(), baud_rate: 115200 });
         assert!(c.open().is_err());
@@ -302,6 +304,8 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn pty_roundtrip() {
+        // no real config dir
+        crate::test_support::init_env();
         use serialport::TTYPort;
         // some CI sandboxes (macOS runner) cannot open a pty: nothing to test then
         let Ok((mut master, slave)) = TTYPort::pair() else {

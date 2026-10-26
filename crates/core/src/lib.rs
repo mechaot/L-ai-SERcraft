@@ -16,3 +16,13 @@ pub mod usage_stats;
 pub mod util;
 
 pub use grbl_core::*;
+
+/// Shared test setup: keep unit tests out of the real config dir.
+#[cfg(test)]
+pub(crate) mod test_support {
+    /// Point data path and settings at a scratch dir (once per test binary, see `lg_base::paths::isolate_for_tests`).
+    /// Call first in every test that can reach settings, session log, laser life, usage stats or emulator config.
+    pub fn init_env() {
+        lg_base::paths::isolate_for_tests("core");
+    }
+}

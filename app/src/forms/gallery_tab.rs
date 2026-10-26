@@ -203,6 +203,8 @@ mod tests {
     /// Every i18n key the forms read must exist in the catalog.
     #[test]
     fn all_keys_exist() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let p = "SvgConverter.ConvertSizeAndOptionForm.";
         let mut keys: Vec<String> = ["$this.Text", "BtnCancel.Text", "BtnCreate.Text", "BtnColorFilter.ToolTip", "BtnModulationInfo.ToolTip", "BtnOnOffInfo.ToolTip", "BtnPSHelper.ToolTip", "GbLaser.Text", "GbSpeed.Text", "LblBorderTracing.Text", "LblBorderTracingmm.Text", "LblSmax.Text", "LblSmin.Text", "gbFilter.Text", "label18.Text", "labelFilter.Text"]
             .iter()
@@ -252,6 +254,8 @@ mod tests {
     /// Every form renders a few frames headless without panicking.
     #[test]
     fn all_forms_render() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let ctx = egui::Context::default();
         let mut tab = FormsTab::default();
         tab.svg_mode = Some(SvgModeForm::new(DEMO_SVG));

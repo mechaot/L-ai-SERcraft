@@ -465,6 +465,8 @@ mod tests {
 
     #[test]
     fn renders_pixels_and_inverts() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let th = Theme::of(crate::ui::Scheme::CADDark);
         let r = render(&file(), (400, 300), &CpuColors::of(&th), &LayerView::default()).unwrap();
         assert!(r.image.pixels.iter().any(|p| p.a() > 0), "nothing drawn");
@@ -490,6 +492,8 @@ mod tests {
     #[test]
     #[allow(clippy::single_range_in_vec_init)]
     fn highlight_is_red_and_hidden_vanishes() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let th = Theme::of(crate::ui::Scheme::CADDark);
         let c = CpuColors::of(&th);
         let f = file();

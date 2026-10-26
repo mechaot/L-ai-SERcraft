@@ -20,6 +20,7 @@ newest first.
 - Longer and Ortur menus keep only the WiFi setup entry: the vendor links (support, YouTube, manuals, firmware) were LaserGRBL partner pages and are gone.
 - "Help online" opens the manual in this repository. The info buttons still open the LaserGRBL documentation, see README.
 - Settings texts no longer say that LaserGRBL does something; other languages fall back to English for them.
+- Dev: all tests now write only to temp folders (`lg_base::paths::isolate_for_tests`), never to `~/.config/L-ai-SERcraft`. `tools/check_test_isolation.py` runs every test alone with a scratch HOME/XDG and fails on any file left behind; CI runs it on Linux.
 
 ### Removed
 - Unused texts of the removed donate, community, auto-update and Telegram features from all language files.

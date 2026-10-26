@@ -32,22 +32,19 @@ pub mod wifi_discovery;
 /// Shared test setup: isolated settings file and data dir (the settings store is process global).
 #[cfg(test)]
 pub(crate) mod test_support {
-    use std::sync::{Mutex, MutexGuard, Once};
+    use std::sync::{Mutex, MutexGuard};
 
-    static INIT: Once = Once::new();
     static SETTINGS_GUARD: Mutex<()> = Mutex::new(());
 
-    /// Point settings and data path to a scratch dir (once per test binary).
+    /// Point settings and data path to a scratch dir (once per test binary, see `lg_base::paths::isolate_for_tests`).
+    /// Call first in every test that can touch settings, logger or the data dir.
     pub fn init_env() {
-        INIT.call_once(|| {
-            let d = std::env::temp_dir().join(format!("lg_services_env_{}", std::process::id()));
-            let _ = std::fs::create_dir_all(&d);
-            lg_base::paths::set_data_path_override(d.join("data"));
-            lg_base::settings::init_at(d.join("settings.json"));
-        });
+        lg_base::paths::isolate_for_tests("services");
     }
 
     /// Serialise tests that change settings read by other tests.
+    ///
+    /// Returns the guard; keep it for the whole test.
     pub fn settings_lock() -> MutexGuard<'static, ()> {
         init_env();
         SETTINGS_GUARD.lock().unwrap_or_else(|e| e.into_inner())

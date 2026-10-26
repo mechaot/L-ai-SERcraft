@@ -162,6 +162,8 @@ mod tests {
 
     #[test]
     fn clamps_to_max() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = ResolutionHelperForm { uid: 0, desired: 20.0, hardware: 10.0, computed: 0.0, max_quality: 20.0 };
         f.compute();
         // 10 / round(0.5)=0 -> divide by zero path keeps value

@@ -1332,6 +1332,8 @@ mod tests {
 
     #[test]
     fn construct_and_defaults() {
+        // no real config dir
+        crate::test_support::init_env();
         let (tx, rx) = crossbeam_channel::unbounded();
         let core = GrblCore::new(Firmware::Grbl, tx);
         assert_eq!(core.machine_status(), MacStatus::Disconnected);

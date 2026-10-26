@@ -140,6 +140,8 @@ mod tests {
 
     #[test]
     fn websocket_client_talks_to_emulator() {
+        // no real config dir
+        crate::test_support::init_env();
         let port = WebSocketEmulator::start(0).unwrap();
         assert!(WebSocketEmulator::running());
         let c = LaserWebEsp8266Com::new();

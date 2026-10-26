@@ -942,6 +942,8 @@ fn first_diff(a: &str, b: &str) -> String {
 
 #[test]
 fn protocol_scenarios_match_the_original() {
+    // first: both tests share the global data dir + settings; init must finish before either uses them
+    lg_base::paths::isolate_for_tests("golden_protocol");
     let dir = golden_dir();
     let only = std::env::var("LG_PROTO_ONLY").ok();
     let mut names: Vec<String> = std::fs::read_dir(&dir)
@@ -1100,6 +1102,8 @@ fn run_emu(text: &str, cfg_file: &Path) -> String {
 
 #[test]
 fn emulator_scenarios_match_the_original() {
+    // first: both tests share the global data dir + settings; init must finish before either uses them
+    lg_base::paths::isolate_for_tests("golden_protocol");
     let dir = golden_dir();
     let mut names: Vec<String> = std::fs::read_dir(&dir)
         .unwrap()

@@ -5,6 +5,7 @@
 #   lint:clippy           clippy, warnings are errors              | lint
 #   lint:headers          SPDX header check (tools/check_headers.py) | lint
 #   test:cargo            whole workspace incl. golden tests       | test
+#                         + test isolation check (tools/check_test_isolation.py)
 #   build:linux-appimage  portable AppImage (glibc 2.28 baseline)  | build -> artifact
 #   build:windows         x86_64 .exe + resources, zip             | build -> artifact
 #   build:macos           universal2 (arm64 + x86_64) + resources  | build -> artifact
@@ -117,6 +118,10 @@ test:cargo:
   script:
     # golden outputs of the original app live in tests/golden (committed)
     - cargo test --workspace --locked --no-fail-fast
+    # every test alone with scratch HOME/XDG dirs: none may write into config dirs or the repo.
+    # python3 only when missing; --profile dev reuses the build of the line above
+    - command -v python3 >/dev/null || { apt-get update -qq && apt-get install -y -qq --no-install-recommends python3 >/dev/null; }
+    - python3 -I tools/check_test_isolation.py --profile dev --locked
 
 # --------------------------------------------------------------- build ------
 

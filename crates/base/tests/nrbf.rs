@@ -7,7 +7,12 @@
 use lg_base::nrbf::*;
 use std::io::Read;
 
+/// Repo root. Also isolates the process (data dir, settings): every test here starts with it,
+/// because the serializer logs to the session log in the data dir.
+///
+/// Returns the repo root path.
 fn root() -> std::path::PathBuf {
+    lg_base::paths::isolate_for_tests("nrbf");
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 

@@ -547,6 +547,8 @@ mod tests {
     /// Handler state is process wide: tests that use it run in one test fn.
     #[test]
     fn handler_flow() {
+        // no real config dir
+        crate::test_support::init_env();
         let file = tmp("flow");
         reload_from(file.clone());
         // default counter is created

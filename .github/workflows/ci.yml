@@ -5,6 +5,7 @@
 #
 #   lint            clippy -D warnings, SPDX headers, tag == Cargo version   | ubuntu
 #   test            cargo test, whole workspace incl. golden tests           | ubuntu (gates), windows + macos (info)
+#                   + test isolation check (tools/check_test_isolation.py)   | ubuntu only
 #   build-linux     portable AppImage (zigbuild, glibc 2.28 baseline)        | ubuntu  -> artifact
 #   build-windows   x86_64 MSVC .exe (static CRT) + resources, zip           | windows -> artifact
 #   build-macos     universal2 (arm64 + x86_64, lipo) + resources, tar.gz    | macos   -> artifact
@@ -138,6 +139,11 @@ jobs:
           restore-keys: cargo-${{ runner.os }}-
       - name: cargo test
         run: cargo test --workspace --locked --no-fail-fast
+      # every test alone with scratch HOME/XDG dirs: none may write into config dirs or the repo.
+      # --profile dev reuses the build of the step above.
+      - name: Test isolation
+        if: runner.os == 'Linux'
+        run: python3 -I tools/check_test_isolation.py --profile dev --locked
 
   # ----------------------------------------------------------------- build ------
   build-linux:

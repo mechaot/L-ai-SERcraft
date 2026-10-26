@@ -478,6 +478,8 @@ mod tests {
     use std::sync::mpsc;
 
     fn emu() -> (Grblv11Emulator, mpsc::Receiver<String>, PathBuf) {
+        // no real config dir
+        crate::test_support::init_env();
         let (tx, rx) = mpsc::channel();
         let tx = Mutex::new(tx);
         let file = std::env::temp_dir().join(format!("lg_emu_test_{}_{}.json", std::process::id(), rand_id()));

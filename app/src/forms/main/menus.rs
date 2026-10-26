@@ -406,6 +406,8 @@ mod tests {
 
     #[test]
     fn every_language_key_has_text() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         for k in LANGUAGE_KEYS {
             assert!(crate::ui::i18n::catalog().has(&format!("MainForm.{k}.Text")), "{k}");
         }

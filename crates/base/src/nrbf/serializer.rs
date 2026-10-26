@@ -194,6 +194,8 @@ mod tests {
 
     #[test]
     fn concurrent_writers_do_not_clash() {
+        // error paths log to the session log: keep it out of the real config dir
+        crate::paths::isolate_for_tests("base");
         // C# lock + random tmp name: parallel saves into one dir must all succeed
         let dir = std::env::temp_dir().join(format!("lg_ser_conc_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();

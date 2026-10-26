@@ -435,6 +435,8 @@ mod tests {
     /// Smoke: run every tab a few frames headless.
     #[test]
     fn renders_all_tabs() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let ctx = egui::Context::default();
         let mut g = Gallery::default();
         for s in Scheme::ALL {

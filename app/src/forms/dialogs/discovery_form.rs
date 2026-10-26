@@ -257,6 +257,8 @@ mod tests {
 
     #[test]
     fn initial_ports() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         assert_eq!(DiscoveryForm::new(DiscoveryProtocol::Telnet, false).port_u16(), 23);
         assert_eq!(DiscoveryForm::new(DiscoveryProtocol::Telnet, true).port_u16(), 8847);
         assert_eq!(DiscoveryForm::new(DiscoveryProtocol::LaserWebEsp8266, false).port_u16(), 81);
@@ -265,6 +267,8 @@ mod tests {
 
     #[test]
     fn return_item_formats_address() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = DiscoveryForm::new(DiscoveryProtocol::Telnet, false);
         f.results.push(ScanResult::new("192.168.1.20".parse().unwrap(), 23));
         assert_eq!(f.return_item(0), Some(DiscoveryOutcome::Address("192.168.1.20:23".into())));
