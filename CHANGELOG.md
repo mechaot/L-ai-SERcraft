@@ -3,16 +3,27 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
-## Unreleased
+## 1.4.0 - 2026-10-26
 
 ### Added
+- Raster images (jpg, jpeg, bmp, png, gif) open straight into the Parameters dock instead of the modal import dialog.
+  The dock engraves line to line and regenerates the G-code after every edit: brightness histogram with draggable
+  start / stop markers (brightness → S-MAX / S-MIN, inverted maps allowed, brightness outside the range is not
+  burned), lower-left corner and size in mm (upper right is calculated; an aspect lock between width and height,
+  closed at every start; aspect ratios shown), direction, quality, engraving speed, laser mode and S-MIN / S-MAX.
+  Values are remembered per file.
+- Button "Classic import dialog…" in the image dock opens the old dialog (dithering, vectorize, centerline). `.lps`
+  project entries still use the classic dialog.
 - `LayerPresets.json` is created with the example preset on first start (also after a broken file is moved to `.bak`).
 
 ### Changed
 - Crash dialog and issue detector point to https://github.com/mechaot/L-ai-SERcraft/issues instead of the LaserGRBL tracker.
 - Longer and Ortur menus keep only the WiFi setup entry: the vendor links (support, YouTube, manuals, firmware) were LaserGRBL partner pages and are gone.
 - "Help online" opens the manual in this repository. The info buttons still open the LaserGRBL documentation, see README.
+- Parameters dock and image dock: the info buttons in Laser Options (links to lasergrbl.com) are gone; the laser mode combo uses the full width.
 - Settings texts no longer say that LaserGRBL does something; other languages fall back to English for them.
+- Dev: all tests now write only to temp folders (`lg_base::paths::isolate_for_tests`), never to `~/.config/L-ai-SERcraft`. `tools/check_test_isolation.py` runs every test alone with a scratch HOME/XDG and fails on any file left behind; CI runs it on Linux.
+- Dev: test scratch files live in one folder per test process, `<temp>/lg-tests/<tag>-<pid>-<time>` (`lg_base::paths::test_dir`, `isolate_for_tests`), which is removed when the process exits; leftovers of killed runs and old `lg_*` folders are swept after one hour. `tools/check_test_isolation.py` also fails on anything a test leaves in its temp dir.
 
 ### Removed
 - Unused texts of the removed donate, community, auto-update and Telegram features from all language files.

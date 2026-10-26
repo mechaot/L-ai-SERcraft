@@ -14,6 +14,48 @@ use lg_dotnet::{decimal_to_f64, f32_to_decimal, fmt_decimal, fmt_double, fmt_dou
 use lg_potrace::Direction;
 use lg_raster::{rotate_flip, RotateFlipType};
 
+/// Brightness to power mapping of the image dock (not in C#, intentional deviation).
+///
+/// `start` maps to S-MAX, `stop` to S-MIN, linear in between. `start > stop` is allowed
+/// (inverted: brighter = more power). Brightness outside `[min(start,stop), max(start,stop)]`
+/// gets power 0 (no burn).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PowerMap {
+    pub start: u8,
+    pub stop: u8,
+}
+
+impl PowerMap {
+    /// Power for one brightness value.
+    ///
+    /// `brightness`: pixel brightness 0..=255 (0 black). `min`,`max`: S-MIN / S-MAX (any order).
+    /// Returns 0 outside the range, else the linear value (rounded half away from zero,
+    /// clamped to the min..max span). `start == stop` burns only that brightness, at `max`.
+    pub fn power(&self, brightness: u8, min: i32, max: i32) -> i32 {
+        let (lo, hi) = (self.start.min(self.stop), self.start.max(self.stop));
+        // outside the range: no burn
+        if brightness < lo || brightness > hi {
+            return 0;
+        }
+        // degenerate range: single brightness at full power
+        if self.start == self.stop {
+            return max;
+        }
+        // linear part in f64 (multiply first, divide once), one rounding
+        let num = (brightness as f64 - self.start as f64) * (min as f64 - max as f64);
+        let v = (max as f64 + num / (self.stop as f64 - self.start as f64)).round() as i32;
+        // clamp guard against min > max (f64/i32 clamp would panic)
+        v.clamp(min.min(max), min.max(max))
+    }
+
+    /// Range test for the non-PWM (on/off) mode.
+    ///
+    /// `brightness`: pixel brightness 0..=255. Returns true when inside `[min(start,stop), max(start,stop)]`.
+    pub fn in_range(&self, brightness: u8) -> bool {
+        brightness >= self.start.min(self.stop) && brightness <= self.start.max(self.stop)
+    }
+}
+
 /// Raster / vector conversion options (C# `GrblFile.L2LConf`).
 #[derive(Debug, Clone)]
 pub struct L2LConf {
@@ -31,6 +73,8 @@ pub struct L2LConf {
     pub fres: f64,
     pub vectorfilling: bool,
     pub firmware_type: Firmware,
+    /// Image dock only: brightness to power mapping. `None` = classic C# `GetColor`.
+    pub power_map: Option<PowerMap>,
 }
 
 impl Default for L2LConf {
@@ -51,6 +95,7 @@ impl Default for L2LConf {
             fres: 0.0,
             vectorfilling: false,
             firmware_type: Firmware::Grbl,
+            power_map: None,
         }
     }
 }
@@ -192,6 +237,15 @@ impl GrblFile {
         if self.check_in_use() {
             return Ok(false);
         }
+        self.load_image_l2l_body(bmp, filename, c, append)?;
+        Ok(true)
+    }
+
+    /// `LoadImageL2L` body without the busy check, for use inside [`GrblFile::spawn_load`]
+    /// (there the loading flag is already set, so the checked variant would skip silently).
+    ///
+    /// Arguments as [`GrblFile::load_image_l2l`]. Returns Ok(()) when loaded.
+    pub fn load_image_l2l_body(&mut self, bmp: &mut RgbaImage, filename: &str, c: &L2LConf, append: bool) -> GResult<()> {
         self.skipcmd = if lg_base::settings::get("Disable G0 fast skip", false) { "G1".into() } else { "G0".into() };
         self.rise_on_file_loading(filename);
         *bmp = rotate_flip(bmp, RotateFlipType::RotateNoneFlipY);
@@ -223,7 +277,7 @@ impl GrblFile {
         self.analyze()?;
         let elapsed = lg_base::tools::hires_timer::total_milliseconds() - start;
         self.rise_on_file_loaded(filename, elapsed);
-        Ok(true)
+        Ok(())
     }
 
     /// C# `ImageLine2Line`: scan the bitmap and append the commands.
@@ -384,7 +438,7 @@ impl GrblFile {
 #[allow(clippy::too_many_arguments)]
 fn extract_segment(image: &RgbaImage, x: i32, y: i32, reverse: bool, len: &mut i32, prev_col: &mut i32, rv: &mut Vec<ColorSegment>, c: &L2LConf) {
     *len += 1;
-    let col = get_color(image, x, y, c.min_power, c.max_power, c.pwm);
+    let col = get_color(image, x, y, c);
     if *prev_col == -1 {
         *prev_col = col;
     }
@@ -401,11 +455,24 @@ fn extract_segment(image: &RgbaImage, x: i32, y: i32, reverse: bool, len: &mut i
 }
 
 /// C# `GetColor`: darkness scaled by alpha, optionally mapped into the power range.
+/// With `c.power_map` the brightness is mapped by [`PowerMap`] instead (image dock).
 ///
-/// `i`: image. `x`,`y`: pixel. `min`,`max`: power range. `pwm`: scale to range.
-fn get_color(i: &RgbaImage, x: i32, y: i32, min: i32, max: i32, pwm: bool) -> i32 {
+/// `i`: image. `x`,`y`: pixel. `c`: conf (power range, pwm, map).
+fn get_color(i: &RgbaImage, x: i32, y: i32, c: &L2LConf) -> i32 {
+    let (min, max, pwm) = (c.min_power, c.max_power, c.pwm);
     let p = i.get_pixel(x as u32, y as u32);
     let rv = (255 - p[0] as i32) * p[3] as i32 / 255;
+    // image dock path: brightness -> power
+    if let Some(m) = &c.power_map {
+        let brightness = (255 - rv) as u8;
+        return if pwm {
+            m.power(brightness, min, max)
+        } else if m.in_range(brightness) {
+            255
+        } else {
+            0
+        };
+    }
     if rv == 0 {
         0
     } else if pwm {
@@ -418,4 +485,124 @@ fn get_color(i: &RgbaImage, x: i32, y: i32, min: i32, max: i32, pwm: bool) -> i3
 /// C# `IsEven`.
 fn is_even(v: i32) -> bool {
     v % 2 == 0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::Rgba;
+
+    fn map(start: u8, stop: u8) -> PowerMap {
+        PowerMap { start, stop }
+    }
+
+    #[test]
+    fn normal_map_darker_is_more_power() {
+        let m = map(16, 210);
+        assert_eq!(m.power(16, 0, 1000), 1000);
+        assert_eq!(m.power(210, 0, 1000), 0);
+        // middle: 1000 + 97 * -1000 / 194 = 500
+        assert_eq!(m.power(113, 0, 1000), 500);
+        // monotonic non-increasing inside
+        let mut prev = i32::MAX;
+        for b in 16..=210u8 {
+            let p = m.power(b, 100, 900);
+            assert!(p <= prev && (100..=900).contains(&p));
+            prev = p;
+        }
+    }
+
+    #[test]
+    fn inverted_map_brighter_is_more_power() {
+        let m = map(210, 16);
+        assert_eq!(m.power(210, 0, 1000), 1000);
+        assert_eq!(m.power(16, 0, 1000), 0);
+        assert_eq!(m.power(113, 0, 1000), 500);
+        assert!(m.power(150, 0, 1000) > m.power(50, 0, 1000));
+        // min > 0: stop end gives S-MIN, not 0
+        assert_eq!(m.power(16, 100, 900), 100);
+        assert_eq!(m.power(210, 100, 900), 900);
+    }
+
+    #[test]
+    fn outside_range_is_zero_both_sides() {
+        for m in [map(16, 210), map(210, 16)] {
+            assert_eq!(m.power(0, 100, 900), 0);
+            assert_eq!(m.power(15, 100, 900), 0);
+            assert_eq!(m.power(211, 100, 900), 0);
+            assert_eq!(m.power(255, 100, 900), 0);
+            assert!(m.power(16, 100, 900) > 0 && m.power(210, 100, 900) > 0);
+        }
+    }
+
+    #[test]
+    fn equal_start_stop_burns_only_that_value() {
+        let m = map(100, 100);
+        assert_eq!(m.power(100, 0, 1000), 1000);
+        assert_eq!(m.power(99, 0, 1000), 0);
+        assert_eq!(m.power(101, 0, 1000), 0);
+        assert!(m.in_range(100) && !m.in_range(99) && !m.in_range(101));
+    }
+
+    #[test]
+    fn full_range_endpoints() {
+        let m = map(0, 255);
+        assert_eq!(m.power(0, 0, 255), 255);
+        assert_eq!(m.power(255, 0, 255), 0);
+        assert_eq!(m.power(255, 10, 255), 10);
+        assert_eq!(m.power(0, 10, 255), 255);
+    }
+
+    #[test]
+    fn rounding_half_away_from_zero() {
+        // start 0, stop 2, min 0, max 5: b=1 -> 5 + 1*-5/2 = 2.5 -> 3
+        assert_eq!(map(0, 2).power(1, 0, 5), 3);
+        // b=1 of 0..4: 5 + -5/4 = 3.75 -> 4
+        assert_eq!(map(0, 4).power(1, 0, 5), 4);
+        // b=3 of 0..4: 5 - 15/4 = 1.25 -> 1
+        assert_eq!(map(0, 4).power(3, 0, 5), 1);
+    }
+
+    #[test]
+    fn min_greater_than_max_does_not_panic() {
+        let m = map(0, 255);
+        for b in [0u8, 1, 128, 254, 255] {
+            let p = m.power(b, 800, 200);
+            assert!((200..=800).contains(&p), "b={b} p={p}");
+        }
+        assert_eq!(m.power(0, 800, 200), 200);
+        assert_eq!(m.power(255, 800, 200), 800);
+    }
+
+    #[test]
+    fn get_color_without_map_is_classic() {
+        let img = RgbaImage::from_pixel(1, 1, Rgba([100, 100, 100, 255]));
+        let mut c = L2LConf { min_power: 10, max_power: 200, pwm: true, ..L2LConf::default() };
+        // (255 - 100) * (200 - 10) / 255 + 10
+        assert_eq!(get_color(&img, 0, 0, &c), 155 * 190 / 255 + 10);
+        c.pwm = false;
+        assert_eq!(get_color(&img, 0, 0, &c), 155);
+        // white stays 0 in the classic path
+        let white = RgbaImage::from_pixel(1, 1, Rgba([255, 255, 255, 255]));
+        assert_eq!(get_color(&white, 0, 0, &c), 0);
+    }
+
+    #[test]
+    fn get_color_with_map() {
+        let px = |v: u8, a: u8| RgbaImage::from_pixel(1, 1, Rgba([v, v, v, a]));
+        let mut c = L2LConf { min_power: 0, max_power: 1000, pwm: true, power_map: Some(map(0, 254)), ..L2LConf::default() };
+        // black -> S-MAX, white (255, outside) -> 0
+        assert_eq!(get_color(&px(0, 255), 0, 0, &c), 1000);
+        assert_eq!(get_color(&px(255, 255), 0, 0, &c), 0);
+        // transparent = white over white -> 0
+        assert_eq!(get_color(&px(0, 0), 0, 0, &c), 0);
+        // on/off mode: in range = 255, out = 0
+        c.pwm = false;
+        assert_eq!(get_color(&px(0, 255), 0, 0, &c), 255);
+        assert_eq!(get_color(&px(255, 255), 0, 0, &c), 0);
+        // inverted map: white burns, black does not
+        c.power_map = Some(map(255, 100));
+        assert_eq!(get_color(&px(255, 255), 0, 0, &c), 255);
+        assert_eq!(get_color(&px(0, 255), 0, 0, &c), 0);
+    }
 }

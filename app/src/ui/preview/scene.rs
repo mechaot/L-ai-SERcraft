@@ -444,6 +444,8 @@ mod tests {
     #[test]
     #[allow(clippy::single_range_in_vec_init)]
     fn small_build_and_invalidate() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let file = raster_file(5000);
         let shared = SceneShared::new(1);
         assert_eq!(build_scene(&file, &colors(), true, &shared), BuildResult::Done);
@@ -477,6 +479,8 @@ mod tests {
 
     #[test]
     fn arc_builds_polyline() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = GrblFile::new();
         for l in ["G90", "M4", "G0 X10 Y0", "G2 X10 Y0 I-10 J0 S500 F1000"] {
             f.commands_mut().push(GrblCommand::new(l));
@@ -492,6 +496,8 @@ mod tests {
     /// Vertex buffer build for 500k lines: must be fast enough for smooth loading.
     #[test]
     fn build_time_500k_lines() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let file = raster_file(500_000);
         let shared = SceneShared::new(3);
         let t = Instant::now();

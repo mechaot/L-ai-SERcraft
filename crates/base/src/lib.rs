@@ -2,7 +2,7 @@
 // Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
 // Copyright (C) 2026 Andreas Pösch (Rust port and changes)
 
-//! `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound.
+//! `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound, test support.
 //!
 //! Foundation crate of the LaserGRBL Rust port (WP-C1a).
 
@@ -16,3 +16,4 @@ pub mod nrbf;
 pub mod tools;
 pub mod csv;
 pub mod sound;
+pub mod test_support;

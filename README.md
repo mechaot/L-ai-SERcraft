@@ -9,7 +9,8 @@ the same G-code generation (raster line-to-line, dithering, vectorize/potrace wi
 centerline via autotrace, SVG import, test generators), the same GRBL streaming protocol, and a UI that mirrors
 the original forms, menus, settings, hotkeys, custom buttons, color schemes and 20 languages. All credit for
 the original design and the years of real-world refinement goes to Diego Settimi and the LaserGRBL
-contributors and translators. L-ai-SERcraft adds per-layer SVG settings, named layer presets and hatch fill.
+contributors and translators. L-ai-SERcraft adds per-layer SVG settings, named layer presets, hatch fill and a raster-image dock with a
+brightness-to-power map.
 
 L-ai-SERcraft is an independent project. See [Authors & credits](#authors--credits) and [License](#license).
 Release notes: [`CHANGELOG.md`](CHANGELOG.md). User manual (multi-layer SVG from Inkscape: cut and fill

@@ -137,13 +137,15 @@ mod tests {
 
     #[test]
     fn default_files_exist() {
-        crate::settings::init_at(std::env::temp_dir().join("lg_base_sound_test").join("s.json"));
+        crate::paths::isolate_for_tests("base");
         for id in [EventId::Success, EventId::Warning, EventId::Fatal, EventId::Connect, EventId::Disconnect] {
             let f = sound_file(id).unwrap();
             assert!(f.exists(), "{f:?}");
         }
         crate::settings::set("Sound.Fatal.Enabled", false);
         assert!(sound_file(EventId::Fatal).is_none());
+        // shared store: leave it as found
+        crate::settings::delete("Sound.Fatal.Enabled");
         // must not panic or block
         play_file(Path::new("/nonexistent.wav"));
     }

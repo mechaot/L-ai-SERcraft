@@ -538,15 +538,14 @@ mod tests {
     use super::*;
 
     fn tmp(name: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("lg_llc_{}_{}", std::process::id(), name));
-        let _ = std::fs::remove_dir_all(&d);
-        std::fs::create_dir_all(&d).unwrap();
-        d.join("LaserLifeCounter.json")
+        lg_base::paths::test_dir(&format!("llc_{name}")).join("LaserLifeCounter.json")
     }
 
     /// Handler state is process wide: tests that use it run in one test fn.
     #[test]
     fn handler_flow() {
+        // no real config dir
+        crate::test_support::init_env();
         let file = tmp("flow");
         reload_from(file.clone());
         // default counter is created

@@ -194,9 +194,10 @@ mod tests {
 
     #[test]
     fn concurrent_writers_do_not_clash() {
+        // error paths log to the session log: keep it out of the real config dir
+        crate::paths::isolate_for_tests("base");
         // C# lock + random tmp name: parallel saves into one dir must all succeed
-        let dir = std::env::temp_dir().join(format!("lg_ser_conc_{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
+        let dir = crate::paths::test_dir("ser_conc");
         let handles: Vec<_> = (0..8)
             .map(|i| {
                 let p = dir.join(format!("f{i}.bin"));
@@ -213,7 +214,6 @@ mod tests {
         for i in 0..8 {
             assert!(obj_from_bytes(&std::fs::read(dir.join(format!("f{i}.bin"))).unwrap()).is_ok());
         }
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

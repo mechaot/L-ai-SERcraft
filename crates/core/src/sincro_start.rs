@@ -180,6 +180,8 @@ mod tests {
 
     #[test]
     fn signal_reaches_listener() {
+        // no real config dir
+        crate::test_support::init_env();
         let (tx, _rx) = crossbeam_channel::unbounded();
         let core = GrblCore::with_com(Firmware::Grbl, tx, FakeCom::new(), lg_base::tools::hires_timer::total_milliseconds);
         start_listen(core, None).unwrap();

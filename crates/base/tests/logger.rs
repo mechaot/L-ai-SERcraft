@@ -8,8 +8,7 @@ use lg_base::logger;
 
 #[test]
 fn logger_files() {
-    let d = std::env::temp_dir().join(format!("lg_logger_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&d);
+    let d = lg_base::paths::test_dir("logger");
     lg_base::paths::set_data_path_override(d.clone());
 
     // pre-existing log with 1500 lines gets rotated to the last 1000
@@ -23,7 +22,9 @@ fn logger_files() {
     let t = std::fs::read_to_string(logger::log_file_path()).unwrap();
     let lines: Vec<&str> = t.split("\r\n").collect();
     assert_eq!(lines[0], "old500");
-    assert!(t.contains("\tProgram     \t------- L-ai-SERcraft v1.3.0 ["), "{t}");
+    // version from Cargo, no hard-coded number
+    let start = format!("\tProgram     \t------- L-ai-SERcraft v{} [", env!("CARGO_PKG_VERSION"));
+    assert!(t.contains(&start), "{t}");
     assert!(t.contains("\tTest        \tline one\r\n"));
     assert!(t.contains("\tTest        \tline two\r\n"));
     assert!(t.contains("\tCtx         \tboom\r\n"));

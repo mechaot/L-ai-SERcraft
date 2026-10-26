@@ -23,6 +23,7 @@ pub mod resolution_helper;
 
 pub use convert_size::ConvertSizeForm;
 pub use raster_to_laser::RasterImport;
+pub(crate) use raster_to_laser::translate_enum;
 pub use resolution_helper::ResolutionHelperForm;
 
 /// Usage counters touched by the raster import (mirror of core `UsageCounters` fields).

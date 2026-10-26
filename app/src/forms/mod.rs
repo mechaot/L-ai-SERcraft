@@ -9,6 +9,7 @@ pub mod main;
 pub mod form_util;
 pub mod gallery_tab;
 pub mod generators;
+pub mod image_dock;
 pub mod legal_disclaimer;
 pub mod license;
 pub mod save_options;

@@ -203,6 +203,8 @@ mod tests {
 
     #[test]
     fn roundtrip_and_remote_close() {
+        // no real config dir
+        crate::test_support::init_env();
         let l = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = l.local_addr().unwrap().port();
         let srv = std::thread::spawn(move || {
@@ -244,6 +246,8 @@ mod tests {
 
     #[test]
     fn missing_host_is_error() {
+        // no real config dir
+        crate::test_support::init_env();
         let c = TelnetCom::new();
         assert!(c.open().is_err());
         c.configure(&ComConfig::Address("127.0.0.1".into()));

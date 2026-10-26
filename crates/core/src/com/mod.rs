@@ -135,6 +135,8 @@ mod tests {
 
     #[test]
     fn wrapper_names_and_factory() {
+        // no real config dir
+        crate::test_support::init_env();
         for t in [
             WrapperType::UsbSerial,
             WrapperType::UsbSerial2,

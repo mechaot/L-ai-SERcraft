@@ -231,12 +231,24 @@ pub fn open_link(url: &str) {
 #[cfg(test)]
 pub struct TestGuard(#[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
 
+/// Test helper: keep this test process out of the real config dir (data dir, settings, session log).
+/// Call FIRST in every test that can reach settings, logger, laser life, presets or custom buttons;
+/// [`test_guard`] does it already. `tools/check_test_isolation.py` enforces it.
+///
+/// Returns the scratch root dir of this test process.
+#[cfg(test)]
+pub fn isolate_env() -> std::path::PathBuf {
+    lg_base::paths::isolate_for_tests("app")
+}
+
 /// Point the settings store at a fresh unique file (init_at flushes the old store into the OLD path, so path must change).
 #[cfg(test)]
 fn reset_store() {
+    // data dir must be isolated before the first store init; settings files live in the same scratch dir
+    let root = isolate_env();
     static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let n = N.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-    lg_base::settings::init_at(std::env::temp_dir().join(format!("lg-forms-settings-{}-{n}.json", std::process::id())));
+    lg_base::settings::init_at(root.join(format!("settings-{n}.json")));
 }
 
 #[cfg(test)]

@@ -34,6 +34,7 @@ use crate::forms::dialogs::safety_countdown::{SafetyCountdown, SafetyOutcome};
 use crate::forms::dialogs::settings_form::{SettingsForm, SettingsOutcome};
 use crate::forms::dialogs::{discovery_form::DiscoveryForm, discovery_form::DiscoveryOutcome, grbl_config::GrblConfig};
 use crate::forms::generators::cutting_test::CuttingTest;
+use crate::forms::image_dock::{ImageDock, ImageDockAction};
 use crate::forms::params_dock::{ParamsAction, ParamsDock};
 use crate::forms::generators::power_vs_speed::PowerVsSpeedForm;
 use crate::forms::generators::shake_test::ShakeTest;
@@ -51,7 +52,7 @@ use crate::forms::raster::RasterImport;
 use crate::forms::save_options::{SaveOptionForm, SaveOptionOutcome, SaveOptions};
 use crate::forms::splash::SplashScreen;
 use crate::ui::dialog::{filters, DialogResult, FileDialogOptions, MessageBox, MessageBoxButtons, MessageBoxHost, MessageBoxIcon, PendingFile};
-use crate::ui::{tr, Theme};
+use crate::ui::{tr, tr_fmt, Theme};
 
 /// Continuations of message boxes.
 #[derive(Clone, Debug)]
@@ -128,8 +129,13 @@ pub struct MainForm {
     connect: ConnectLogForm,
     jog: JogForm,
     preview: PreviewForm,
-    /// "Parameters" dock (right panel).
+    /// "Parameters" dock (right panel) for SVG files and without a file.
     params: ParamsDock,
+    /// Raster-image dock: takes the right panel while an image is loaded.
+    image: ImageDock,
+    /// Image the classic import dialog was opened for from the image dock (path, append): the dock takes it
+    /// back when the dialog is cancelled.
+    classic_from_dock: Option<(PathBuf, bool)>,
     /// Run was requested while the dock still had to generate G-code.
     run_after_apply: bool,
     emulator: std::sync::Arc<EmulatorWindow>,
@@ -184,6 +190,8 @@ impl MainForm {
             jog: JogForm::new(),
             preview: PreviewForm::new(),
             params: ParamsDock::new(),
+            image: ImageDock::new(),
+            classic_from_dock: None,
             run_after_apply: false,
             emulator: EmulatorWindow::install(),
             overlays,
@@ -230,7 +238,7 @@ impl MainForm {
             self.started = true;
         }
         self.pump_events();
-        self.poll_params();
+        self.poll_docks();
         self.poll_connect();
         self.poll_file(&ctx);
         if self.started && self.state.take_sincro_run() {
@@ -271,6 +279,7 @@ impl MainForm {
         }
         // Parameters dock: input is blocked while a modal is open
         let mut params_actions = Vec::new();
+        let mut image_actions = Vec::new();
         let dock = egui::Panel::right("main-params")
             .frame(Frame::new().fill(th.form_back_color).inner_margin(Margin::same(3)))
             .resizable(true)
@@ -278,7 +287,12 @@ impl MainForm {
             .size_range(200.0..=500.0)
             .show(ui, |ui| {
                 ui.add_enabled_ui(!modal_open, |ui| {
-                    params_actions = self.params.show(ui, &self.state.core);
+                    // one panel, the dock of the loaded file type
+                    if self.image.has_source() {
+                        image_actions = self.image.show(ui, &self.state.core);
+                    } else {
+                        params_actions = self.params.show(ui, &self.state.core);
+                    }
                 });
             });
         // dock resized: persist "MainForm Params Width"
@@ -297,9 +311,15 @@ impl MainForm {
                 ParamsAction::OpenPresetEditor => self.overlays.push_back(Overlay::Material(PresetEditor::new(default_presets()))),
             }
         }
+        for a in image_actions {
+            match a {
+                ImageDockAction::OpenClassic => self.open_classic_from_dock(),
+            }
+        }
 
         self.emulator.show(&ctx);
         self.params.show_dialogs(&ctx);
+        self.image.show_dialogs(&ctx);
         self.show_dialogs(&ctx);
         if self.started && !modal_open {
             self.hotkeys(&ctx);
@@ -641,6 +661,12 @@ impl MainForm {
             OverlayResult::Hotkeys(HotkeyOutcome::Saved(list)) => hotkey_manager_form::apply_saved(&mut self.state.hotkeys, list),
             OverlayResult::SaveOptions(SaveOptionOutcome::Save(o)) => self.pick_save_program(o),
             OverlayResult::Raster(o) => {
+                // classic dialog opened from the image dock and left without a program: the dock takes the image back
+                if let Some((path, append)) = self.classic_from_dock.take() {
+                    if !o.generated {
+                        self.reopen_in_image_dock(&path, append);
+                    }
+                }
                 // raster_file is counted by the core in open_file
                 core.update_usage_counters(|c| {
                     c.dithering += o.usage.dithering;
@@ -815,14 +841,29 @@ impl MainForm {
     /// just restored from a `.lps` entry (the dock reloads its values from them).
     fn open_outcome(&mut self, outcome: OpenFileOutcome, append: bool, from_project: bool) {
         let file = self.state.core.loaded_file();
-        // every real file replaces the SVG the dock works on
-        if !matches!(outcome, OpenFileOutcome::Busy | OpenFileOutcome::Unsupported | OpenFileOutcome::Svg(_)) {
-            self.params.clear_source();
+        // every real file replaces the SVG / image the docks work on
+        match &outcome {
+            OpenFileOutcome::Busy | OpenFileOutcome::Unsupported => {}
+            OpenFileOutcome::Svg(_) => self.image.clear_source(),
+            // a plain raster image goes to the image dock, which replaces its own source
+            OpenFileOutcome::Raster(_) if !from_project => self.params.clear_source(),
+            _ => {
+                self.params.clear_source();
+                self.image.clear_source();
+            }
         }
         match outcome {
-            OpenFileOutcome::Raster(p) => match RasterImport::open(file, &p, append) {
+            // project entries carry the classic dialog settings (tool, vectorize, ...): classic dialog
+            OpenFileOutcome::Raster(p) if from_project => match RasterImport::open(file, &p, append) {
                 Ok(r) => self.overlays.push_back(Overlay::Raster(Box::new(r))),
                 Err(e) => lg_base::logger::log_exception("RasterImport", &e),
+            },
+            OpenFileOutcome::Raster(p) => match self.image.load_image(file, &p, append) {
+                Ok(()) => self.state.core.update_usage_counters(|c| c.line2line += 1),
+                Err(e) => {
+                    lg_base::logger::log_exception("ImageDock", &e);
+                    self.msgs.push(MsgTag::Info, MessageBox::new(tr_fmt("ImageDock.LoadFailed", &[&e]), "Error").icon(MessageBoxIcon::Error));
+                }
             },
             OpenFileOutcome::Svg(p) => self.params.load_svg(file, &p.to_string_lossy(), append, from_project),
             OpenFileOutcome::Project(p) => match project::load_project(&p.to_string_lossy()) {
@@ -837,7 +878,7 @@ impl MainForm {
     /// Project loop: restore settings of the next entry once the previous dialog has closed.
     fn pump_project(&mut self) {
         // SVG generation is async: next entry would hit "busy"
-        if !self.overlays.is_empty() || self.msgs.is_open() || self.params.job_running() || !self.state.core.can_load_new_file() {
+        if !self.overlays.is_empty() || self.msgs.is_open() || self.dock_job_running() || !self.state.core.can_load_new_file() {
             return;
         }
         let Some(mut q) = self.project.take() else { return };
@@ -876,9 +917,13 @@ impl MainForm {
     fn request_run(&mut self) {
         let core = self.state.core.clone();
         // dock edits not generated yet (auto regen running or failed): generate first, run when done
-        if self.params.needs_apply() && core.is_connected() {
-            if self.params.is_dirty_idle() {
-                if core.can_load_new_file() && self.params.apply() {
+        if self.dock_needs_apply() && core.is_connected() {
+            // image dock with an invalid size: the program is stale and cannot be regenerated, do not run it
+            if self.image.is_blocked() {
+                return;
+            }
+            if self.dock_is_dirty_idle() {
+                if core.can_load_new_file() && self.dock_apply() {
                     self.run_after_apply = true;
                 }
             } else {
@@ -898,12 +943,59 @@ impl MainForm {
         }
     }
 
-    /// Check the dock's generation worker; start the deferred run when it succeeded.
-    fn poll_params(&mut self) {
-        if let Some(ok) = self.params.poll() {
+    /// Check the docks' generation workers; start the deferred run when one succeeded.
+    fn poll_docks(&mut self) {
+        if let Some(ok) = self.params.poll().or_else(|| self.image.poll()) {
             if std::mem::take(&mut self.run_after_apply) && ok {
                 self.request_run();
             }
+        }
+    }
+
+    /// Returns true when the dock of the loaded file has G-code to generate or is generating.
+    fn dock_needs_apply(&self) -> bool {
+        self.params.needs_apply() || self.image.needs_apply()
+    }
+
+    /// Returns true when the dock of the loaded file has edits waiting and could start a generation now.
+    fn dock_is_dirty_idle(&self) -> bool {
+        self.params.is_dirty_idle() || self.image.is_dirty_idle()
+    }
+
+    /// Start the generation in the dock that holds the file (only one dock has a source at a time).
+    ///
+    /// Returns false when nothing was started.
+    fn dock_apply(&mut self) -> bool {
+        if self.image.has_source() { self.image.apply() } else { self.params.apply() }
+    }
+
+    /// Returns true while a dock generation runs.
+    fn dock_job_running(&self) -> bool {
+        self.params.job_running() || self.image.job_running()
+    }
+
+    /// Image dock button "Classic import dialog": the image moves to the classic raster dialog.
+    fn open_classic_from_dock(&mut self) {
+        let Some((file, path, append)) = self.image.take_classic() else { return };
+        match RasterImport::open(file, &path, append) {
+            Ok(r) => {
+                self.classic_from_dock = Some((path, append));
+                self.overlays.push_back(Overlay::Raster(Box::new(r)));
+            }
+            Err(e) => {
+                lg_base::logger::log_exception("RasterImport", &e);
+                self.reopen_in_image_dock(&path, append);
+            }
+        }
+    }
+
+    /// Put an image back into the image dock (classic dialog cancelled or failed to open).
+    ///
+    /// `path`: image file. `append`: the import keeps the commands that were there before.
+    fn reopen_in_image_dock(&mut self, path: &Path, append: bool) {
+        let file = self.state.core.loaded_file();
+        if let Err(e) = self.image.load_image(file, path, append) {
+            lg_base::logger::log_exception("ImageDock", &e);
         }
     }
 

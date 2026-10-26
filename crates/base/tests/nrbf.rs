@@ -7,7 +7,12 @@
 use lg_base::nrbf::*;
 use std::io::Read;
 
+/// Repo root. Also isolates the process (data dir, settings): every test here starts with it,
+/// because the serializer logs to the session log in the data dir.
+///
+/// Returns the repo root path.
 fn root() -> std::path::PathBuf {
+    lg_base::paths::isolate_for_tests("nrbf");
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
@@ -123,9 +128,7 @@ fn builder_vs_mono() {
 
 #[test]
 fn serializer_files() {
-    let d = std::env::temp_dir().join(format!("lg_ser_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&d);
-    std::fs::create_dir_all(&d).unwrap();
+    let d = lg_base::paths::test_dir("ser");
     // Windows zbn and Mono re-serialized zbn decode through the container reader
     for p in ["resources/misc/StandardButtons.zbn", "tests/golden/base/buttons_std_reser.zbn"] {
         let g = obj_from_file(&root().join(p)).unwrap().unwrap();

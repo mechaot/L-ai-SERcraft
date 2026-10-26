@@ -314,6 +314,8 @@ mod tests {
 
     #[test]
     fn defaults_and_sizes() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let f = CuttingTest::new(Arc::new(RwLock::new(GrblFile::new())));
         assert_eq!((f.f_steps, f.f_min, f.f_max, f.f_step_size), (5, 200, 1000, 200));
         assert_eq!((f.size_w, f.size_h), (69.0, 61.0));
@@ -322,6 +324,8 @@ mod tests {
 
     #[test]
     fn same_gcode_as_direct_call() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let form = CuttingTest::new(Arc::new(RwLock::new(GrblFile::new())));
         let mut a = GrblFile::new();
         assert!(form.args().run(&mut a).unwrap());
@@ -333,6 +337,8 @@ mod tests {
 
     #[test]
     fn single_step_disables_fmin() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = CuttingTest::new(Arc::new(RwLock::new(GrblFile::new())));
         f.f_steps = 1;
         f.on_f_changed(Some(Field::FSteps), true);
@@ -346,6 +352,8 @@ mod tests {
 
     #[test]
     fn passes_stay_ordered() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = CuttingTest::new(Arc::new(RwLock::new(GrblFile::new())));
         f.p_min = 6;
         f.on_p_changed(Field::PMin, true);

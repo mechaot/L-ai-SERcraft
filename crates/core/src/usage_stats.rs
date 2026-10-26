@@ -168,10 +168,10 @@ mod tests {
 
     #[test]
     fn persistence_roundtrip() {
-        let dir = std::env::temp_dir().join(format!("lg_usage_{}", std::process::id()));
-        let _ = std::fs::create_dir_all(&dir);
+        // no real config dir
+        crate::test_support::init_env();
+        let dir = lg_base::paths::test_dir("usage");
         let file = dir.join("UsageStats.json");
-        let _ = std::fs::remove_file(&file);
         load_file_from(&file);
         let id = get_id().unwrap();
         assert_eq!(id.len(), 32);
@@ -187,6 +187,5 @@ mod tests {
         assert_eq!(s.vendor, "Ortur");
         assert_eq!(s.usage_time_ticks, 600_000_000);
         assert!(installed_date().is_some());
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }

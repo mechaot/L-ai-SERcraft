@@ -7,6 +7,9 @@ black box in its middle that is **engraved** (filled).
 Example file: [`manual/layers-example.svg`](manual/layers-example.svg) (100 × 100 mm). Screenshots: Inkscape
 1.4 and L-ai-SERcraft.
 
+Photos and other bitmaps (JPG, PNG, BMP, GIF) are described at the end:
+[Raster images in the Parameters dock](#manual-raster-images-in-the-parameters-dock).
+
 ## How layers are read
 
 * Every **top-level layer** of the SVG becomes one entry in the *Layer* picker of the *Parameters* dock. The
@@ -127,3 +130,70 @@ How the settings behave:
 | no hatch lines | *Fill closed shapes* is off for that layer, or the path is not closed (join the end nodes with the Node tool, `N`) |
 | text is missing | *Path ▸ Object to Path* before saving |
 | a hidden Inkscape layer is burned | hidden layers are converted too: untick *Enabled* in the Parameters dock |
+
+# Manual: raster images in the Parameters dock
+
+A raster image (JPG, JPEG, BMP, PNG, GIF) opens with *File ▸ Open File* straight into the dock on the right, the
+same place where SVG settings live, and is engraved **line to line**. The G-code is generated at once and
+regenerates after every committed edit: Enter or leaving an input field, or releasing a histogram marker. The
+preview follows, also after the target size changed.
+
+## Brightness to power
+
+The histogram shows how many pixels have each brightness (0 = black … 255 = white, bar height on a log scale).
+The strip under it is the brightness scale. Two markers set the **map** from brightness to laser power: drag
+them, or type the values into *Start* and *Stop*. The orange curve is the resulting power; the scale on the
+right ends at the machine's maximum S value.
+
+| rule | effect |
+|---|---|
+| *Start* gets **S-MAX**, *Stop* gets **S-MIN**, linear in between | normal map, e.g. Start 16, Stop 210: darker pixels burn harder |
+| *Start* is larger than *Stop* | **inverted** map, e.g. Start 210, Stop 16: brighter pixels burn harder. Allowed, no warning |
+| brightness **outside** the range between both markers | power 0, **not burned**. The laser skips these parts with fast moves, which also shortens the job |
+| *Start* = *Stop* | only exactly this brightness burns, with S-MAX |
+
+Notes:
+
+* Brightness is the grey value of the pixel (luma weights 0.299 / 0.587 / 0.114) laid over white, so transparent
+  areas count as white.
+* The default map is 0 … 254: pure white (255) never burns, even when S-MIN is above 0. The last used map is
+  the start value for the next image.
+* Without hardware PWM (*Support Hardware PWM* off in the settings) the S-MIN and S-MAX inputs are hidden and
+  every pixel inside the range burns fully (on/off).
+
+## Position and size
+
+The first two rows are inputs, the third is calculated:
+
+* **Lower left** X / Y in mm is the job offset. Changing it moves the image, the size stays.
+* **Size** W / H is the width and height of the engraving in mm (0.01 to 10000).
+* **Upper right** X / Y is lower left plus size. It is shown read-only and cannot be edited.
+
+The lock symbol between *W* and *H* keeps the aspect ratio. It is **closed at every start of the program**. While
+it is closed, committing a width recalculates the height and committing a height recalculates the width, both
+with the ratio the target had before the edit (not necessarily the ratio of the image: the image is stretched to
+the rectangle). Click the lock to open it: then width and height are independent. Switching the lock does not
+change any value and does not regenerate the G-code. When the size is zero or invalid, the closed lock uses the
+ratio of the image. Below the inputs the dock shows, read-only:
+
+* the aspect ratio of the target and, in brackets, of the image,
+* the size of the raster in pixels (width × height).
+
+Width and height must be greater than 0. Otherwise a red message appears, no G-code is generated and *Run* does
+nothing until the values are valid again.
+
+## Line to line, speed and laser
+
+* **Direction:** Horizontal, Vertical or Diagonal.
+* **Quality:** lines per mm, 0.1 to 20 (50 with *Raster Hi-Res* in the settings). Higher quality makes a finer
+  raster and a longer job. Very large targets are limited by the memory limit of the converter.
+* **Engraving speed** in mm/min, **Laser Mode** (M3 constant, M4 dynamic power) and **S-MIN** / **S-MAX**.
+
+All values are saved for each image file and come back when the same file is opened again. A new file starts with
+the last used values.
+
+## Classic import dialog
+
+*Classic import dialog…* at the bottom hands the image to the original raster dialog, which also offers
+dithering, vectorize and centerline. If you cancel that dialog the image returns to the dock. Entries of `.lps`
+project files always open in the classic dialog.

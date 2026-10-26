@@ -60,10 +60,9 @@ fn save_gcode_header_footer_cycles() {
     f.commands_mut().push(GrblCommand::new("G1 X1"));
     f.commands_mut().push(GrblCommand::new("M5"));
     lg_base::settings::set("GCode.CustomHeader", "G90\r\n\r\n; comment [left]".to_string());
-    let p = std::env::temp_dir().join(format!("lg-gcode-save-{}.nc", std::process::id()));
+    let p = lg_base::paths::test_dir("gcode_save").join("save.nc");
     f.save_gcode(&p, true, true, true, 2, true, &|l| if l.contains("comment") { String::new() } else { l.to_string() }).unwrap();
     let s = std::fs::read_to_string(&p).unwrap();
-    let _ = std::fs::remove_file(&p);
     assert!(s.starts_with("G90\nG1 X1\nM5\n"), "{s:?}");
     // passes default has 4 lines, all start with ';' and are kept (evaluator echoes)
     assert!(s.contains(";G91 (use relative coordinates)\n"));
@@ -150,8 +149,7 @@ fn truncate_list_keeps_head_only() {
 fn svg_layered_ranges_cover_layers() {
     use lg_svg2gcode::{ColorFilter, LayerParams};
     let _g = sandbox();
-    let dir = std::env::temp_dir().join(format!("lg_layers_{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
+    let dir = lg_base::paths::test_dir("layers");
     let svg = dir.join("two.svg");
     std::fs::write(
         &svg,

@@ -942,6 +942,8 @@ fn first_diff(a: &str, b: &str) -> String {
 
 #[test]
 fn protocol_scenarios_match_the_original() {
+    // first: both tests share the global data dir + settings; init must finish before either uses them
+    lg_base::paths::isolate_for_tests("golden_protocol");
     let dir = golden_dir();
     let only = std::env::var("LG_PROTO_ONLY").ok();
     let mut names: Vec<String> = std::fs::read_dir(&dir)
@@ -951,8 +953,7 @@ fn protocol_scenarios_match_the_original() {
         .collect();
     names.sort();
     assert!(!names.is_empty(), "no scenarios found");
-    let scratch = std::env::temp_dir().join(format!("lg_proto_{}", std::process::id()));
-    std::fs::create_dir_all(&scratch).unwrap();
+    let scratch = lg_base::paths::test_dir("proto");
     let mut ip = Interp::new(&scratch);
     let mut bad = Vec::new();
     for n in &names {
@@ -972,7 +973,7 @@ fn protocol_scenarios_match_the_original() {
         }
     }
     if !bad.is_empty() {
-        panic!("{} scenario(s) differ (full Rust traces in {}):\n{}", bad.len(), scratch.display(), bad.join("\n---\n"));
+        panic!("{} scenario(s) differ (full Rust traces in {}, kept when LG_KEEP_TEST_DIRS=1):\n{}", bad.len(), scratch.display(), bad.join("\n---\n"));
     }
 }
 
@@ -1100,6 +1101,8 @@ fn run_emu(text: &str, cfg_file: &Path) -> String {
 
 #[test]
 fn emulator_scenarios_match_the_original() {
+    // first: both tests share the global data dir + settings; init must finish before either uses them
+    lg_base::paths::isolate_for_tests("golden_protocol");
     let dir = golden_dir();
     let mut names: Vec<String> = std::fs::read_dir(&dir)
         .unwrap()
@@ -1108,8 +1111,7 @@ fn emulator_scenarios_match_the_original() {
         .collect();
     names.sort();
     assert!(!names.is_empty());
-    let scratch = std::env::temp_dir().join(format!("lg_emu_{}", std::process::id()));
-    std::fs::create_dir_all(&scratch).unwrap();
+    let scratch = lg_base::paths::test_dir("emu");
     let mut bad = Vec::new();
     for n in &names {
         let src = std::fs::read_to_string(dir.join(format!("{n}.emu"))).unwrap();
@@ -1121,6 +1123,6 @@ fn emulator_scenarios_match_the_original() {
         }
     }
     if !bad.is_empty() {
-        panic!("{} emulator scenario(s) differ (traces in {}):\n{}", bad.len(), scratch.display(), bad.join("\n---\n"));
+        panic!("{} emulator scenario(s) differ (traces in {}, kept when LG_KEEP_TEST_DIRS=1):\n{}", bad.len(), scratch.display(), bad.join("\n---\n"));
     }
 }

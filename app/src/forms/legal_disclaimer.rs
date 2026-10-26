@@ -122,6 +122,8 @@ mod tests {
 
     #[test]
     fn translate_url_shape() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let u = LegalDisclaimer::translate_url();
         assert!(u.starts_with("https://translate.google.it/?sl=en&tl="));
         assert!(u.ends_with("&op=translate"));

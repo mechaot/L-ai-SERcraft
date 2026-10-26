@@ -7,6 +7,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+/// Test scratch helpers live in `test_support`; re-exported here, the place callers know.
+pub use crate::test_support::{isolate_for_tests, test_dir};
+
 static DATA: Mutex<Option<PathBuf>> = Mutex::new(None);
 static TEMP: Mutex<Option<PathBuf>> = Mutex::new(None);
 
@@ -88,7 +91,7 @@ pub fn data_path() -> PathBuf {
 
 /// Temp dir of the app, created on first call (C# `GrblCore.TempPath`).
 ///
-/// Returns `<temp_dir>/L-ai-SERcraft`.
+/// Returns `<temp_dir>/L-ai-SERcraft` or the override set by [`set_temp_path_override`].
 pub fn temp_path() -> PathBuf {
     let mut g = TEMP.lock().unwrap_or_else(|e| e.into_inner());
     if g.is_none() {
@@ -139,6 +142,14 @@ pub fn set_data_path_override(p: PathBuf) {
     *DATA.lock().unwrap_or_else(|e| e.into_inner()) = Some(p);
 }
 
+/// Override the app temp dir (tests). Creates it.
+///
+/// `p`: new temp dir.
+pub fn set_temp_path_override(p: PathBuf) {
+    let _ = std::fs::create_dir_all(&p);
+    *TEMP.lock().unwrap_or_else(|e| e.into_inner()) = Some(p);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -150,18 +161,26 @@ mod tests {
 
     #[test]
     fn override_works() {
-        let d = std::env::temp_dir().join("lg_base_paths_test");
+        // isolate helper first: same test fn, because both change the global data dir
+        let root = isolate_for_tests("paths test");
+        assert_eq!(data_path(), root.join("data"));
+        assert_eq!(temp_path(), root.join("tmp"));
+        assert!(root.join("data").is_dir());
+        // second call keeps the first scratch dir
+        assert_eq!(isolate_for_tests("other"), root);
+        let d = test_dir("paths-data");
         set_data_path_override(d.clone());
         assert_eq!(data_path(), d);
         assert!(d.is_dir());
-        assert!(temp_path().ends_with("L-ai-SERcraft"));
+        let t = test_dir("paths-temp");
+        set_temp_path_override(t.clone());
+        assert_eq!(temp_path(), t);
         assert!(exe_path().is_dir());
     }
 
     #[test]
     fn migrate_copies_once() {
-        let r = std::env::temp_dir().join(format!("lg_migrate_a_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&r);
+        let r = test_dir("migrate");
         let (old, new) = (r.join("old"), r.join("new"));
         std::fs::create_dir_all(old.join("sub")).unwrap();
         std::fs::write(old.join("a.json"), "A").unwrap();
@@ -175,13 +194,11 @@ mod tests {
         std::fs::write(new.join("a.json"), "CHANGED").unwrap();
         assert!(!migrate_dir(&old, &new).unwrap());
         assert_eq!(std::fs::read_to_string(new.join("a.json")).unwrap(), "CHANGED");
-        let _ = std::fs::remove_dir_all(&r);
     }
 
     #[test]
     fn migrate_skips_when_new_exists_or_old_missing() {
-        let r = std::env::temp_dir().join(format!("lg_migrate_b_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&r);
+        let r = test_dir("migrate");
         let (old, new) = (r.join("old"), r.join("new"));
         std::fs::create_dir_all(&old).unwrap();
         std::fs::create_dir_all(&new).unwrap();
@@ -189,13 +206,11 @@ mod tests {
         assert!(!migrate_dir(&old, &new).unwrap());
         assert!(!new.join("a.json").exists());
         assert!(!migrate_dir(&r.join("missing"), &r.join("new2")).unwrap());
-        let _ = std::fs::remove_dir_all(&r);
     }
 
     #[test]
     fn migrate_first_priority() {
-        let r = std::env::temp_dir().join(format!("lg_migrate_c_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&r);
+        let r = test_dir("migrate");
         for (d, v) in [("LaserGRBL", "G"), ("L-ai-SERctrl", "C")] {
             std::fs::create_dir_all(r.join(d)).unwrap();
             std::fs::write(r.join(d).join("a.json"), v).unwrap();
@@ -210,6 +225,5 @@ mod tests {
         std::fs::remove_dir_all(r.join("L-ai-SERctrl")).unwrap();
         let new2 = r.join("new2");
         assert_eq!(migrate_first(&r, &new2).unwrap(), Some(r.join("LaserGRBL")));
-        let _ = std::fs::remove_dir_all(&r);
     }
 }

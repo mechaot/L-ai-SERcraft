@@ -206,6 +206,8 @@ mod tests {
 
     #[test]
     fn defaults() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let f = ShakeTest::new(Arc::new(RwLock::new(GrblFile::new())));
         assert_eq!(f.limit_items, vec![4000, 3000, 2000, 1000]);
         assert_eq!((f.axis_len, f.cross_speed, f.cross_power), (300, 1000, 100));
@@ -214,6 +216,8 @@ mod tests {
 
     #[test]
     fn y_axis_uses_table_height() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = ShakeTest::new(Arc::new(RwLock::new(GrblFile::new())));
         f.axis = Some(1);
         f.on_axis_changed();
@@ -223,6 +227,8 @@ mod tests {
 
     #[test]
     fn same_gcode_as_direct_call() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let form = ShakeTest::new(Arc::new(RwLock::new(GrblFile::new())));
         let mut a = GrblFile::new();
         assert!(form.args().run(&mut a).unwrap());

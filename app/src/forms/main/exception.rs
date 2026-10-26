@@ -163,6 +163,10 @@ mod tests {
 
     #[test]
     fn header_mentions_version() {
-        assert!(header(None).starts_with("L-ai-SERcraft v1.3.0"));
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
+        // expected text from Cargo version, no hard-coded number
+        let want = format!("L-ai-SERcraft v{}", env!("CARGO_PKG_VERSION"));
+        assert!(header(None).starts_with(&want));
     }
 }

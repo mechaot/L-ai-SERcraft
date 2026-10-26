@@ -352,6 +352,8 @@ mod tests {
 
     #[test]
     fn defaults() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let f = PowerVsSpeedForm::new(Arc::new(RwLock::new(GrblFile::new())));
         assert_eq!((f.s_steps, f.s_min, f.s_max, f.s_step_size), (10, 100, 1000, 100));
         assert_eq!((f.f_steps, f.f_min, f.f_max, f.f_step_size), (7, 1000, 4000, 500));
@@ -362,6 +364,8 @@ mod tests {
 
     #[test]
     fn same_gcode_as_direct_call() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let form = PowerVsSpeedForm::new(Arc::new(RwLock::new(GrblFile::new())));
         let mut a = GrblFile::new();
         assert!(form.args().run(&mut a).unwrap());
@@ -374,6 +378,8 @@ mod tests {
 
     #[test]
     fn single_step_disables_min() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let mut f = PowerVsSpeedForm::new(Arc::new(RwLock::new(GrblFile::new())));
         f.s_steps = 1;
         f.on_s_changed(Some(Field::SSteps), true);

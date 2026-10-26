@@ -310,10 +310,7 @@ mod tests {
     use super::*;
 
     fn scratch(name: &str) -> std::path::PathBuf {
-        let d = std::env::temp_dir().join(format!("lg_cbform_{}_{name}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&d);
-        std::fs::create_dir_all(&d).unwrap();
-        d
+        lg_base::paths::test_dir(&format!("cbform_{name}"))
     }
 
     fn list(name: &str) -> CustomButtons {

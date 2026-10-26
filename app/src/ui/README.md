@@ -62,6 +62,7 @@ every color), Icons (filterable), Widgets, Dialogs, i18n. `cargo test -p laiserc
 | `PictureBox` | MyPictureBox | state struct (`fence`), `show(ui, tex, size)` |
 | `data_grid` | MyDatagridView | egui_extras table helper |
 | `InputBox` | Tools/InputBox | state struct, `show(ctx) -> Option<InputBoxResult>` |
+| `BrightnessHistogram` | (new, raster dock) | `BrightnessHistogram::new(&hist, &mut start, &mut stop).power(PowerScale{..}).show(ui) -> HistogramOutput{changed, committed}` |
 | `graph::*` | Tools/Graph | `rounded_rect_points`, gradients, `wheel_notches` |
 
 Numeric inputs and `ColorSlider`/`TrackBar` need distinct ids when several share one call site: use `.id(Id::unique(..))`

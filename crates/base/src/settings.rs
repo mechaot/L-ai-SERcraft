@@ -11,6 +11,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Condvar, Mutex, MutexGuard, Once};
 use std::time::{Duration, Instant};
 
@@ -55,6 +56,8 @@ struct State {
 static STATE: Mutex<Option<State>> = Mutex::new(None);
 static CV: Condvar = Condvar::new();
 static WORKER: Once = Once::new();
+/// Set by [`flush_and_freeze`]: no file write happens after it.
+static FROZEN: AtomicBool = AtomicBool::new(false);
 static GRAPHIC: Mutex<(GraphicMode, GraphicMode)> = Mutex::new((GraphicMode::Auto, GraphicMode::Auto));
 
 /// Default settings file: `data_path()/LaserGRBL.Settings.json`.
@@ -148,7 +151,8 @@ fn worker() {
 /// `s`: state. Clears timer and cause.
 fn save_now(s: &mut State) {
     s.deadline = None;
-    if s.last_cause.is_some() {
+    // frozen at process exit: nothing may touch the disk anymore
+    if s.last_cause.is_some() && !FROZEN.load(Ordering::SeqCst) {
         let txt = serde_json::to_string_pretty(&s.dic).unwrap_or_default();
         let tmp = s.path.with_extension("json.tmp");
         // write tmp then rename = atomic; errors ignored like C#
@@ -269,6 +273,18 @@ pub fn exiting() {
     if let Some(s) = g.as_mut() {
         save_now(s);
     }
+}
+
+/// Flush a pending save now, then ignore every later save (the saver thread included).
+///
+/// For process exit only (`test_support` cleanup, so nothing recreates files in a dir about to be deleted).
+/// Never loads the store: when nothing was loaded yet, only the freeze flag is set. Never panics.
+pub fn flush_and_freeze() {
+    let mut g = STATE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(s) = g.as_mut() {
+        save_now(s);
+    }
+    FROZEN.store(true, Ordering::SeqCst);
 }
 
 /// True when no settings file existed at startup.

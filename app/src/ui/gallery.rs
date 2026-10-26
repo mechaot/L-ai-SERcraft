@@ -57,6 +57,10 @@ pub struct Gallery {
     picture: PictureBox,
     picture_tex: Option<egui::TextureHandle>,
     ib_alt: bool,
+    /// Sample histogram and markers of the BrightnessHistogram demo.
+    hist: Box<[u32; 256]>,
+    hist_start: u8,
+    hist_stop: u8,
     // dialogs
     msgs: MessageBoxHost<&'static str>,
     input: Option<InputBox>,
@@ -116,6 +120,13 @@ impl Default for Gallery {
             picture: PictureBox::new(),
             picture_tex: None,
             ib_alt: false,
+            hist: Box::new(std::array::from_fn(|i| {
+                // two humps (dark and light) plus a floor
+                let x = i as f32;
+                (4000.0 * (-((x - 60.0) / 25.0).powi(2)).exp() + 9000.0 * (-((x - 215.0) / 12.0).powi(2)).exp() + 40.0) as u32
+            })),
+            hist_start: 16,
+            hist_stop: 210,
             msgs: MessageBoxHost::default(),
             input: None,
             file: None,
@@ -311,6 +322,10 @@ impl Gallery {
             });
             ui.label(format!("dec={} int={} nud={}", self.dec, self.int, self.nud));
         });
+        grbl_group_box(ui, "BrightnessHistogram (drag the markers)", |ui| {
+            let out = BrightnessHistogram::new(&self.hist, &mut self.hist_start, &mut self.hist_stop).power(PowerScale { s_min: 0, s_max: 1000, s_limit: 1000 }).id(egui::Id::unique("g-hist")).show(ui);
+            ui.label(format!("start={} stop={} changed={} committed={}", self.hist_start, self.hist_stop, out.changed, out.committed));
+        });
         grbl_group_box(ui, "Progress", |ui| {
             self.pb.show(ui);
             self.dpb.show(ui);
@@ -420,6 +435,8 @@ mod tests {
     /// Smoke: run every tab a few frames headless.
     #[test]
     fn renders_all_tabs() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let ctx = egui::Context::default();
         let mut g = Gallery::default();
         for s in Scheme::ALL {

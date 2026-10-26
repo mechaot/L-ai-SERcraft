@@ -193,6 +193,8 @@ mod tests {
 
     #[test]
     fn license_text_available() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         assert!(rtb_text("LicenseForm.richTextBox1.Text", LICENSE_MD).contains("GNU GENERAL PUBLIC LICENSE"));
         assert!(LICENSE_MD.contains("GENERAL PUBLIC LICENSE"));
         // new texts exist and credit the original
@@ -206,6 +208,8 @@ mod tests {
 
     #[test]
     fn legal_notices() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         // GPLv3 "Appropriate Legal Notices": warranty line, both names
         let lt = tr("LicenseForm.LicenseText");
         assert!(lt.contains("NO WARRANTY"));
@@ -231,11 +235,15 @@ mod tests {
 
     #[test]
     fn source_text_has_version() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let s = tr_fmt("LicenseForm.SourceText", &[&"9.9.9"]);
         assert!(s.contains("L-ai-SERcraft-9.9.9-source.tar.gz"), "{s}");    }
 
     #[test]
     fn credit_links_clickable() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let links: Vec<String> = tr("LicenseForm.CreditText").lines().flat_map(split_links).filter(|s| s.0).map(|s| s.1).collect();
         assert_eq!(links, vec!["https://lasergrbl.com", "https://github.com/arkypita/LaserGRBL"]);
     }
@@ -250,6 +258,8 @@ mod tests {
 
     #[test]
     fn renders_headless() {
+        // isolated settings + data dir
+        let _g = crate::forms::form_util::test_guard();
         let ctx = egui::Context::default();
         let mut f = LicenseForm::new();
         // textures delta must be cleared or egui panics on drop

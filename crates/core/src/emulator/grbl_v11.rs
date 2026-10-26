@@ -478,17 +478,15 @@ mod tests {
     use std::sync::mpsc;
 
     fn emu() -> (Grblv11Emulator, mpsc::Receiver<String>, PathBuf) {
+        // no real config dir
+        crate::test_support::init_env();
         let (tx, rx) = mpsc::channel();
         let tx = Mutex::new(tx);
-        let file = std::env::temp_dir().join(format!("lg_emu_test_{}_{}.json", std::process::id(), rand_id()));
+        let file = lg_base::paths::test_dir("emu").join("GrblEmulator.v11.json");
         let e = Grblv11Emulator::with_config_file(Box::new(move |s| {
             let _ = tx.lock().unwrap().send(s.to_string());
         }), file.clone());
         (e, rx, file)
-    }
-
-    fn rand_id() -> u128 {
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
     }
 
     fn wait_for(rx: &mpsc::Receiver<String>, pred: impl Fn(&str) -> bool) -> Vec<String> {
@@ -508,7 +506,7 @@ mod tests {
 
     #[test]
     fn welcome_status_and_ok() {
-        let (e, rx, file) = emu();
+        let (e, rx, _) = emu();
         e.open_com();
         let g = wait_for(&rx, |s| s.starts_with("Grbl "));
         assert_eq!(g.last().unwrap(), "Grbl 1.1# ['$' for help]\n");
@@ -521,7 +519,6 @@ mod tests {
         let g = wait_for(&rx, |s| s.starts_with('<'));
         assert!(g.last().unwrap().starts_with("<Idle|MPos:5.000,2.000,0.000>"), "{g:?}");
         e.close_com();
-        let _ = std::fs::remove_file(file);
     }
 
     #[test]
@@ -545,12 +542,11 @@ mod tests {
         // persisted
         let e2 = Grblv11Emulator::with_config_file(Box::new(|_| {}), file.clone());
         assert_eq!(e2.config().get(100), Some("300"));
-        let _ = std::fs::remove_file(file);
     }
 
     #[test]
     fn hold_and_reset() {
-        let (e, rx, file) = emu();
+        let (e, rx, _) = emu();
         e.open_com();
         wait_for(&rx, |s| s.starts_with("Grbl "));
         e.manage_message(&[33]);
@@ -565,12 +561,11 @@ mod tests {
         e.manage_message(&[24]);
         wait_for(&rx, |s| s.starts_with("Grbl "));
         e.close_com();
-        let _ = std::fs::remove_file(file);
     }
 
     #[test]
     fn check_mode_toggles() {
-        let (e, rx, file) = emu();
+        let (e, rx, _) = emu();
         e.open_com();
         e.manage_message(b"$C\n");
         wait_for(&rx, |s| s == "[Enabled]\n");
@@ -578,6 +573,5 @@ mod tests {
         let g = wait_for(&rx, |s| s.starts_with('<'));
         assert!(g.last().unwrap().starts_with("<Check|"));
         e.close_com();
-        let _ = std::fs::remove_file(file);
     }
 }
