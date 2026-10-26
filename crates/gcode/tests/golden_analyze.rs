@@ -54,6 +54,61 @@ fn gcode_analyze_matches_oracle() {
     assert!(files > 50);
 }
 
+/// Allowed distance in ULPs for the `arc.bits` doubles. The expected values come from Mono on Linux (glibc `atan2`
+/// and friends); other C libraries may round the last bit differently. Linux must match bit for bit.
+///
+/// Returns 0 on Linux, 2 elsewhere.
+fn arc_ulp_tolerance() -> u64 {
+    if cfg!(target_os = "linux") { 0 } else { 2 }
+}
+
+/// Distance of two doubles in units of the last place (same sign assumed, else `u64::MAX`).
+///
+/// `a`, `b`: raw bit patterns. Returns the ULP distance.
+fn ulp_distance(a: u64, b: u64) -> u64 {
+    if (a >> 63) != (b >> 63) {
+        return u64::MAX;
+    }
+    a.abs_diff(b)
+}
+
+/// Compare two trace lines: every tab field must be equal, except that the doubles of `arc.bits=` may differ by
+/// [`arc_ulp_tolerance`] ULPs.
+///
+/// `got`: our line. `exp`: expected line. Returns true when they match.
+fn same_line(got: &str, exp: &str) -> bool {
+    if got == exp {
+        return true;
+    }
+    let (g, e): (Vec<&str>, Vec<&str>) = (got.split('\t').collect(), exp.split('\t').collect());
+    g.len() == e.len()
+        && g.iter().zip(&e).all(|(gf, ef)| {
+            if gf == ef {
+                return true;
+            }
+            let (Some(gb), Some(eb)) = (gf.strip_prefix("arc.bits="), ef.strip_prefix("arc.bits=")) else { return false };
+            let (gv, ev): (Vec<&str>, Vec<&str>) = (gb.split(',').collect(), eb.split(',').collect());
+            gv.len() == ev.len()
+                && gv.iter().zip(&ev).all(|(x, y)| match (u64::from_str_radix(x, 16), u64::from_str_radix(y, 16)) {
+                    (Ok(x), Ok(y)) => ulp_distance(x, y) <= arc_ulp_tolerance(),
+                    _ => false,
+                })
+        })
+}
+
+#[test]
+fn same_line_rules() {
+    let l = |bits: &str, m: &str| format!("i=1\tmotion={m}\tarc.bits={bits}");
+    assert!(same_line(&l("3ff18856734daac4,4020000000000000", "G3"), &l("3ff18856734daac4,4020000000000000", "G3")));
+    // other fields never get a tolerance
+    assert!(!same_line(&l("3ff18856734daac4", "G3"), &l("3ff18856734daac4", "G2")));
+    // one ULP apart: only where the tolerance is on
+    assert_eq!(same_line(&l("3ff18856734daac4", "G3"), &l("3ff18856734daac5", "G3")), arc_ulp_tolerance() >= 1);
+    // far apart or different sign: never
+    assert!(!same_line(&l("3ff18856734daac4", "G3"), &l("3ff18856734dbac4", "G3")));
+    assert!(!same_line(&l("3ff0000000000000", "G3"), &l("bff0000000000000", "G3")));
+}
+
 #[test]
 fn state_builder_matches_oracle() {
     let _g = sandbox();
@@ -139,13 +194,13 @@ fn state_builder_matches_oracle() {
                     .join("\n")
             };
             let (a, b) = (strip(&out), strip(&expected));
-            if a != b {
-                for (x, y) in a.lines().zip(b.lines()) {
-                    if x != y {
-                        panic!("{prog} pwm={pwm}\n got: {x}\n exp: {y}");
-                    }
-                }
+            if a.lines().count() != b.lines().count() {
                 panic!("{prog}: line count differs");
+            }
+            for (x, y) in a.lines().zip(b.lines()) {
+                if !same_line(x, y) {
+                    panic!("{prog} pwm={pwm}\n got: {x}\n exp: {y}");
+                }
             }
             files += 1;
         }
