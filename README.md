@@ -15,6 +15,8 @@ L-ai-SERcraft is an independent project. See [Authors & credits](#authors--credi
 Release notes: [`CHANGELOG.md`](CHANGELOG.md). User manual (multi-layer SVG from Inkscape: cut and fill
 layers): [`docs/MANUAL.md`](docs/MANUAL.md).
 
+![L-ai-SERcraft main window: G-code preview of an SVG with a cut layer (circle) and a fill layer (box), per-layer settings in the Parameters dock](docs/img/screenshot.png)
+
 ## Authors & credits
 
 * **Andreas Pösch (mechaot)** is the author of L-ai-SERcraft (2026-): the Rust/egui port, per-layer SVG
