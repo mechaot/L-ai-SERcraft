@@ -858,12 +858,10 @@ impl ParamsDock {
                 label(ui, P, "label18");
                 let before = self.cur().laser_on;
                 let mut sel = Some(before);
-                let w = (ui.available_width() - 40.0).max(60.0);
+                // full width, no icon
+                let w = ui.available_width().max(60.0);
                 flat_combo(ui, "params-laser-on", &mut sel, &items, w);
                 self.cur_mut().laser_on = sel.unwrap_or(before);
-                if info_button(ui, &ctl_tip(P, "BtnOnOffInfo")) {
-                    open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#laser-modes");
-                }
                 if self.cur().laser_on != before {
                     *edited = true;
                     self.on_laser_mode_changed();
@@ -873,7 +871,7 @@ impl ParamsDock {
                 return;
             }
             let mut max_p = self.cur().max_power;
-            Grid::new("params-power").num_columns(4).spacing([8.0, 4.0]).show(ui, |ui| {
+            Grid::new("params-power").num_columns(3).spacing([8.0, 4.0]).show(ui, |ui| {
                 // S-MAX only: SVG paths burn at one power, S-MIN is never used
                 label(ui, P, "LblSmax");
                 if int_input(ui, "params-smax", &mut max_p, 1, pwm_max, false, 43.0).is_some() {
@@ -881,9 +879,6 @@ impl ParamsDock {
                     *edited = true;
                 }
                 ui.label(self.perc_text(self.cur().max_power));
-                if info_button(ui, &ctl_tip(P, "BtnModulationInfo")) {
-                    open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#power-modulation");
-                }
                 ui.end_row();
             });
         });

@@ -20,6 +20,7 @@ newest first.
 - Crash dialog and issue detector point to https://github.com/mechaot/L-ai-SERcraft/issues instead of the LaserGRBL tracker.
 - Longer and Ortur menus keep only the WiFi setup entry: the vendor links (support, YouTube, manuals, firmware) were LaserGRBL partner pages and are gone.
 - "Help online" opens the manual in this repository. The info buttons still open the LaserGRBL documentation, see README.
+- Parameters dock and image dock: the info buttons in Laser Options (links to lasergrbl.com) are gone; the laser mode combo uses the full width.
 - Settings texts no longer say that LaserGRBL does something; other languages fall back to English for them.
 - Dev: all tests now write only to temp folders (`lg_base::paths::isolate_for_tests`), never to `~/.config/L-ai-SERcraft`. `tools/check_test_isolation.py` runs every test alone with a scratch HOME/XDG and fails on any file left behind; CI runs it on Linux.
 

@@ -809,12 +809,10 @@ impl ImageDock {
                 label(ui, R, "LblLaserMode");
                 let before = self.v.laser_on;
                 let mut sel = Some(before);
-                let w = (ui.available_width() - 40.0).max(60.0);
+                // full width, no icon
+                let w = ui.available_width().max(60.0);
                 flat_combo(ui, "image-laser-on", &mut sel, &items, w);
                 self.v.laser_on = sel.unwrap_or(before);
-                if info_button(ui, &ctl_tip(R, "BtnOnOffInfo")) {
-                    open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#laser-modes");
-                }
                 if self.v.laser_on != before {
                     *edited = true;
                     self.on_laser_mode_changed();
@@ -823,7 +821,7 @@ impl ImageDock {
             if !self.support_pwm {
                 return;
             }
-            Grid::new("image-power").num_columns(4).spacing([8.0, 4.0]).show(ui, |ui| {
+            Grid::new("image-power").num_columns(3).spacing([8.0, 4.0]).show(ui, |ui| {
                 // S-MIN
                 label(ui, R, "LblSmin");
                 let mut min_p = self.v.min_power;
@@ -836,9 +834,6 @@ impl ImageDock {
                     *edited = true;
                 }
                 ui.label(self.perc_text(self.v.min_power));
-                if info_button(ui, &ctl_tip(R, "BtnModulationInfo")) {
-                    open_link("https://lasergrbl.com/usage/raster-image-import/target-image-size-and-laser-options/#power-modulation");
-                }
                 ui.end_row();
                 // S-MAX
                 label(ui, R, "LblSmax");
