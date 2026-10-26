@@ -19,7 +19,8 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-DEFAULT_SRC = Path("/home/mechaot/workspace/external/Laser/LaserGRBL/LaserGRBL")
+# original C# checkout next to this repo: <parent>/LaserGRBL/LaserGRBL
+DEFAULT_SRC = Path(__file__).resolve().parent.parent.parent / "LaserGRBL" / "LaserGRBL"
 DEFAULT_OUT = Path(__file__).resolve().parent.parent / "resources" / "i18n"
 SKIP_DIRS = {"SharpGL", "SvgLibrary"}
 CULTURE_RE = re.compile(r"^[a-z]{2,3}(-[A-Za-z]{2,4})?$")
