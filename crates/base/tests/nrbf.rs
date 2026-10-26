@@ -123,7 +123,7 @@ fn builder_vs_mono() {
 
 #[test]
 fn serializer_files() {
-    let d = std::path::PathBuf::from(std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into())).join(format!("lg_ser_{}", std::process::id()));
+    let d = std::env::temp_dir().join(format!("lg_ser_{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&d);
     std::fs::create_dir_all(&d).unwrap();
     // Windows zbn and Mono re-serialized zbn decode through the container reader

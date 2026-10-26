@@ -8,7 +8,7 @@ use lg_base::logger;
 
 #[test]
 fn logger_files() {
-    let d = std::path::PathBuf::from(std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into())).join(format!("lg_logger_{}", std::process::id()));
+    let d = std::env::temp_dir().join(format!("lg_logger_{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&d);
     lg_base::paths::set_data_path_override(d.clone());
 
