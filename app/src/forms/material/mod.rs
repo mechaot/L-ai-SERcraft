@@ -6,8 +6,9 @@
 //! Named layer presets (replaces the C# material helper `PSHelper/*`, intentional deviation).
 //!
 //! The preset DB is a shared handle ([`SharedPresetDb`]); [`default_presets`] is the process wide
-//! instance loaded from `<config dir>/L-ai-SERcraft/LayerPresets.json`. [`PresetEditor`] lists and
-//! deletes presets, [`PresetPickerForm`] is the picker of the raster import "P/S helper" button.
+//! instance loaded from `<config dir>/L-ai-SERcraft/LayerPresets.json` (created with an example preset
+//! on first start). [`PresetEditor`] lists and deletes presets, [`PresetPickerForm`] is the picker of
+//! the raster import "P/S helper" button.
 
 use lg_services::layer_presets::PresetDb;
 use std::sync::{Arc, Mutex, OnceLock};

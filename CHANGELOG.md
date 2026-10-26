@@ -5,6 +5,9 @@ newest first.
 
 ## Unreleased
 
+### Added
+- `LayerPresets.json` is created with the example preset on first start (also after a broken file is moved to `.bak`).
+
 ### Changed
 - Crash dialog and issue detector point to https://github.com/mechaot/L-ai-SERcraft/issues instead of the LaserGRBL tracker.
 - Longer and Ortur menus keep only the WiFi setup entry: the vendor links (support, YouTube, manuals, firmware) were LaserGRBL partner pages and are gone.

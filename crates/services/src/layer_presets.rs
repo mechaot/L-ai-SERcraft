@@ -5,7 +5,8 @@
 //!
 //! Not part of the C# app (intentional deviation): replaces the old material database
 //! (`PSHelper/MaterialDB.cs`). Stored as JSON in `<config dir>/L-ai-SERcraft/LayerPresets.json`.
-//! A missing file yields one example preset; nothing is written until the user saves or deletes.
+//! A missing file yields one example preset and is created with it on first load; a broken file is
+//! moved to `<name>.bak` and replaced the same way. A readable file is never rewritten on load.
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -143,15 +144,17 @@ impl PresetDb {
         lg_base::paths::data_path().join(FILE_NAME)
     }
 
-    /// Load the default file. Returns the DB (example preset when the file is missing).
+    /// Load the default file. Returns the DB (example preset when the file is missing, and the file
+    /// is created with it).
     pub fn load() -> Self {
         Self::load_from(&Self::default_file())
     }
 
     /// Load a file.
     ///
-    /// `path`: JSON file. Returns the DB; missing file gives the example (nothing written),
-    /// a broken file is moved to `<name>.bak` and also gives the example.
+    /// `path`: JSON file. Returns the DB; a missing file gives the example and is created with it
+    /// (parent dir too), a broken file is moved to `<name>.bak` and also gives the example, written
+    /// to a fresh file. A readable file is never rewritten. A failed write only logs a warning.
     pub fn load_from(path: &Path) -> Self {
         let presets = if !path.exists() {
             vec![LayerPreset::example()]
@@ -171,7 +174,14 @@ impl PresetDb {
                 }
             }
         };
-        Self { presets, file: Some(path.to_path_buf()) }
+        let db = Self { presets, file: Some(path.to_path_buf()) };
+        // no usable file left on disk (first start, or broken one moved away): write the example
+        if !path.exists()
+            && let Err(e) = db.save()
+        {
+            log::warn!("layer presets {} not created: {e}", path.display());
+        }
+        db
     }
 
     /// DB without a file (tests).
@@ -274,11 +284,14 @@ mod tests {
     }
 
     #[test]
-    fn missing_file_gives_example_only() {
+    fn missing_file_gives_example_and_is_created() {
         let f = tmp("missing").join("LayerPresets.json");
         let db = PresetDb::load_from(&f);
         assert_eq!(db.presets(), [LayerPreset::example()]);
-        assert!(!f.exists());
+        // file written on first load, reloads to the example only
+        assert!(f.exists());
+        assert!(!f.with_extension("json.tmp").exists());
+        assert_eq!(PresetDb::load_from(&f).presets(), [LayerPreset::example()]);
         let e = LayerPreset::example();
         assert_eq!((e.name.as_str(), e.passes, e.speed, e.power_pct, e.laser_on.as_str(), e.filter.as_str()), (EXAMPLE_NAME, 1, 1000, 45.0, "M4", "All"));
     }
@@ -343,8 +356,29 @@ mod tests {
         std::fs::write(&f, "{ not json").unwrap();
         let db = PresetDb::load_from(&f);
         assert_eq!(db.presets(), [LayerPreset::example()]);
-        assert!(d.join("LayerPresets.json.bak").exists());
-        assert!(!f.exists());
+        // broken file kept as .bak, fresh file holds the example
+        assert_eq!(std::fs::read_to_string(d.join("LayerPresets.json.bak")).unwrap(), "{ not json");
+        assert!(f.exists());
+        assert_eq!(PresetDb::load_from(&f).presets(), [LayerPreset::example()]);
+    }
+
+    #[test]
+    fn missing_parent_dir_is_created() {
+        let f = tmp("parent").join("a").join("b").join(FILE_NAME);
+        assert!(!f.parent().unwrap().exists());
+        let db = PresetDb::load_from(&f);
+        assert_eq!(db.presets(), [LayerPreset::example()]);
+        assert!(f.exists());
+    }
+
+    #[test]
+    fn existing_file_is_not_rewritten_on_load() {
+        let f = tmp("keep").join(FILE_NAME);
+        // odd formatting and empty list: a rewrite would change the text
+        let text = r#"{ "version": 1,   "presets": [] }"#;
+        std::fs::write(&f, text).unwrap();
+        assert!(PresetDb::load_from(&f).presets().is_empty());
+        assert_eq!(std::fs::read_to_string(&f).unwrap(), text);
     }
 
     #[test]

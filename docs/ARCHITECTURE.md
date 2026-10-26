@@ -109,7 +109,7 @@ SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFil
 | `CustomButtons.json` | custom buttons (`.zbn` import/export = NRBF) | `lg_services::custom_button`, `lg_base::nrbf` |
 | `LaserLifeCounter.json` (+`.old`) | laser module usage | `lasergrbl_core::laser_life` |
 | `UsageStats.json` | local counters | `lasergrbl_core::usage_stats` |
-| `LayerPresets.json` | named layer presets (JSON, `<config dir>/L-ai-SERcraft/`: `~/.config` Linux, `%APPDATA%` Windows, `~/Library/Application Support` macOS) | `lg_services::layer_presets` |
+| `LayerPresets.json` | named layer presets (JSON, `<config dir>/L-ai-SERcraft/`: `~/.config` Linux, `%APPDATA%` Windows, `~/Library/Application Support` macOS); created with one example preset when missing, a broken file is moved to `.bak` and replaced the same way | `lg_services::layer_presets` |
 | `GrblEmulator.v11.json` | emulator `$` config | `lasergrbl_core::emulator` |
 | `sessionlog.txt`, com log | logs | `lg_base::logger` |
 Windows `LaserGRBL.Settings.bin`, `.zbn`, `.lps` are BinaryFormatter files read by `lg_base::nrbf`.
