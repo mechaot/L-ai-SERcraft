@@ -222,6 +222,18 @@ mod tests {
             keys.push(format!("LegalDisclaimer.{k}"));
         }
         keys.extend(["Title", "Preset", "PresetNone", "EditPresets", "PresetInfo", "PresetNameHint", "SavePresetTip", "Modified", "NoSource", "Generating", "ApplyFailed", "Fill", "FillEnabled", "FillDistance", "FillAngle", "FillCross", "FillPerShape", "FillPerShapeTip", "PresetFillInfo"].map(|k| format!("ParamsDock.{k}")));
+        keys.extend(
+            [
+                "Aspect", "Classic", "ClassicTip", "EngraveSpeed", "ErrorInvalid", "ErrorPlacement", "FitHeight", "FitHeightTip", "GroupMap", "GroupPosition", "LoadFailed", "LowerLeft", "MapInverted", "MapNormal", "MapOnOff", "MapSingle", "NoSource", "RasterSize", "Size", "Start", "StartTip",
+                "Stop", "StopTip", "UpperRight",
+            ]
+            .map(|k| format!("ImageDock.{k}")),
+        );
+        let r = "RasterConverter.ConvertSizeAndOptionForm.";
+        keys.extend(["GbSpeed", "GbLaser", "LblLaserMode", "LblSmin", "LblSmax", "LblLinearFillingmm", "BtnOnOffInfo", "BtnModulationInfo"].map(|k| format!("{r}{k}.{}", if k.starts_with("Btn") { "ToolTip" } else { "Text" })));
+        let r = "RasterConverter.RasterToLaserForm.";
+        keys.extend(["label27.Text", "label5.Text", "label8.Text", "CbDirections.ToolTip", "UDQuality.ToolTip"].map(|k| format!("{r}{k}")));
+        keys.extend(["Strings.Line2LineOptions", "Strings.DirectionHorizontal", "Strings.DirectionVertical", "Strings.DirectionDiagonal"].map(String::from));
         keys.extend(["EditorTitle", "ColName", "ColPasses", "ColSpeed", "ColPower", "ColMode", "ColFilter", "ColFill", "PerShape", "Delete", "Empty", "File", "PickerLabel", "PickerNote"].map(|k| format!("Presets.{k}")));
         keys.extend(["Strings.AlreadyLoading", "Strings.WarnWrongLaserMode", "Strings.WarnWrongLaserModeTitle", "LicenseForm.richTextBox1.Text", "LicenseForm.Title", "LicenseForm.CreditTitle", "LicenseForm.CreditText", "LicenseForm.EditionTitle", "LicenseForm.EditionText", "LicenseForm.AiText", "LicenseForm.LicenseText", "LicenseForm.CreditThirdParty", "LicenseForm.Independent", "LicenseForm.NoticesTitle", "LicenseForm.SourceText"].map(String::from));
         let missing: Vec<&String> = keys.iter().filter(|k| tr(k) == k.as_str()).collect();

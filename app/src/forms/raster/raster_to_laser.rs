@@ -38,7 +38,9 @@ const PB_H: i32 = 484;
 static NEXT_UID: AtomicU64 = AtomicU64::new(1);
 
 /// `Strings.<Type><Value>` translation of an enum (`GrblCore.TranslateEnum`), fallback = C# name.
-fn translate_enum<T: SettingEnum>(v: T, type_name: &str) -> String {
+///
+/// `v`: enum value. `type_name`: C# type name used in the key (e.g. "Direction"). Returns the localized text.
+pub(crate) fn translate_enum<T: SettingEnum>(v: T, type_name: &str) -> String {
     let key = format!("Strings.{type_name}{}", v.name());
     let t = tr(&key);
     if t == key || t.is_empty() { v.name().to_string() } else { t.to_string() }

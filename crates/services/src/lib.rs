@@ -7,6 +7,7 @@
 //! * [`image_processor`] - `RasterConverter/ImageProcessor.cs` (preview + G-code generation threads)
 //! * [`autotrace`] - `Autotrace/Autotrace.cs`
 //! * [`project`] - `Tools/Project.cs` (.lps)
+//! * [`raster_dock`] - backend of the raster-image dock (brightness to power map, no C# counterpart)
 //! * [`hotkeys`] - `HotKeysManager.cs`
 //! * [`custom_button`] - `CustomButton.cs`
 //! * [`layer_presets`] - named layer presets (replaces `PSHelper/MaterialDB.cs`)
@@ -25,6 +26,7 @@ pub mod hotkeys;
 pub mod image_processor;
 pub mod layer_presets;
 pub mod project;
+pub mod raster_dock;
 pub mod wifi_discovery;
 
 /// Shared test setup: isolated settings file and data dir (the settings store is process global).

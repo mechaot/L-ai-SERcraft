@@ -52,7 +52,7 @@ custom-button enable state, image processor → `GrblCore::loaded_file()`).
 | TX | `GrblCore` (`ThreadObject` "Serial TX Thread") | continuous jog, `send_line` when the buffer has room, status queries, hang detection, cooling cycles |
 | RX | `GrblCore` ("Serial RX Thread") | `read_line_blocking` → `manage_received_line` (replies, realtime status, welcome/vendor messages) |
 | link reader | each `ComWrapper` | reads the socket/serial port into a `LineQueue` so RX never blocks writers |
-| file loaders | `GrblFile::spawn_load` | G-code/SVG load + `analyze` off the UI thread (C# `SafeLoadFile`) |
+| file loaders | `GrblFile::spawn_load` | G-code/SVG load + `analyze` off the UI thread (C# `SafeLoadFile`); also the raster-image dock regeneration |
 | image processor | `lg_services::image_processor` | preview generation and G-code generation for the raster dialog |
 | helpers | core | delayed `$$`/`$I` refresh 500 ms after connect, SincroStart UDP listener, laser-life saves |
 
@@ -95,11 +95,21 @@ RasterImport dialog (app/forms/raster) ──► lg_services::ImageProcessor
                                                      GrblFile::load_image_potrace (vectorize → lg-potrace
                                                         trace → lg-clipper fill → biarc G-code)
                                                      GrblFile::load_image_centerline (autotrace → lg-svg2gcode)
+Raster image (jpg, jpeg, bmp, png, gif; not `.lps` entries) ──► ImageDock (right dock, auto regen on edit)
+   ──► lg_services::raster_dock (gray image = the one brightness definition, histogram, layout, `generate`)
+   ──► GrblFile::load_image_l2l_body (L2LConf.power_map: brightness → S, see below)
+   The dock replaces the modal dialog for plain line-to-line engraving. Its button "Classic import dialog…" and
+   every `.lps` project entry still use the RasterImport dialog above (dithering, vectorize, centerline).
 SVG file ──► ParamsDock (right dock, auto regen on edit) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
                                                      (auto regen: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
                                                       not used by the golden paths; returns each layer's command range for the preview highlight/hide;
                                                       optional per-layer hatch fill (hatch.rs) of closed curves, per connected area or row by row, emitted as normal burn lines after each pass's outline)
 ```
+
+Raster dock brightness map (`PowerMap { start, stop }`, `crates/gcode/src/l2l.rs`, not in the C# code): `start` → S-MAX,
+`stop` → S-MIN, linear in between; `start > stop` is allowed (brighter = more power). Brightness outside
+`[min(start,stop), max(start,stop)]` gets power 0 (the optimizer turns those runs into G0 skips); without hardware PWM
+the pixels inside the range burn on/off. `L2LConf.power_map = None` keeps the classic `GetColor` byte-exact (goldens).
 
 ### 3.5 Persistence
 `lg_base::paths::data_path()` = `~/.config/L-ai-SERcraft` (Windows `%APPDATA%\L-ai-SERcraft`). First start copies an existing old `LaserGRBL` config folder there once (`paths::migrate_dir`, old folder untouched). File names inside keep the original names (e.g. `LaserGRBL.Settings.json`) on purpose. Temp dir: `<temp>/L-ai-SERcraft`.
@@ -119,6 +129,9 @@ Windows `LaserGRBL.Settings.bin`, `.zbn`, `.lps` are BinaryFormatter files read 
 * `main_form.rs` (C# `MainForm.cs`): owns `AppState` (`app_state.rs`: core, event receiver, custom buttons,
   hotkeys), lays out menus/status bar/left column/preview, and runs every **flow** (file open incl. `.lps`
   projects, save, run → resume dialog → safety countdown, connect/disconnect, hotkeys, dialogs).
+  The right panel holds one of two docks: `ImageDock` while a raster image is loaded (`image.has_source()`),
+  else `ParamsDock` (SVG, or no file). `open_outcome` clears the other dock; `dock_*` helpers dispatch
+  needs-apply / apply / poll / job-running to the active one for `request_run` and `pump_project`.
 * Dialogs: struct per C# form with `open(..)` + `show(ctx) -> Option<Outcome>`; the main window keeps at most
   one modal `Overlay` (`forms/main/dialogs.rs`) like `ShowDialog`.
 * Shared UI foundation (`app/src/ui`, see `ui/README.md`): `theme` (ColorScheme), `icons` (SvgIcons/legacy,
