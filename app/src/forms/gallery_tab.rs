@@ -226,7 +226,7 @@ mod tests {
         keys.extend(["Title", "Preset", "PresetNone", "EditPresets", "PresetInfo", "PresetNameHint", "SavePresetTip", "Modified", "NoSource", "Generating", "ApplyFailed", "Fill", "FillEnabled", "FillDistance", "FillAngle", "FillCross", "FillPerShape", "FillPerShapeTip", "PresetFillInfo"].map(|k| format!("ParamsDock.{k}")));
         keys.extend(
             [
-                "Aspect", "Classic", "ClassicTip", "EngraveSpeed", "ErrorInvalid", "ErrorPlacement", "FitHeight", "FitHeightTip", "GroupMap", "GroupPosition", "LoadFailed", "LowerLeft", "MapInverted", "MapNormal", "MapOnOff", "MapSingle", "NoSource", "RasterSize", "Size", "Start", "StartTip",
+                "Aspect", "Classic", "ClassicTip", "EngraveSpeed", "ErrorInvalid", "ErrorPlacement", "GroupMap", "GroupPosition", "LoadFailed", "LockAspectTip", "LowerLeft", "MapInverted", "MapNormal", "MapOnOff", "MapSingle", "NoSource", "RasterSize", "SizeRow", "Start", "StartTip",
                 "Stop", "StopTip", "UpperRight",
             ]
             .map(|k| format!("ImageDock.{k}")),

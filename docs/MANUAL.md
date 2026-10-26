@@ -163,17 +163,24 @@ Notes:
 
 ## Position and size
 
-*Lower left* and *Upper right* are the corners of the engraving in mm. The size is the difference of both and the
-lower-left corner is the job offset. The aspect ratio is **free**: the image is stretched to the rectangle. Below
-the inputs the dock shows, read-only:
+The first two rows are inputs, the third is calculated:
 
-* the target size in mm,
+* **Lower left** X / Y in mm is the job offset. Changing it moves the image, the size stays.
+* **Size** W / H is the width and height of the engraving in mm (0.01 to 10000).
+* **Upper right** X / Y is lower left plus size. It is shown read-only and cannot be edited.
+
+The lock symbol between *W* and *H* keeps the aspect ratio. It is **closed at every start of the program**. While
+it is closed, committing a width recalculates the height and committing a height recalculates the width, both
+with the ratio the target had before the edit (not necessarily the ratio of the image: the image is stretched to
+the rectangle). Click the lock to open it: then width and height are independent. Switching the lock does not
+change any value and does not regenerate the G-code. When the size is zero or invalid, the closed lock uses the
+ratio of the image. Below the inputs the dock shows, read-only:
+
 * the aspect ratio of the target and, in brackets, of the image,
 * the size of the raster in pixels (width × height).
 
-*Fit height to image aspect* sets the upper-right Y so that the target has the aspect ratio of the image.
-The upper-right corner must be to the right of **and** above the lower-left corner. Otherwise a red message
-appears, no G-code is generated and *Run* does nothing until the values are valid again.
+Width and height must be greater than 0. Otherwise a red message appears, no G-code is generated and *Run* does
+nothing until the values are valid again.
 
 ## Line to line, speed and laser
 

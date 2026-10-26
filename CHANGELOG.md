@@ -9,8 +9,9 @@ newest first.
 - Raster images (jpg, jpeg, bmp, png, gif) open straight into the Parameters dock instead of the modal import dialog.
   The dock engraves line to line and regenerates the G-code after every edit: brightness histogram with draggable
   start / stop markers (brightness → S-MAX / S-MIN, inverted maps allowed, brightness outside the range is not
-  burned), lower-left / upper-right corners in mm (free aspect, aspect ratios shown, fit-height button), direction,
-  quality, engraving speed, laser mode and S-MIN / S-MAX. Values are remembered per file.
+  burned), lower-left corner and size in mm (upper right is calculated; an aspect lock between width and height,
+  closed at every start; aspect ratios shown), direction, quality, engraving speed, laser mode and S-MIN / S-MAX.
+  Values are remembered per file.
 - Button "Classic import dialog…" in the image dock opens the old dialog (dithering, vectorize, centerline). `.lps`
   project entries still use the classic dialog.
 - `LayerPresets.json` is created with the example preset on first start (also after a broken file is moved to `.bak`).

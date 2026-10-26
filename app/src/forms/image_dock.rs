@@ -3,14 +3,14 @@
 
 //! Raster-image dock (right side of the main window). Replaces the modal `RasterToLaserForm` for plain
 //! line-to-line engraving: the image loads at once, a histogram with a brightness to power map, the target
-//! corners, line settings and laser options are edited here, and every committed edit regenerates the G-code in
+//! position and size, line settings and laser options are edited here, and every committed edit regenerates the G-code in
 //! the background. The classic dialog stays reachable through a button.
 //! Not part of the C# app (intentional deviation).
 
-use eframe::egui::{self, Grid, Id, RichText, Ui};
+use eframe::egui::{self, Grid, Id, RichText, Ui, Vec2};
 use image::RgbaImage;
 use lasergrbl_core::GrblCore;
-use lg_dotnet::{decimal_to_f64, f64_to_decimal, fmt_double_custom, Decimal};
+use lg_dotnet::{decimal_to_f64, f64_to_decimal, fmt_double_custom, fmt_float_custom, Decimal};
 use lg_gcode::{Direction, Firmware, GrblFile, PowerMap};
 use lg_services::raster_dock::{self, RasterParams};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ use std::thread::JoinHandle;
 use crate::forms::form_util::*;
 use crate::forms::raster::{get_enum, translate_enum, SettingEnum};
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
-use crate::ui::widgets::{enum_combo, flat_combo, grbl_group_box_wide, BrightnessHistogram, DecimalInputRanged, PowerScale};
+use crate::ui::widgets::{enum_combo, flat_combo, grbl_group_box_wide, BrightnessHistogram, DecimalInputRanged, ImageButton, PowerScale};
 use crate::ui::{tr, tr_fmt, tr_plain};
 
 /// i18n prefix of the classic raster size / laser form (captions and tooltips are reused).
@@ -93,6 +93,69 @@ impl ImageUi {
         self.mark_speed = self.mark_speed.max(1);
         self
     }
+
+    /// Returns the target width in mm (upper right minus lower left).
+    fn width(&self) -> f32 {
+        self.x1 - self.x0
+    }
+
+    /// Returns the target height in mm (upper right minus lower left).
+    fn height(&self) -> f32 {
+        self.y1 - self.y0
+    }
+
+    /// Move the lower-left X; the width stays, upper right follows.
+    ///
+    /// `x0`: new lower-left X in mm.
+    fn move_x(&mut self, x0: f32) {
+        let w = self.width();
+        self.x0 = x0;
+        self.x1 = round2(x0 + w);
+    }
+
+    /// Move the lower-left Y; the height stays, upper right follows.
+    ///
+    /// `y0`: new lower-left Y in mm.
+    fn move_y(&mut self, y0: f32) {
+        let h = self.height();
+        self.y0 = y0;
+        self.y1 = round2(y0 + h);
+    }
+
+    /// Set the width; with `keep_aspect` the height follows the ratio from before the edit.
+    ///
+    /// `w`: new width in mm. `keep_aspect`: lock is on. `native_ratio`: image height / width, used when the
+    /// current size has no usable ratio (zero, negative, NaN).
+    fn set_width(&mut self, w: f32, keep_aspect: bool, native_ratio: f32) {
+        let (old_w, old_h) = (self.width(), self.height());
+        self.x1 = round2(self.x0 + w);
+        if keep_aspect {
+            // current ratio, else the image's own
+            let ratio = if usable_size(old_w, old_h) { old_h / old_w } else { native_ratio };
+            self.y1 = round2(self.y0 + w * ratio);
+        }
+    }
+
+    /// Set the height; with `keep_aspect` the width follows the ratio from before the edit.
+    ///
+    /// `h`: new height in mm. `keep_aspect`: lock is on. `native_ratio`: image height / width, used when the
+    /// current size has no usable ratio (zero, negative, NaN).
+    fn set_height(&mut self, h: f32, keep_aspect: bool, native_ratio: f32) {
+        let (old_w, old_h) = (self.width(), self.height());
+        self.y1 = round2(self.y0 + h);
+        if keep_aspect {
+            // current ratio, else the image's own
+            let ratio = if usable_size(old_w, old_h) { old_w / old_h } else { 1.0 / native_ratio };
+            self.x1 = round2(self.x0 + h * ratio);
+        }
+    }
+}
+
+/// Returns true when a size has a ratio: both sides finite and above zero.
+///
+/// `w`/`h`: sides in mm.
+fn usable_size(w: f32, h: f32) -> bool {
+    w.is_finite() && h.is_finite() && w > 0.0 && h > 0.0
 }
 
 /// Saved values of one image file.
@@ -230,6 +293,8 @@ pub struct ImageDock {
     line_dirs: Vec<Direction>,
     /// Edited values.
     v: ImageUi,
+    /// Size lock: width and height keep the target ratio. On at every start, not stored.
+    keep_aspect: bool,
     source: Option<ImageSource>,
     /// Edited since the last successful generation.
     dirty: bool,
@@ -255,6 +320,7 @@ impl ImageDock {
             firmware: Firmware::Grbl,
             line_dirs: raster_directions(),
             v: settings_values(&limits, 20.0, 1, 1),
+            keep_aspect: true,
             source: None,
             dirty: false,
             edit_seq: 0,
@@ -599,30 +665,64 @@ impl ImageDock {
         });
     }
 
-    /// Lower-left / upper-right corner inputs, the read-only size lines and the fit button.
+    /// Image height / width (ratio of the pixels). Returns 1 without an image.
+    fn native_ratio(&self) -> f32 {
+        self.source.as_ref().map_or(1.0, |s| s.img_h.max(1) as f32 / s.img_w.max(1) as f32)
+    }
+
+    /// Lower-left and size inputs with the aspect lock, the calculated upper right and the read-only facts.
     ///
-    /// `ui`: parent. `edited`: set on a committed change.
+    /// `ui`: parent. `edited`: set on a committed change (a lock toggle alone is no edit).
     fn position_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         grbl_group_box_wide(ui, &tr_plain("ImageDock.GroupPosition"), |ui| {
             let mut v = self.v.clone();
-            Grid::new("image-pos").num_columns(5).min_col_width(0.0).spacing([6.0, 4.0]).show(ui, |ui| {
+            let (mut x0, mut y0, mut w, mut h) = (v.x0, v.y0, v.width(), v.height());
+            let (lock, native) = (self.keep_aspect, self.native_ratio());
+            let mut lock_clicked = false;
+            Grid::new("image-pos").num_columns(6).min_col_width(0.0).spacing([6.0, 4.0]).show(ui, |ui| {
+                // lower left: moving keeps the size
                 ui.label(tr_plain("ImageDock.LowerLeft"));
                 ui.label("X");
-                pos_input(ui, "image-x0", &mut v.x0, edited);
+                if let Some(nv) = mm_input(ui, "image-x0", &mut x0, -10000.0, 10000.0) {
+                    v.move_x(nv);
+                    *edited = true;
+                }
+                ui.label("");
                 ui.label("Y");
-                pos_input(ui, "image-y0", &mut v.y0, edited);
+                if let Some(nv) = mm_input(ui, "image-y0", &mut y0, -10000.0, 10000.0) {
+                    v.move_y(nv);
+                    *edited = true;
+                }
                 ui.end_row();
+                // size: lock sits between width and height
+                ui.label(tr_plain("ImageDock.SizeRow"));
+                ui.label("W");
+                if let Some(nv) = mm_input(ui, "image-w", &mut w, 0.01, 10000.0) {
+                    v.set_width(nv, lock, native);
+                    *edited = true;
+                }
+                let r = ui.add(ImageButton::new("mdi-lock").alt("mdi-lock-open-outline", !lock).size(Vec2::splat(17.0)));
+                lock_clicked = r.on_hover_text(tr_plain("ImageDock.LockAspectTip")).clicked();
+                ui.label("H");
+                if let Some(nv) = mm_input(ui, "image-h", &mut h, 0.01, 10000.0) {
+                    v.set_height(nv, lock, native);
+                    *edited = true;
+                }
+                ui.end_row();
+                // upper right: calculated, read-only
                 ui.label(tr_plain("ImageDock.UpperRight"));
                 ui.label("X");
-                pos_input(ui, "image-x1", &mut v.x1, edited);
+                mm_label(ui, v.x1);
+                ui.label("");
                 ui.label("Y");
-                pos_input(ui, "image-y1", &mut v.y1, edited);
+                mm_label(ui, v.y1);
                 ui.end_row();
             });
-            // read-only facts: target size, aspect ratios, raster size
-            let (w, h) = (v.x1 - v.x0, v.y1 - v.y0);
-            let f = |x: f32| fmt_double_custom(f64::from(x), "0.##");
-            ui.label(tr_fmt("ImageDock.Size", &[&f(w), &f(h)]));
+            if lock_clicked {
+                self.keep_aspect = !self.keep_aspect;
+            }
+            // read-only facts: aspect ratios, raster size
+            let (w, h) = (v.width(), v.height());
             let (img_w, img_h) = self.source.as_ref().map_or((1, 1), |s| (s.img_w.max(1), s.img_h.max(1)));
             let target_aspect = if w > 0.0 && h > 0.0 { fmt_double_custom(f64::from(w / h), "0.000") } else { "-".to_owned() };
             let img_aspect = fmt_double_custom(f64::from(img_w) / f64::from(img_h), "0.000");
@@ -634,10 +734,6 @@ impl ImageDock {
             if layout.is_err() {
                 let msg = if w <= 0.0 || h <= 0.0 { tr_plain("ImageDock.ErrorPlacement") } else { tr_plain("ImageDock.ErrorInvalid") };
                 ui.colored_label(ui.visuals().error_fg_color, msg);
-            }
-            if ui.button(tr_plain("ImageDock.FitHeight")).on_hover_text(tr_plain("ImageDock.FitHeightTip")).clicked() {
-                v.y1 = round2(v.y0 + (v.x1 - v.x0) * img_h as f32 / img_w as f32);
-                *edited = true;
             }
             self.v = v;
         });
@@ -786,14 +882,25 @@ impl Default for ImageDock {
     }
 }
 
-/// One corner coordinate input (mm, 2 decimals).
+/// One millimetre input (2 decimals).
 ///
-/// `ui`: parent. `id`: unique id text. `v`: bound value. `edited`: set when a new value was committed.
-fn pos_input(ui: &mut Ui, id: &str, v: &mut f32, edited: &mut bool) {
-    let out = DecimalInputRanged::new(v).range(-10000.0, 10000.0).decimals(2).width(52.0).id(Id::unique(id)).show(ui);
-    if out.committed.is_some() {
-        *edited = true;
-    }
+/// `ui`: parent. `id`: unique id text. `v`: bound value. `min`/`max`: range (out of range shows the red border).
+/// Returns the new value when one was committed, else None.
+fn mm_input(ui: &mut Ui, id: &str, v: &mut f32, min: f32, max: f32) -> Option<f32> {
+    let out = DecimalInputRanged::new(v).range(min, max).decimals(2).width(52.0).id(Id::unique(id)).show(ui);
+    out.committed.map(|(_, new)| new)
+}
+
+/// Read-only millimetre value, sized like an input.
+///
+/// `ui`: parent. `v`: value in mm, shown with 2 decimals.
+fn mm_label(ui: &mut Ui, v: f32) {
+    // left aligned with the text of the inputs next to it
+    let size = egui::vec2(52.0, ui.spacing().interact_size.y);
+    ui.allocate_ui_with_layout(size, egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        ui.add_space(3.0);
+        ui.label(fmt_float_custom(v, "0.00"));
+    });
 }
 
 /// File name part of a path text.
@@ -1179,6 +1286,70 @@ mod tests {
         let _ = std::fs::remove_file(&p);
     }
 
+    /// Values with only the box set, the rest default. `x0`/`y0`/`x1`/`y1`: corners in mm. Returns the values.
+    fn boxed(x0: f32, y0: f32, x1: f32, y1: f32) -> ImageUi {
+        ImageUi { x0, y0, x1, y1, quality: 3.0, direction: "Horizontal".into(), start: 0, stop: 254, mark_speed: 1000, min_power: 0, max_power: 1000, laser_on: 0 }
+    }
+
+    #[test]
+    fn aspect_lock_is_on_at_start_and_survives_load_and_clear() {
+        let _g = settings_guard();
+        let mut d = ImageDock::new();
+        assert!(d.keep_aspect);
+        // user switches it off: loading another image or dropping the source does not touch it
+        d.keep_aspect = false;
+        let p = write_png("lock", 40, 20, |_| 0);
+        d.load_image(new_file(), &p, false).unwrap();
+        assert!(wait(&mut d));
+        assert!(!d.keep_aspect);
+        d.clear_source();
+        assert!(!d.keep_aspect);
+        // a new dock (app start) is locked again, whatever was stored
+        assert!(ImageDock::new().keep_aspect);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn move_keeps_size_and_size_edits_follow_the_lock() {
+        // x0 / y0: image moves, size stays
+        let mut v = boxed(0.0, 0.0, 100.0, 50.0);
+        v.move_x(10.0);
+        v.move_y(-5.5);
+        assert_eq!((v.x0, v.y0, v.x1, v.y1), (10.0, -5.5, 110.0, 44.5));
+        assert_eq!((v.width(), v.height()), (100.0, 50.0));
+        // width, lock on: height follows the current 2:1 ratio
+        v.set_width(60.0, true, 0.5);
+        assert_eq!((v.x1, v.y1), (70.0, 24.5));
+        // height, lock on: width follows
+        v.set_height(10.0, true, 0.5);
+        assert_eq!((v.x1, v.y1), (30.0, 4.5));
+        // lock off: the other side stays
+        v.set_width(100.0, false, 0.5);
+        assert_eq!((v.x1, v.y1), (110.0, 4.5));
+        v.set_height(33.33, false, 0.5);
+        assert_eq!((v.x1, v.y1), (110.0, 27.83));
+        // a ratio that is not 2:1 is kept as it is, not forced to the image's
+        let mut v = boxed(0.0, 0.0, 30.0, 10.0);
+        v.set_width(60.0, true, 0.5);
+        assert_eq!((v.width(), v.height()), (60.0, 20.0));
+    }
+
+    #[test]
+    fn aspect_lock_falls_back_to_image_ratio_without_a_usable_size() {
+        // image 3:2 wide: height / width = 2/3
+        let native = 2.0 / 3.0;
+        for bad in [(0.0, 0.0), (10.0, 0.0), (0.0, 10.0), (-4.0, -2.0), (f32::NAN, 5.0)] {
+            let mut v = boxed(0.0, 0.0, 1.0, 1.0);
+            (v.x1, v.y1) = bad;
+            v.set_width(30.0, true, native);
+            assert_eq!((v.width(), v.height()), (30.0, 20.0), "width from {bad:?}");
+            let mut v = boxed(0.0, 0.0, 1.0, 1.0);
+            (v.x1, v.y1) = bad;
+            v.set_height(20.0, true, native);
+            assert_eq!((v.width(), v.height()), (30.0, 20.0), "height from {bad:?}");
+        }
+    }
+
     /// Headless egui driver around one dock (same technique as the SVG dock's e2e tests).
     mod e2e {
         use super::*;
@@ -1267,6 +1438,18 @@ mod tests {
                 self.texts.iter().any(|(s, _)| s.trim() == t.trim())
             }
 
+            /// Returns how often a text is on screen. `t`: text.
+            pub fn count(&self, t: &str) -> usize {
+                self.texts.iter().filter(|(s, _)| s.trim() == t.trim()).count()
+            }
+
+            /// Click the aspect lock (right of the width input, one grid gap away).
+            pub fn click_lock(&mut self) {
+                self.stabilize();
+                let w = self.ctx.read_response(egui::Id::unique("image-w")).expect("width input not shown").rect;
+                self.click_at(egui::pos2(w.max.x + 6.0 + 8.5, w.center().y));
+            }
+
             /// Wait until auto regen caught up with all edits. Panics when none was triggered or one failed.
             pub fn settle(&mut self) {
                 assert!(self.dock.job.is_some() || self.dock.dirty, "edit did not trigger regen");
@@ -1297,25 +1480,50 @@ mod tests {
         assert!(wait(&mut h.dock));
         h.frame(vec![]);
         assert!(h.shows(&tr_plain("ImageDock.GroupMap")));
-        assert!(h.shows(&tr_fmt("ImageDock.Size", &[&"100", &"50"])));
+        // size row with the lock on, upper right calculated (x0 = 0: x1 equals w, so label + input = 2)
+        assert!(h.shows(&tr_plain("ImageDock.SizeRow")) && h.dock.keep_aspect);
+        assert_eq!((h.count("100.00"), h.count("50.00")), (2, 2));
         assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"2.000", &"2.000"])));
         assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&300, &150])));
         let base = h.all_lines();
         assert!((max_x(&base) - 100.0).abs() < 1e-3);
 
-        // x1 typed: wider target, regenerated, size text follows
-        h.type_into("image-x1", "150");
+        // width typed, lock on: height follows the 2:1 ratio, upper right follows, regenerated
+        h.type_into("image-w", "150");
         h.settle();
+        assert_eq!((h.dock.v.x0, h.dock.v.y0, h.dock.v.x1, h.dock.v.y1), (0.0, 0.0, 150.0, 75.0));
         assert!((max_x(&h.all_lines()) - 150.0).abs() < 1e-3);
-        assert!(h.shows(&tr_fmt("ImageDock.Size", &[&"150", &"50"])));
-        assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"3.000", &"2.000"])));
-        assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&450, &150])));
-
-        // fit height button: 150 wide, 2:1 image -> 75 high
-        h.click_text(&tr_plain("ImageDock.FitHeight"));
-        h.settle();
-        assert_eq!(h.dock.v.y1, 75.0);
+        assert_eq!((h.count("150.00"), h.count("75.00")), (2, 2));
         assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"2.000", &"2.000"])));
+        assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&450, &225])));
+
+        // lock click: opens, toggling alone does not regenerate
+        h.click_lock();
+        assert!(!h.dock.keep_aspect && !h.dock.needs_apply());
+        // height typed, lock off: width stays
+        h.type_into("image-h", "40");
+        h.settle();
+        assert_eq!((h.dock.v.x1, h.dock.v.y1), (150.0, 40.0));
+        assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"3.750", &"2.000"])));
+        assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&450, &120])));
+        // lock on again: width typed, height follows the new 3.75 ratio
+        h.click_lock();
+        assert!(h.dock.keep_aspect && !h.dock.needs_apply());
+        h.type_into("image-w", "75");
+        h.settle();
+        assert_eq!((h.dock.v.x1, h.dock.v.y1), (75.0, 20.0));
+        h.type_into("image-h", "40");
+        h.settle();
+        assert_eq!((h.dock.v.x1, h.dock.v.y1), (150.0, 40.0));
+
+        // x0 typed: upper right moves, size stays, first move goes to the new X
+        h.type_into("image-x0", "10");
+        h.settle();
+        assert_eq!((h.dock.v.x0, h.dock.v.x1, h.dock.v.width(), h.dock.v.height()), (10.0, 160.0, 150.0, 40.0));
+        assert!(h.shows("160.00") && h.shows("10.00"));
+        let l = h.all_lines();
+        assert!(l[0].starts_with("G0 X10 "), "{}", l[0]);
+        assert!((max_x(&l) - 160.0).abs() < 1e-3);
 
         // quality, speed, S-MAX, stop (black stays in range)
         h.type_into("image-quality", "1");
@@ -1327,15 +1535,15 @@ mod tests {
         assert!(words(&l, 'F').contains(&1800.0), "speed: {:?}", &l[..3]);
         assert_eq!(burn_levels(&l), vec![400]);
         assert_eq!((h.dock.v.quality, h.dock.v.start, h.dock.v.stop), (1.0, 0, 100));
-        assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&150, &75])));
+        assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&150, &40])));
         // start above black: black is outside the range and no longer burns
         h.type_into("image-start", "10");
         h.settle();
         assert!(burn_levels(&h.all_lines()).is_empty());
         let l = h.all_lines();
 
-        // layout error: red text, program stays, no generation
-        h.type_into("image-x1", "-5");
+        // layout error: red text, program stays, no generation (lock is on: height goes to 0 as well)
+        h.type_into("image-w", "0");
         assert!(h.shows(&tr_plain("ImageDock.ErrorPlacement")));
         assert!(!h.dock.job_running() && h.dock.is_blocked());
         assert_eq!(h.all_lines(), l);
