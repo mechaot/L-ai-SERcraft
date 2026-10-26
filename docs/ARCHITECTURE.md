@@ -151,16 +151,23 @@ Windows `LaserGRBL.Settings.bin`, `.zbn`, `.lps` are BinaryFormatter files read 
 Generators live in `tools/golden/<area>/` (`run.sh`, needs `../.mono-build/env.sh`, see `PLAN.md` §4).
 Run `cargo test --workspace --release` and `cargo clippy --workspace --all-targets -- -D warnings`.
 
-**Test isolation.** Tests never touch the real config dir (`~/.config/L-ai-SERcraft`) or the repository: temp dirs only.
-Every test that can reach settings, session log, laser life, usage stats, emulator config, presets or custom buttons
-calls `lg_base::paths::isolate_for_tests(tag)` FIRST, before anything caches the real data path (it sets the data dir
-and the settings file below `<temp>/lg_test_<tag>_<pid>`, once per process). Shortcuts: `test_support::init_env()` in
-`lasergrbl-core` and `lg-services`, `form_util::isolate_env()` and `form_util::test_guard()` in the app (the guard also
-serialises and resets the settings store), the shared `root()` fn in `crates/base/tests/nrbf.rs`.
-`python3 -I tools/check_test_isolation.py` enforces it: it runs EVERY test alone in its own process with scratch
-`HOME`/`XDG_*`/`APPDATA`, reports any file or dir created there (binary + test name) and any change of
-`git status`, and fails on test failures too. CI runs it on Linux after `cargo test`. A new test that touches config
-without the call fails that check.
+**Test isolation.** Tests never touch the real config dir (`~/.config/L-ai-SERcraft`), the repository or loose files in the
+system temp dir. Rules:
+* Every test that can reach settings, session log, laser life, usage stats, emulator config, presets, custom buttons or the
+  app temp dir (`paths::temp_path()`) calls `lg_base::paths::isolate_for_tests(tag)` FIRST, before anything caches the real
+  path. It points the data dir (`<root>/data`), the settings file (`<root>/settings.json`) and the app temp dir
+  (`<root>/tmp`) into the per-process scratch root `<temp>/lg-tests/<tag>-<pid>-<unix_secs>/`. Shortcuts:
+  `test_support::init_env()` in `lasergrbl-core` and `lg-services`, `form_util::isolate_env()` and `form_util::test_guard()`
+  in the app (the guard also serialises and resets the settings store), the shared `root()` fn in `crates/base/tests/nrbf.rs`.
+* A test that needs its own scratch files calls `lg_base::paths::test_dir(name)`: a fresh, unique sub dir of the same root.
+  Never build paths from `std::env::temp_dir()` in test code (integration tests in `crates/*/tests/` included).
+* Both live in `crates/base/src/test_support.rs`. The root is removed when the test process exits (`atexit` handler: flushes
+  the settings saver and the loggers, then deletes the tree). Roots of killed or aborted processes, and old `lg_*` leftovers
+  in `<temp>`, are swept after one hour by the next process that creates a root. Debugging: `LG_KEEP_TEST_DIRS=1` keeps the root.
+* `python3 -I tools/check_test_isolation.py` enforces it: it runs EVERY test alone in its own process with scratch
+  `HOME`/`XDG_*`/`APPDATA` and its own `TMPDIR`/`TEMP`/`TMP`, reports any file or dir created in the config dirs (binary + test
+  name), any "temp leftover" in the temp dir after the process exited, and any change of `git status`, and fails on test
+  failures too. CI runs it on Linux after `cargo test`. A new test that touches config or leaves temp files fails that check.
 
 ## 5. Making changes efficiently
 * Find the C# origin of a behaviour → `PORTING.md` (search the C# member) → Rust location.

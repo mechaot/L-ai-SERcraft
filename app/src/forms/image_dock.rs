@@ -915,9 +915,9 @@ mod tests {
         Arc::new(RwLock::new(GrblFile::new()))
     }
 
-    /// PNG in the temp dir: `w` x `h` px, gray value per column from `col`. Returns the path.
+    /// PNG in a scratch dir: `w` x `h` px, gray value per column from `col`. Returns the path.
     fn write_png(tag: &str, w: u32, h: u32, col: impl Fn(u32) -> u8) -> PathBuf {
-        let p = std::env::temp_dir().join(format!("lg-image-dock-{tag}-{}.png", std::process::id()));
+        let p = lg_base::paths::test_dir(&format!("image_dock_{tag}")).join("img.png");
         let img = RgbaImage::from_fn(w, h, |x, _| {
             let g = col(x);
             image::Rgba([g, g, g, 255])
@@ -1031,7 +1031,7 @@ mod tests {
         let mut d = ImageDock::new();
         assert!(d.load_image(new_file(), Path::new("/nonexistent/none.png"), false).is_err());
         assert!(!d.has_source());
-        let p = std::env::temp_dir().join(format!("lg-image-dock-bad-{}.png", std::process::id()));
+        let p = lg_base::paths::test_dir("image_dock_bad").join("bad.png");
         std::fs::write(&p, b"not an image").unwrap();
         assert!(d.load_image(new_file(), &p, false).is_err());
         assert!(!d.has_source());

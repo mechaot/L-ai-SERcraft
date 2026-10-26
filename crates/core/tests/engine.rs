@@ -27,9 +27,9 @@ fn fake_clock() -> i64 {
 /// Serialise tests (global settings) and give them a clean settings store.
 fn setup(name: &str) -> MutexGuard<'static, ()> {
     let g = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
-    let dir = std::env::temp_dir().join(format!("lg_core_it_{}_{}", std::process::id(), name));
-    let _ = std::fs::remove_dir_all(&dir);
-    std::fs::create_dir_all(&dir).unwrap();
+    // app temp dir and session log stay out of the real dirs too
+    lg_base::paths::isolate_for_tests("core_it");
+    let dir = lg_base::paths::test_dir(&format!("core_it_{name}"));
     lg_base::paths::set_data_path_override(dir.clone());
     lg_base::settings::init_at(dir.join("settings.json"));
     for s in ["Success", "Warning", "Fatal", "Connect", "Disconnect"] {
@@ -55,7 +55,7 @@ fn wait_until(what: &str, mut cond: impl FnMut() -> bool) {
 }
 
 fn write_nc(name: &str, body: &str) -> std::path::PathBuf {
-    let p = std::env::temp_dir().join(format!("lg_core_it_{}_{}.nc", std::process::id(), name));
+    let p = lg_base::paths::test_dir(&format!("core_it_{name}_nc")).join(format!("{name}.nc"));
     std::fs::write(&p, body).unwrap();
     p
 }
@@ -528,7 +528,7 @@ fn custom_code_expressions_and_immediates() {
     wait_until("lines", || r.fake.written_lines().len() == 2);
     assert_eq!(r.fake.written_lines(), vec!["G91", "G0X30.000"]);
     assert_eq!(r.fake.written_bytes(), vec![63, 0x85]);
-    let out = std::env::temp_dir().join(format!("lg_core_it_{}_saved.nc", std::process::id()));
+    let out = lg_base::paths::test_dir("core_it_saved").join("saved.nc");
     r.core.save_program(&out, true, true, false, 1, true).unwrap();
     assert_eq!(std::fs::read_to_string(&out).unwrap(), "G90\nM3 S500\nG1 X10 Y20\nG1 X30 Y50\nM5\n");
     r.core.close_com(true).unwrap();
@@ -558,8 +558,7 @@ fn open_file_dispatch() {
 #[test]
 fn full_core_against_emulator() {
     let _g = setup("emulator");
-    let cfg = std::env::temp_dir().join(format!("lg_core_it_{}_emu.json", std::process::id()));
-    let _ = std::fs::remove_file(&cfg);
+    let cfg = lg_base::paths::test_dir("core_it_emu").join("emu.json");
     let com: Arc<dyn ComWrapper> = Arc::new(EmulatorCom::with_emulator(|sink| Grblv11Emulator::with_config_file(sink, cfg.clone())));
     let (tx, rx) = crossbeam_channel::unbounded();
     let core = GrblCore::with_com(Firmware::Grbl, tx, com, lg_base::tools::hires_timer::total_milliseconds);

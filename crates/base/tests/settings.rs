@@ -7,11 +7,9 @@
 use lg_base::settings::*;
 use std::time::{Duration, Instant};
 
+/// Fresh scratch dir, removed at process exit. `name`: label. Returns the dir.
 fn tmp(name: &str) -> std::path::PathBuf {
-    let d = std::env::temp_dir().join(format!("lg_settings_{name}_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&d);
-    std::fs::create_dir_all(&d).unwrap();
-    d
+    lg_base::paths::test_dir(&format!("settings_{name}"))
 }
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize, Default, Clone, Copy)]

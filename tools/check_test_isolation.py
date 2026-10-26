@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Andreas Pösch
 
-"""Check that no test writes into the user's config dirs or into the repository.
+"""Check that no test writes into the user's config dirs, the temp dir or the repository.
 
 Usage: python3 -I tools/check_test_isolation.py [--jobs N] [--profile release|dev] [--skip-build]
                                                 [--locked] [--timeout SEC] [-v]
@@ -11,12 +11,16 @@ How it works:
   1. Build all test binaries (`cargo test --workspace --release --no-run --message-format=json`).
   2. List the tests of every binary and run EACH test alone in its own process. cwd = package dir.
      HOME, XDG_CONFIG_HOME, XDG_DATA_HOME, XDG_CACHE_HOME, XDG_STATE_HOME, APPDATA and LOCALAPPDATA
-     point into a fresh, empty scratch dir per process. TMPDIR is left alone (temp is allowed).
-  3. Anything that appears under the scratch dir is an isolation finding (binary + test name).
+     point into a fresh, empty scratch dir per process. TMPDIR, TEMP and TMP point into an empty `tmp`
+     dir of that scratch dir.
+  3. Anything that appears under the scratch dir is an isolation finding (binary + test name);
+     anything left in the `tmp` dir after the process exited is a "temp leftover" finding.
   4. `git status --porcelain` is snapshotted before and after the whole run; any change is a finding.
 
 A test passes the check when it calls `lg_base::paths::isolate_for_tests` before it touches
-settings, logger, laser life, emulator config and friends (see docs/ARCHITECTURE.md, "Testing").
+settings, logger, laser life, emulator config and friends, and makes its scratch files with
+`lg_base::paths::test_dir` instead of `std::env::temp_dir()`; both are removed at process exit
+(see docs/ARCHITECTURE.md, "Testing").
 
 Exit codes: 0 clean, 1 isolation findings and/or failed tests, 2 setup error (build, listing, usage).
 `--skip-build` reuses the binary list saved by the last run of this script (no cargo call at all).
@@ -31,6 +35,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -46,10 +51,13 @@ SCRATCH_ENV = {
     "APPDATA": "appdata",
     "LOCALAPPDATA": "localappdata",
 }
+# temp dir vars (POSIX + Windows spellings) share one empty subdir of the scratch dir
+TEMP_ENV = ("TMPDIR", "TEMP", "TMP")
+TEMP_SUB = "tmp"
+# debug switch of lg_base::test_support that keeps the scratch root: must not hide leftovers here
+KEEP_ENV = "LG_KEEP_TEST_DIRS"
 MAX_FILES_SHOWN = 8
 TAIL_LINES = 25
-# pids of all child processes, to sweep their `lg_test_<tag>_<pid>` temp dirs at the end
-CHILD_PIDS: set[int] = set()
 
 
 @dataclass(frozen=True)
@@ -70,13 +78,14 @@ class Outcome:
 
     binary: owning test binary. test: test name (`<list>` for the listing call).
     passed: exit code 0 (false on timeout). files: scratch entries left behind (relative paths).
-    output: tail of stdout+stderr, kept for failures only.
+    temp: entries left in the process's TMPDIR (relative to it). output: tail of stdout+stderr, kept for failures only.
     """
 
     binary: TestBin
     test: str
     passed: bool
     files: list[str] = field(default_factory=list)
+    temp: list[str] = field(default_factory=list)
     output: str = ""
 
 
@@ -177,35 +186,54 @@ def load_cached() -> list[TestBin]:
 def scratch_env(scratch: Path) -> dict[str, str]:
     """Process env that hides the real config dirs.
 
-    scratch: fresh dir; every config var gets its own empty subdir. Returns the full env mapping.
+    scratch: fresh dir; every config var gets its own empty subdir, the temp vars share the empty `tmp` subdir.
+    Returns the full env mapping.
     """
     env = dict(os.environ)
+    env.pop(KEEP_ENV, None)
     for var, sub in SCRATCH_ENV.items():
         d = scratch / sub
         d.mkdir(parents=True, exist_ok=True)
         env[var] = str(d)
+    tmp = scratch / TEMP_SUB
+    tmp.mkdir(parents=True, exist_ok=True)
+    for var in TEMP_ENV:
+        env[var] = str(tmp)
     return env
 
 
-def leftovers(scratch: Path) -> list[str]:
-    """Everything a test process created under its scratch dir.
+def scan(base: Path, skip: Path | None = None) -> list[str]:
+    """Everything below a dir.
 
-    scratch: dir to scan. Returns sorted relative paths: all files, symlinks and empty dirs.
+    base: dir to scan (not listed itself). skip: subdir that is not entered. Returns sorted relative paths:
+    all files, symlinks and empty dirs (an empty dir counts too: `data_path()` creates the config dir even when
+    nothing is written).
     """
     out: list[str] = []
-    for dirpath, dirnames, filenames in os.walk(scratch):
+    for dirpath, dirnames, filenames in os.walk(base):
         here = Path(dirpath)
-        # empty dir counts too: data_path() creates the config dir even when nothing is written
-        if not dirnames and not filenames and here != scratch:
-            out.append(str(here.relative_to(scratch)) + "/")
-        out.extend(str((here / f).relative_to(scratch)) for f in filenames)
-    # dirs that only hold the pre-created env dirs are not findings
+        dirnames[:] = [d for d in dirnames if here / d != skip]
+        if not dirnames and not filenames and here != base:
+            out.append(str(here.relative_to(base)) + "/")
+        out.extend(str((here / f).relative_to(base)) for f in filenames)
+    return sorted(out)
+
+
+def leftovers(scratch: Path) -> tuple[list[str], list[str]]:
+    """Everything a test process created under its scratch dir.
+
+    scratch: dir to scan. Returns (config findings, temp findings): the first lists entries outside `tmp`
+    (relative to scratch; the pre-created, empty env dirs do not count), the second lists everything in the
+    `tmp` dir (relative to it).
+    """
+    tmp = scratch / TEMP_SUB
     pre = {sub + "/" for sub in SCRATCH_ENV.values()}
-    return sorted(p for p in out if p not in pre)
+    config = [p for p in scan(scratch, skip=tmp) if p not in pre]
+    return config, scan(tmp)
 
 
 def run_proc(argv: list[str], cwd: Path, env: dict[str, str], timeout: float, merge_stderr: bool) -> tuple[int | None, str, str]:
-    """Run a child process and remember its pid (see `sweep_helper_dirs`).
+    """Run a child process.
 
     argv: command line. cwd: working dir. env: full environment. timeout: seconds until the child is killed.
     merge_stderr: True folds stderr into stdout. Returns (exit code or None on timeout, stdout, stderr).
@@ -220,20 +248,7 @@ def run_proc(argv: list[str], cwd: Path, env: dict[str, str], timeout: float, me
             proc.kill()
             out, err = proc.communicate()
             code = None
-        CHILD_PIDS.add(proc.pid)
     return code, out or "", err or ""
-
-
-def sweep_helper_dirs() -> None:
-    """Delete the temp dirs `isolate_for_tests` made for our child processes.
-
-    They are named `lg_test_<tag>_<pid>`; only dirs of pids we started are removed. One scan of the temp dir
-    (a scan per test would crawl: temp dirs are big). No arguments, no return value.
-    """
-    for d in Path(tempfile.gettempdir()).glob("lg_test_*"):
-        pid = d.name.rpartition("_")[2]
-        if pid.isdigit() and int(pid) in CHILD_PIDS:
-            shutil.rmtree(d, ignore_errors=True)
 
 
 def run_one(binary: TestBin, args: list[str], test: str, scratch_root: Path, timeout: float) -> Outcome:
@@ -241,7 +256,7 @@ def run_one(binary: TestBin, args: list[str], test: str, scratch_root: Path, tim
 
     binary: executable to run. args: its arguments. test: name for reports.
     scratch_root: parent for the per-process scratch dir. timeout: seconds before the process is killed.
-    Returns the outcome (exit status + files left behind).
+    Returns the outcome (exit status + files left behind in the scratch dir and in its temp dir).
     """
     scratch = Path(tempfile.mkdtemp(prefix="p", dir=scratch_root))
     env = scratch_env(scratch)
@@ -251,10 +266,10 @@ def run_one(binary: TestBin, args: list[str], test: str, scratch_root: Path, tim
     passed = code == 0
     if code is None:
         text += f"\n[timeout after {timeout:.0f}s]"
-    files = leftovers(scratch)
+    files, temp = leftovers(scratch)
     shutil.rmtree(scratch, ignore_errors=True)
     tail = "" if passed else "\n".join(text.splitlines()[-TAIL_LINES:])
-    return Outcome(binary, test, passed, files, tail)
+    return Outcome(binary, test, passed, files, temp, tail)
 
 
 def list_tests(binary: TestBin, scratch_root: Path, timeout: float) -> tuple[list[str], Outcome]:
@@ -267,11 +282,11 @@ def list_tests(binary: TestBin, scratch_root: Path, timeout: float) -> tuple[lis
     env = scratch_env(scratch)
     env["CARGO_MANIFEST_DIR"] = str(binary.cwd)
     code, out, err = run_proc([str(binary.exe), "--list", "--format", "terse"], binary.cwd, env, timeout, merge_stderr=False)
-    files = leftovers(scratch)
+    files, temp = leftovers(scratch)
     shutil.rmtree(scratch, ignore_errors=True)
     names = [ln[: -len(": test")] for ln in out.splitlines() if ln.endswith(": test")]
     note = "" if code == 0 else (err[-2000:] or f"[listing timed out after {timeout:.0f}s]")
-    return names, Outcome(binary, "<list>", code == 0, files, note)
+    return names, Outcome(binary, "<list>", code == 0, files, temp, note)
 
 
 def repo_snapshot() -> dict[str, tuple[str, int, int]] | None:
@@ -331,6 +346,20 @@ def diff_snapshots(before: dict[str, tuple[str, int, int]], after: dict[str, tup
     return out
 
 
+def print_findings(outcomes: list[Outcome], paths_of: Callable[[Outcome], list[str]]) -> None:
+    """Print findings, one block per test process.
+
+    outcomes: processes with findings. paths_of: picks the list of leftover paths out of an outcome.
+    """
+    for f in sorted(outcomes, key=lambda o: (o.binary.label, o.test)):
+        paths = paths_of(f)
+        print(f"  {f.binary.label}  {f.test}")
+        for p in paths[:MAX_FILES_SHOWN]:
+            print(f"      {p}")
+        if len(paths) > MAX_FILES_SHOWN:
+            print(f"      ... {len(paths) - MAX_FILES_SHOWN} more")
+
+
 def main() -> int:
     """CLI entry point.
 
@@ -354,6 +383,7 @@ def main() -> int:
     before = repo_snapshot()
     scratch_root = Path(tempfile.mkdtemp(prefix="lg_iso_"))
     findings: list[Outcome] = []
+    temp_findings: list[Outcome] = []
     failures: list[Outcome] = []
     total = 0
     try:
@@ -364,6 +394,8 @@ def main() -> int:
             for binary, (names, lst) in zip(bins, listed):
                 if lst.files:
                     findings.append(lst)
+                if lst.temp:
+                    temp_findings.append(lst)
                 if not lst.passed:
                     failures.append(lst)
                 for name in names:
@@ -372,18 +404,19 @@ def main() -> int:
                 res = fut.result()
                 total += 1
                 if opts.verbose:
-                    print(f"  {'ok  ' if res.passed else 'FAIL'} {'LEAK' if res.files else '    '} {res.binary.label} {res.test}")
+                    print(f"  {'ok  ' if res.passed else 'FAIL'} {'LEAK' if res.files or res.temp else '    '} {res.binary.label} {res.test}")
                 elif sys.stderr.isatty() and n % 50 == 0:
                     print(f"\r  {n}/{len(futures)} tests", end="", file=sys.stderr, flush=True)
                 if res.files:
                     findings.append(res)
+                if res.temp:
+                    temp_findings.append(res)
                 if not res.passed:
                     failures.append(res)
         if sys.stderr.isatty():
             print("\r" + " " * 40 + "\r", end="", file=sys.stderr)
     finally:
         shutil.rmtree(scratch_root, ignore_errors=True)
-        sweep_helper_dirs()
     after = repo_snapshot()
 
     repo_changes: list[str] = []
@@ -395,12 +428,11 @@ def main() -> int:
     # report: isolation findings, repo changes and test failures are separate sections
     if findings:
         print(f"\nISOLATION FINDINGS: {len(findings)} test process(es) left files in the scratch HOME/XDG dirs")
-        for f in sorted(findings, key=lambda o: (o.binary.label, o.test)):
-            print(f"  {f.binary.label}  {f.test}")
-            for p in f.files[:MAX_FILES_SHOWN]:
-                print(f"      {p}")
-            if len(f.files) > MAX_FILES_SHOWN:
-                print(f"      ... {len(f.files) - MAX_FILES_SHOWN} more")
+        print_findings(findings, lambda o: o.files)
+    if temp_findings:
+        print(f"\nTEMP LEFTOVERS: {len(temp_findings)} test process(es) left files in their TMPDIR "
+              "(use lg_base::paths::test_dir / isolate_for_tests, never std::env::temp_dir())")
+        print_findings(temp_findings, lambda o: o.temp)
     if repo_changes:
         print(f"\nREPOSITORY CHANGED by the test run: {len(repo_changes)} path(s)")
         for line in repo_changes:
@@ -413,9 +445,9 @@ def main() -> int:
                 print(f"      | {ln}")
 
     elapsed = time.monotonic() - t0
-    print(f"\n{total} tests in {len(bins)} binaries, {len(findings)} isolation finding(s), "
+    print(f"\n{total} tests in {len(bins)} binaries, {len(findings)} isolation finding(s), {len(temp_findings)} temp leftover(s), "
           f"{len(repo_changes)} repo change(s), {len(failures)} failure(s), {elapsed:.0f}s")
-    return 1 if (findings or repo_changes or failures) else 0
+    return 1 if (findings or temp_findings or repo_changes or failures) else 0
 
 
 if __name__ == "__main__":

@@ -30,13 +30,20 @@ pub struct PreviewFormDemo {
     log: String,
 }
 
+/// Per-process scratch dir of the demo, inside the app temp dir (tests: the scratch root).
+///
+/// Returns the dir path; the caller creates it.
+fn scratch_dir() -> std::path::PathBuf {
+    lg_base::paths::temp_path().join(format!("gallery_{}", std::process::id()))
+}
+
 impl Default for PreviewFormDemo {
     /// Core on the emulator (not connected yet); button list in a scratch file seeded from the standard buttons.
     fn default() -> Self {
         let (tx, rx) = crossbeam_channel::unbounded();
         let core = GrblCore::new(Firmware::Grbl, tx);
         core.configure(WrapperType::Emulator, &ComConfig::None);
-        let dir = std::env::temp_dir().join(format!("lasergrbl_gallery_{}", std::process::id()));
+        let dir = scratch_dir();
         let _ = std::fs::create_dir_all(&dir);
         let mut buttons = CustomButtons::with_paths(dir.join("CustomButtons.json"), lg_base::paths::resources_dir().join("misc").join("standard_buttons.json"));
         buttons.load_file();
@@ -64,7 +71,7 @@ impl PreviewFormDemo {
                 self.log = e;
             }
             if ui.button("Load sample G-code").clicked() {
-                let p = std::env::temp_dir().join("lasergrbl_gallery_sample.nc");
+                let p = scratch_dir().join("sample.nc");
                 if std::fs::write(&p, SAMPLE_GCODE).is_ok() {
                     self.log = format!("{:?}", self.core.open_file(&p, false));
                 }

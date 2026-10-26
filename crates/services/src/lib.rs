@@ -42,6 +42,30 @@ pub(crate) mod test_support {
         lg_base::paths::isolate_for_tests("services");
     }
 
+    /// Write an executable shell script and make sure the kernel will run it.
+    ///
+    /// Another test thread may fork while we still hold the file open for writing; that child keeps the fd until
+    /// its exec, and a spawn of the script fails meanwhile with ETXTBSY ("Text file busy"). So the script runs
+    /// once here and that one error is retried: afterwards no writer is left.
+    ///
+    /// `path`: script file to create. `body`: script text, needs a shebang. Panics on I/O errors.
+    #[cfg(unix)]
+    pub fn write_script(path: &std::path::Path, body: &str) {
+        use std::os::unix::fs::PermissionsExt;
+        use std::process::{Command, Stdio};
+        const ETXTBSY: i32 = 26;
+        std::fs::write(path, body).unwrap();
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        // warm-up run, up to 2 s of retries
+        for _ in 0..200 {
+            let run = Command::new(path).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).status();
+            match run {
+                Err(e) if e.raw_os_error() == Some(ETXTBSY) => std::thread::sleep(std::time::Duration::from_millis(10)),
+                _ => break,
+            }
+        }
+    }
+
     /// Serialise tests that change settings read by other tests.
     ///
     /// Returns the guard; keep it for the whole test.

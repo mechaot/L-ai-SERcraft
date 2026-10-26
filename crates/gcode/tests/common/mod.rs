@@ -16,14 +16,12 @@ pub fn golden_root() -> PathBuf {
 static LOCK: Mutex<()> = Mutex::new(());
 static INIT: Once = Once::new();
 
-/// Serialises the tests of one process and points the settings store to a throw-away file.
+/// Serialises the tests of one process and points settings, data dir and temp dir to a scratch root.
 pub fn sandbox() -> MutexGuard<'static, ()> {
     let g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     INIT.call_once(|| {
-        let dir = std::env::var("TMPDIR").map(PathBuf::from).unwrap_or_else(|_| std::env::temp_dir());
-        let p = dir.join(format!("lg-gcode-test-{}.json", std::process::id()));
-        let _ = std::fs::remove_file(&p);
-        lg_base::settings::init_at(p);
+        // data dir, temp dir and settings in a scratch root that is removed at exit
+        lg_base::paths::isolate_for_tests("gcode");
     });
     reset_settings();
     g

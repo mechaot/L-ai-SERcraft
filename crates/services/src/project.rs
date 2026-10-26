@@ -570,8 +570,7 @@ mod tests {
 
     #[test]
     fn store_load_and_images() {
-        let dir = std::env::temp_dir().join(format!("lg_services_prj_{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
+        let dir = lg_base::paths::test_dir("services_prj");
         // tiny png as the "opened image"
         let png = dir.join("pic.png");
         image::RgbaImage::from_pixel(2, 2, image::Rgba([1, 2, 3, 255])).save(&png).unwrap();

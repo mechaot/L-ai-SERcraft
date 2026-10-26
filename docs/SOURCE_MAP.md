@@ -80,7 +80,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | golden generators | `tools/golden/<area>/` (`run.sh`; protocol harness `tools/golden/protocol/`) |
 | member-level porting checklist | `PORTING.md` (regenerate skeleton: `tools/gen_porting_checklist.py`) |
 | audit results / known deviations | `docs/AUDIT_NONUI.md`, `docs/AUDIT_UI_MAIN.md`, `docs/AUDIT_UI_DIALOGS.md`, `crates/dotnet/README.md` |
-| test isolation (no test may write into the real config dir or the repo) | helper `lg_base::paths::isolate_for_tests` (`crates/base/src/paths.rs`), crate shortcuts `test_support` in `crates/{core,services}/src/lib.rs`, `isolate_env` / `test_guard` in `app/src/forms/form_util.rs`; checker `tools/check_test_isolation.py` (every test alone, scratch HOME/XDG) |
+| test isolation + scratch files (no test may write into the real config dir, the repo or loose files in the temp dir; all removed at process exit) | helpers `lg_base::paths::isolate_for_tests` / `test_dir` (`crates/base/src/test_support.rs`, re-exported by `paths.rs`), crate shortcuts `test_support` in `crates/{core,services}/src/lib.rs`, `isolate_env` / `test_guard` in `app/src/forms/form_util.rs`; checker `tools/check_test_isolation.py` (every test alone, scratch HOME/XDG/TMPDIR) |
 | CI pipelines (lint, test + isolation check, AppImage/Windows/macOS/source packages, GitHub releases) | `.gitlab-ci.yml`, `.github/workflows/ci.yml` |
 | AppImage packaging | `packaging/appimage/` (`build-appimage.sh`, `AppRun`, `laisercraft.desktop`, `io.github.mechaot.laisercraft.appdata.xml`) |
 | app name, version, window title | `lg_base::APP_NAME` (`crates/base/src/lib.rs`), `app/src/main.rs` (`form_title`), root `Cargo.toml` version |
@@ -140,10 +140,10 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/material/preset_editor.rs`](../app/src/forms/material/preset_editor.rs) | 140 | List editor of the layer presets: read-only table, delete per row. |
 | [`app/src/forms/material/preset_picker.rs`](../app/src/forms/material/preset_picker.rs) | 106 | Preset picker of the raster import "P/S helper" button. |
 | [`app/src/forms/mod.rs`](../app/src/forms/mod.rs) | 25 | Forms of the application (one module per C# form). |
-| [`app/src/forms/params_dock.rs`](../app/src/forms/params_dock.rs) | 1866 | "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm` (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`). Not part of the C# app (intentional deviation). |
-| [`app/src/forms/preview_form/custom_button_form.rs`](../app/src/forms/preview_form/custom_button_form.rs) | 388 | Ports `CustomButtonForm.cs` + Designer: modal editor to create / edit one custom button. |
+| [`app/src/forms/params_dock.rs`](../app/src/forms/params_dock.rs) | 1864 | "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm` (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`). Not part of the C# app (intentional deviation). |
+| [`app/src/forms/preview_form/custom_button_form.rs`](../app/src/forms/preview_form/custom_button_form.rs) | 385 | Ports `CustomButtonForm.cs` + Designer: modal editor to create / edit one custom button. |
 | [`app/src/forms/preview_form/custom_button_ib.rs`](../app/src/forms/preview_form/custom_button_ib.rs) | 357 | UI side of `CustomButton.cs` / `PreviewForm.CustomButtonIB`: click/press/release semantics, icon choice, PNG image rendering and the drag-reorder helpers. |
-| [`app/src/forms/preview_form/gallery_demo.rs`](../app/src/forms/preview_form/gallery_demo.rs) | 85 | Gallery tab "PreviewForm": the form with a core on the built-in emulator and the standard buttons. |
+| [`app/src/forms/preview_form/gallery_demo.rs`](../app/src/forms/preview_form/gallery_demo.rs) | 92 | Gallery tab "PreviewForm": the form with a core on the built-in emulator and the standard buttons. |
 | [`app/src/forms/preview_form/mod.rs`](../app/src/forms/preview_form/mod.rs) | 689 | Ports `PreviewForm.cs` + Designer: right-hand panel of the main window. Job preview on top, toolbar below (reset, homing, unlock, zero, custom buttons flow, resume, stop). Custom button editor: [`custom_button_form`]; button behaviour helpers: [`custom_button_ib`]. |
 | [`app/src/forms/raster/convert_size.rs`](../app/src/forms/raster/convert_size.rs) | 483 | Ports `RasterConverter/ConvertSizeAndOptionForm.cs` (+ Designer): target size, offset, speeds and laser options of the raster import (second page). |
 | [`app/src/forms/raster/gallery_demo.rs`](../app/src/forms/raster/gallery_demo.rs) | 125 | Gallery tab "Raster import": opens [`RasterImport`] on a bundled test image with a throwaway `GrblFile` and prints the resulting G-code line count (dev tool, no C# counterpart). |
@@ -152,7 +152,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/raster/resolution_helper.rs`](../app/src/forms/raster/resolution_helper.rs) | 172 | Ports `RasterConverter/ResolutionHelperForm.cs` (+ Designer): computes a line resolution that matches the stepper resolution (`$100`). |
 | [`app/src/forms/save_options.rs`](../app/src/forms/save_options.rs) | 131 | Ports `SaveOptionForm.cs` (+ Designer): "Save G-code options" dialog. |
 | [`app/src/forms/splash.rs`](../app/src/forms/splash.rs) | 84 | Ports `SplashScreenForm.cs` (+ Designer): borderless, top-most splash with logo, version and 2 s timer. |
-| [`app/src/forms/svg_mode.rs`](../app/src/forms/svg_mode.rs) | 117 | Ports `SvgConverter/SvgModeForm.cs` (+ Designer): choose "Load as Vector" / "Load as Image" for an SVG. |
+| [`app/src/forms/svg_mode.rs`](../app/src/forms/svg_mode.rs) | 116 | Ports `SvgConverter/SvgModeForm.cs` (+ Designer): choose "Load as Vector" / "Load as Image" for an SVG. |
 | [`app/src/main.rs`](../app/src/main.rs) | 159 | L-ai-SERcraft egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`). |
 | [`app/src/main_form.rs`](../app/src/main_form.rs) | 1310 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
 | [`app/src/ui/dialog.rs`](../app/src/ui/dialog.rs) | 419 | Modal-form framework: WinForms `ShowDialog`, `MessageBox.Show`, `OpenFileDialog/SaveFileDialog`. |
@@ -176,7 +176,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/ui/widgets/graph.rs`](../app/src/ui/widgets/graph.rs) | 153 | Ports `Tools/Graph.cs` (rounded rect) plus small GDI+-like drawing helpers shared by widgets. |
 | [`app/src/ui/widgets/grbl_button.rs`](../app/src/ui/widgets/grbl_button.rs) | 76 | Ports `UserControls/GrblButton.cs`: flat themed button, optional icon at left. |
 | [`app/src/ui/widgets/group_box.rs`](../app/src/ui/widgets/group_box.rs) | 53 | Ports `UserControls/GrblGroupBox.cs`: group box with bold title in a themed border. |
-| [`app/src/ui/widgets/histogram.rs`](../app/src/ui/widgets/histogram.rs) | 463 | Brightness histogram with draggable start / stop markers and the brightness to power curve (raster-image dock). |
+| [`app/src/ui/widgets/histogram.rs`](../app/src/ui/widgets/histogram.rs) | 465 | Brightness histogram with draggable start / stop markers and the brightness to power curve (raster-image dock). |
 | [`app/src/ui/widgets/image_button.rs`](../app/src/ui/widgets/image_button.rs) | 186 | Ports `UserControls/ImageButton.cs`: icon button with themed border, hover/pressed look, caption. |
 | [`app/src/ui/widgets/input_box.rs`](../app/src/ui/widgets/input_box.rs) | 94 | Ports `Tools/InputBox.cs`: modal "prompt + text + OK/Cancel" dialog with optional validator. |
 | [`app/src/ui/widgets/label_tb.rs`](../app/src/ui/widgets/label_tb.rs) | 122 | Ports `UserControls/LabelTB.cs`: override slider (Rapid / Linear / Power) with label and reset button. |
@@ -196,18 +196,19 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/base/src/csv/dictionary.rs`](../crates/base/src/csv/dictionary.rs) | 64 | Port of `CSV/CsvDictionary.cs`. |
 | [`crates/base/src/csv/formatted_message.rs`](../crates/base/src/csv/formatted_message.rs) | 398 | Port of `CSV/FormattedMessage.cs` (`FormattedMessage`, `StringList`). |
 | [`crates/base/src/csv/mod.rs`](../crates/base/src/csv/mod.rs) | 13 | Port of `CSV/CsvDictionary.cs`, `CSV/FormattedMessage.cs` and static `CSVD` (from `GrblCommand.cs`). |
-| [`crates/base/src/lib.rs`](../crates/base/src/lib.rs) | 18 | `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound. |
+| [`crates/base/src/lib.rs`](../crates/base/src/lib.rs) | 19 | `lg-base`: settings, paths, logger, tools, CSV dictionaries, NRBF, sound, test support. |
 | [`crates/base/src/logger/async_file.rs`](../crates/base/src/logger/async_file.rs) | 124 | Port of `Logger/AsyncLogFile.cs`: queue + writer thread. |
 | [`crates/base/src/logger/com.rs`](../crates/base/src/logger/com.rs) | 108 | Port of `Logger/ComLogger.cs`: TX/RX recording to a file. |
-| [`crates/base/src/logger/mod.rs`](../crates/base/src/logger/mod.rs) | 102 | Port of `Logger/Logger.cs` (session log) and `Logger/ComLogger.cs` (TX/RX log). |
+| [`crates/base/src/logger/mod.rs`](../crates/base/src/logger/mod.rs) | 109 | Port of `Logger/Logger.cs` (session log) and `Logger/ComLogger.cs` (TX/RX log). |
 | [`crates/base/src/nrbf/convert.rs`](../crates/base/src/nrbf/convert.rs) | 453 | Graph <-> JSON / typed helpers: settings import, `List<CustomButton>` read and build. |
 | [`crates/base/src/nrbf/mod.rs`](../crates/base/src/nrbf/mod.rs) | 192 | MS-NRBF (.NET `BinaryFormatter`) reader / writer and the `Tools/Serializer.cs` file container. |
 | [`crates/base/src/nrbf/reader.rs`](../crates/base/src/nrbf/reader.rs) | 323 | NRBF reader. |
-| [`crates/base/src/nrbf/serializer.rs`](../crates/base/src/nrbf/serializer.rs) | 226 | Port of `Tools/Serializer.cs`: text header (`<!-- Tag: Value -->` lines) + optional raw-deflate + NRBF payload. |
+| [`crates/base/src/nrbf/serializer.rs`](../crates/base/src/nrbf/serializer.rs) | 224 | Port of `Tools/Serializer.cs`: text header (`<!-- Tag: Value -->` lines) + optional raw-deflate + NRBF payload. |
 | [`crates/base/src/nrbf/writer.rs`](../crates/base/src/nrbf/writer.rs) | 345 | NRBF writer: re-emits a [`Graph`] byte-exact. |
-| [`crates/base/src/paths.rs`](../crates/base/src/paths.rs) | 253 | Port of `GrblCore.DataPath`, `GrblCore.TempPath`, `GrblCore.ExePath` (Core/GrblCore.cs) + resource dir lookup. |
-| [`crates/base/src/settings.rs`](../crates/base/src/settings.rs) | 354 | Port of `Settings.cs`: global key/value store with debounced save. |
-| [`crates/base/src/sound.rs`](../crates/base/src/sound.rs) | 150 | Port of `Sound/SoundEvent.cs`: play event sounds without blocking the caller. |
+| [`crates/base/src/paths.rs`](../crates/base/src/paths.rs) | 229 | Port of `GrblCore.DataPath`, `GrblCore.TempPath`, `GrblCore.ExePath` (Core/GrblCore.cs) + resource dir lookup. |
+| [`crates/base/src/settings.rs`](../crates/base/src/settings.rs) | 370 | Port of `Settings.cs`: global key/value store with debounced save. |
+| [`crates/base/src/sound.rs`](../crates/base/src/sound.rs) | 152 | Port of `Sound/SoundEvent.cs`: play event sounds without blocking the caller. |
+| [`crates/base/src/test_support.rs`](../crates/base/src/test_support.rs) | 396 | TEST SUPPORT (not for production code): one scratch root per test process, removed at process exit. |
 | [`crates/base/src/tools/cronometro.rs`](../crates/base/src/tools/cronometro.rs) | 268 | Port of `Tools/Cronometro.cs`: `TimingBase`, `ElapsedFromEvent`, `SimpleCrono`, `AdvancedCrono`, `PeriodicEventTimer`. |
 | [`crates/base/src/tools/hires_timer.rs`](../crates/base/src/tools/hires_timer.rs) | 70 | Port of `Tools/HiResTimer.cs` (class `HiResTimer`). |
 | [`crates/base/src/tools/math_helper.rs`](../crates/base/src/tools/math_helper.rs) | 117 | Port of `Tools/MathHelper.cs`: `MathHelper` and `RulerStepCalculator`. |
@@ -218,9 +219,9 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/base/src/tools/utils.rs`](../crates/base/src/tools/utils.rs) | 201 | Port of class `Utils` in `Tools/HiResTimer.cs` (TimeSpanToString, HumanReadableDateDiff, OpenLink). |
 | [`crates/base/src/tools/word_wrap.rs`](../crates/base/src/tools/word_wrap.rs) | 100 | Port of `Tools/WordWrap.cs`. Works on UTF-16 units like C# so lengths match. |
 | [`crates/base/tests/golden_timespan.rs`](../crates/base/tests/golden_timespan.rs) | 53 | Compare Utils.HumanReadableDateDiff / TimeSpanToString with Mono goldens. |
-| [`crates/base/tests/logger.rs`](../crates/base/tests/logger.rs) | 67 | Logger + ComLogger output tests. |
-| [`crates/base/tests/nrbf.rs`](../crates/base/tests/nrbf.rs) | 155 | NRBF reader / writer tests against StandardButtons.zbn and Mono-generated streams. |
-| [`crates/base/tests/settings.rs`](../crates/base/tests/settings.rs) | 126 | Settings store tests (one process, one test fn: the store is global). |
+| [`crates/base/tests/logger.rs`](../crates/base/tests/logger.rs) | 66 | Logger + ComLogger output tests. |
+| [`crates/base/tests/nrbf.rs`](../crates/base/tests/nrbf.rs) | 153 | NRBF reader / writer tests against StandardButtons.zbn and Mono-generated streams. |
+| [`crates/base/tests/settings.rs`](../crates/base/tests/settings.rs) | 124 | Settings store tests (one process, one test fn: the store is global). |
 
 ### `crates/clipper`
 
@@ -246,7 +247,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/core/src/com/serial.rs`](../crates/core/src/com/serial.rs) | 348 | Port of `ComWrapper/UsbSerial.cs`, `UsbSerial2.cs` and `RJCPSerial.cs`. |
 | [`crates/core/src/com/telnet.rs`](../crates/core/src/com/telnet.rs) | 256 | Port of `ComWrapper/Telnet.cs` (plain TCP line stream, no telnet option negotiation, like C#). |
 | [`crates/core/src/com/websocket.rs`](../crates/core/src/com/websocket.rs) | 280 | Port of `ComWrapper/LaserWebESP8266.cs` on top of `tungstenite` (client). |
-| [`crates/core/src/emulator/grbl_v11.rs`](../crates/core/src/emulator/grbl_v11.rs) | 585 | Port of `GrblEmulator/Grblv11Emulator.cs`: an in-process Grbl 1.1 look-alike. |
+| [`crates/core/src/emulator/grbl_v11.rs`](../crates/core/src/emulator/grbl_v11.rs) | 577 | Port of `GrblEmulator/Grblv11Emulator.cs`: an in-process Grbl 1.1 look-alike. |
 | [`crates/core/src/emulator/mod.rs`](../crates/core/src/emulator/mod.rs) | 48 | Port of `GrblEmulator/*` (the `EmulatorUI` form is UI work, only its hook is here). |
 | [`crates/core/src/emulator/websocket_emulator.rs`](../crates/core/src/emulator/websocket_emulator.rs) | 170 | Port of `GrblEmulator/WebsocketEmulator.cs`: a websocket server that serves one [`Grblv11Emulator`] per connection (tungstenite server instead of websocket-sharp). |
 | [`crates/core/src/grbl_core/expr.rs`](../crates/core/src/grbl_core/expr.rs) | 202 | Custom code evaluation of `GrblCore` (`ExecuteCustomCode` helpers, `EvaluateExpression`, `EvaluateCB`, `IsImmediate`, `GetImmediate`, `FormatNumber`). |
@@ -256,13 +257,13 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/core/src/grbl_core/testing.rs`](../crates/core/src/grbl_core/testing.rs) | 139 | Test support for the protocol golden tests (not part of the C# code). |
 | [`crates/core/src/grbl_core/time_projection.rs`](../crates/core/src/grbl_core/time_projection.rs) | 402 | Port of `TimeProjection` (in `Core/GrblCore.cs`): job counters, timing and pause accounting. |
 | [`crates/core/src/grbl_core/types.rs`](../crates/core/src/grbl_core/types.rs) | 475 | Enums, event and result types of `Core/GrblCore.cs` (nested types of `GrblCore`, delegates, events). |
-| [`crates/core/src/laser_life.rs`](../crates/core/src/laser_life.rs) | 639 | Port of `LaserLifeHandler` (+ `LaserLifeCounter`, `ListLLC`) from `Core/GrblCore.cs`. |
+| [`crates/core/src/laser_life.rs`](../crates/core/src/laser_life.rs) | 636 | Port of `LaserLifeHandler` (+ `LaserLifeCounter`, `ListLLC`) from `Core/GrblCore.cs`. |
 | [`crates/core/src/lib.rs`](../crates/core/src/lib.rs) | 28 | `lasergrbl-core`: GRBL streaming engine, communication links, emulator and support services. |
 | [`crates/core/src/sincro_start.rs`](../crates/core/src/sincro_start.rs) | 194 | Port of `SincroStart.cs`: "start all instances" signal between LaserGRBL processes. |
-| [`crates/core/src/usage_stats.rs`](../crates/core/src/usage_stats.rs) | 194 | Port of `UsageStats.cs`, local part only (PLAN section 6: no upload to the upstream server). |
+| [`crates/core/src/usage_stats.rs`](../crates/core/src/usage_stats.rs) | 191 | Port of `UsageStats.cs`, local part only (PLAN section 6: no upload to the upstream server). |
 | [`crates/core/src/util.rs`](../crates/core/src/util.rs) | 165 | Small helpers shared by the modules (GUID generation, TimeSpan setting codec, UTF-16 style substrings). |
-| [`crates/core/tests/engine.rs`](../crates/core/tests/engine.rs) | 588 | Engine tests against a recording fake link (deterministic replies) and against the in-process emulator. Expected command strings were derived by reading `Core/GrblCore.cs`. |
-| [`crates/core/tests/golden_protocol.rs`](../crates/core/tests/golden_protocol.rs) | 1130 | Protocol golden test: replays every `tests/golden/protocol/*.scn` scenario on the Rust core and compares the trace byte for byte with `*.txt`, which the ORIGINAL C# `GrblCore` (Mono) produced (`tools/golden/protocol/run.sh`). |
+| [`crates/core/tests/engine.rs`](../crates/core/tests/engine.rs) | 587 | Engine tests against a recording fake link (deterministic replies) and against the in-process emulator. Expected command strings were derived by reading `Core/GrblCore.cs`. |
+| [`crates/core/tests/golden_protocol.rs`](../crates/core/tests/golden_protocol.rs) | 1128 | Protocol golden test: replays every `tests/golden/protocol/*.scn` scenario on the Rust core and compares the trace byte for byte with `*.txt`, which the ORIGINAL C# `GrblCore` (Mono) produced (`tools/golden/protocol/run.sh`). |
 
 ### `crates/dotnet`
 
@@ -306,14 +307,14 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/gcode/src/state_builder.rs`](../crates/gcode/src/state_builder.rs) | 803 | Port of `StateBuilder.cs`: `StatePositionBuilder`, `StateBuilder`, `ModalElement`, `G2G3Helper`. |
 | [`crates/gcode/src/text.rs`](../crates/gcode/src/text.rs) | 106 | .NET string helpers (`Trim()`, `ToUpper()`, `ToLower()`) with Fx semantics. |
 | [`crates/gcode/src/vector.rs`](../crates/gcode/src/vector.rs) | 295 | Port of the vector loaders of `GrblFile.cs`: `LoadImagePotrace`, `LoadImportedSVG`, `LoadImageCenterline`. |
-| [`crates/gcode/tests/common/mod.rs`](../crates/gcode/tests/common/mod.rs) | 146 | Shared helpers for the golden tests: settings sandbox, conf parsing, escaping. |
+| [`crates/gcode/tests/common/mod.rs`](../crates/gcode/tests/common/mod.rs) | 144 | Shared helpers for the golden tests: settings sandbox, conf parsing, escaping. |
 | [`crates/gcode/tests/golden_analyze.rs`](../crates/gcode/tests/golden_analyze.rs) | 210 | gcode_analyze + state_builder goldens. |
 | [`crates/gcode/tests/golden_config.rs`](../crates/gcode/tests/golden_config.rs) | 124 | config golden: `GrblConfST` parsing + derived properties, `GrblVersionInfo` comparisons. |
 | [`crates/gcode/tests/golden_generators.rs`](../crates/gcode/tests/golden_generators.rs) | 73 | generators golden: cutting test, greyscale test, shake test. |
 | [`crates/gcode/tests/golden_l2l.rs`](../crates/gcode/tests/golden_l2l.rs) | 80 | l2l golden: `LoadImageL2L` over synthetic bitmaps. |
 | [`crates/gcode/tests/golden_parse.rs`](../crates/gcode/tests/golden_parse.rs) | 110 | gcode_parse golden: byte compare of the dump produced from `GrblCommand`. |
 | [`crates/gcode/tests/golden_potrace.rs`](../crates/gcode/tests/golden_potrace.rs) | 137 | potrace golden: `LoadImagePotrace` (vector fills; raster fills are smoke-tested only because GDI+ resampling is not reproducible). |
-| [`crates/gcode/tests/misc.rs`](../crates/gcode/tests/misc.rs) | 180 | Hand-written checks: clone-shared result, messages, SaveGCODE, drawing, svg glue, optimizer. |
+| [`crates/gcode/tests/misc.rs`](../crates/gcode/tests/misc.rs) | 178 | Hand-written checks: clone-shared result, messages, SaveGCODE, drawing, svg glue, optimizer. |
 
 ### `crates/hershey`
 
@@ -364,19 +365,19 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 
 | file | lines | purpose |
 |---|---:|---|
-| [`crates/services/src/autotrace.rs`](../crates/services/src/autotrace.rs) | 193 | Port of `Autotrace/Autotrace.cs`: run the external `autotrace` binary on a bitmap. |
-| [`crates/services/src/custom_button.rs`](../crates/services/src/custom_button.rs) | 688 | Port of `CustomButton.cs`: `CustomButton` and the `CustomButtons` list. |
-| [`crates/services/src/flash_grbl.rs`](../crates/services/src/flash_grbl.rs) | 274 | Port of the logic of `Firmware/FlashGrbl.cs` (the form itself is UI). |
+| [`crates/services/src/autotrace.rs`](../crates/services/src/autotrace.rs) | 190 | Port of `Autotrace/Autotrace.cs`: run the external `autotrace` binary on a bitmap. |
+| [`crates/services/src/custom_button.rs`](../crates/services/src/custom_button.rs) | 685 | Port of `CustomButton.cs`: `CustomButton` and the `CustomButtons` list. |
+| [`crates/services/src/flash_grbl.rs`](../crates/services/src/flash_grbl.rs) | 271 | Port of the logic of `Firmware/FlashGrbl.cs` (the form itself is UI). |
 | [`crates/services/src/hotkeys.rs`](../crates/services/src/hotkeys.rs) | 888 | Port of `HotKeysManager.cs`: hotkey model, default bindings, key event dispatch (pure). |
 | [`crates/services/src/image_processor/file_dpi.rs`](../crates/services/src/image_processor/file_dpi.rs) | 163 | `Bitmap.HorizontalResolution` of the file (GDI+ reads it from the image header). |
 | [`crates/services/src/image_processor/job.rs`](../crates/services/src/image_processor/job.rs) | 388 | Worker side of `ImageProcessor`: `CreatePreview`, `DoTrueWork` and the bitmap pipeline. A [`Job`] is the C# `Clone()` of the processor that a thread works on. |
 | [`crates/services/src/image_processor/mod.rs`](../crates/services/src/image_processor/mod.rs) | 727 | Port of `RasterConverter/ImageProcessor.cs`. |
 | [`crates/services/src/image_processor/overlay.rs`](../crates/services/src/image_processor/overlay.rs) | 259 | Pixel drawing helpers of the previews (GDI+ `Graphics` calls reproduced by direct pixel writes). |
-| [`crates/services/src/image_processor/tests.rs`](../crates/services/src/image_processor/tests.rs) | 346 | Unit tests of the image processor (preview + generator wiring). |
-| [`crates/services/src/layer_presets.rs`](../crates/services/src/layer_presets.rs) | 423 | Named layer presets: all per-layer values of the "Parameters" dock (except `enabled`). |
-| [`crates/services/src/lib.rs`](../crates/services/src/lib.rs) | 52 | `lg-services`: non-UI services of LaserGRBL that do not need the `GrblCore` engine. |
-| [`crates/services/src/project.rs`](../crates/services/src/project.rs) | 596 | Port of `Tools/Project.cs`: LaserGRBL project files (`.lps`). |
-| [`crates/services/src/raster_dock.rs`](../crates/services/src/raster_dock.rs) | 461 | Backend of the raster-image dock: brightness, histogram, layout and line-to-line G-code with a brightness to power map. |
+| [`crates/services/src/image_processor/tests.rs`](../crates/services/src/image_processor/tests.rs) | 343 | Unit tests of the image processor (preview + generator wiring). |
+| [`crates/services/src/layer_presets.rs`](../crates/services/src/layer_presets.rs) | 420 | Named layer presets: all per-layer values of the "Parameters" dock (except `enabled`). |
+| [`crates/services/src/lib.rs`](../crates/services/src/lib.rs) | 76 | `lg-services`: non-UI services of LaserGRBL that do not need the `GrblCore` engine. |
+| [`crates/services/src/project.rs`](../crates/services/src/project.rs) | 595 | Port of `Tools/Project.cs`: LaserGRBL project files (`.lps`). |
+| [`crates/services/src/raster_dock.rs`](../crates/services/src/raster_dock.rs) | 460 | Backend of the raster-image dock: brightness, histogram, layout and line-to-line G-code with a brightness to power map. |
 | [`crates/services/src/wifi_discovery.rs`](../crates/services/src/wifi_discovery.rs) | 901 | Port of `WiFiDiscovery/IPAddressHelper.cs` and the non-UI parts of `DiscoveryForm.cs`. |
 
 ### `crates/svg2gcode`

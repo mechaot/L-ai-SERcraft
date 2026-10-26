@@ -157,15 +157,12 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn runs_configured_binary_and_cleans_up() {
-        use std::os::unix::fs::PermissionsExt;
         // shares the global settings ("Autotrace Path") and the temp folder with the image processor tests
         let _g = crate::test_support::settings_lock();
-        let d = std::env::temp_dir().join(format!("lg_services_at_{}", std::process::id()));
-        std::fs::create_dir_all(&d).unwrap();
+        let d = lg_base::paths::test_dir("services_at");
         let script = d.join("fake-autotrace");
         // prints the args so the test can see them
-        std::fs::write(&script, "#!/bin/sh\necho \"<svg>$*</svg>\"\n").unwrap();
-        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_support::write_script(&script, "#!/bin/sh\necho \"<svg>$*</svg>\"\n");
         lg_base::settings::set(SETTING_PATH, script.display().to_string());
         let img = RgbaImage::from_pixel(4, 4, image::Rgba([255, 255, 255, 255]));
         let svg = bitmap_to_svg_string(&img, true, 100, false, 0).unwrap();

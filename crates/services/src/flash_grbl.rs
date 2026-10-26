@@ -257,12 +257,9 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn streams_output_and_exit_code() {
-        use std::os::unix::fs::PermissionsExt;
-        let d = std::env::temp_dir().join(format!("lg_services_fg_{}", std::process::id()));
-        std::fs::create_dir_all(&d).unwrap();
+        let d = lg_base::paths::test_dir("services_fg");
         let s = d.join("fake-avrdude");
-        std::fs::write(&s, "#!/bin/sh\necho out1\necho err1 >&2\nprintf 'prog\\rdone\\n'\nexit 3\n").unwrap();
-        std::fs::set_permissions(&s, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_support::write_script(&s, "#!/bin/sh\necho out1\necho err1 >&2\nprintf 'prog\\rdone\\n'\nexit 3\n");
         let mut got = String::new();
         let rc = run_avrdude(&s, &[], &mut |c| got.push_str(c)).unwrap();
         assert_eq!(rc, 3);

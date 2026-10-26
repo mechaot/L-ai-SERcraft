@@ -149,12 +149,9 @@ fn vector_preview_has_red_borders() {
 
 #[cfg(unix)]
 fn fake_autotrace(body: &str) -> std::path::PathBuf {
-    use std::os::unix::fs::PermissionsExt;
-    let d = std::env::temp_dir().join(format!("lg_services_ip_{}", std::process::id()));
-    std::fs::create_dir_all(&d).unwrap();
+    let d = lg_base::paths::test_dir("services_ip");
     let s = d.join(format!("fake-{}", body.len()));
-    std::fs::write(&s, format!("#!/bin/sh\n{body}\n")).unwrap();
-    std::fs::set_permissions(&s, std::fs::Permissions::from_mode(0o755)).unwrap();
+    crate::test_support::write_script(&s, &format!("#!/bin/sh\n{body}\n"));
     s
 }
 

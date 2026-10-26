@@ -538,10 +538,7 @@ mod tests {
     fn scratch(name: &str) -> PathBuf {
         // import errors log to the session log in the data dir: isolate before any test code runs
         crate::test_support::init_env();
-        let d = std::env::temp_dir().join(format!("lg_services_cb_{}_{name}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&d);
-        std::fs::create_dir_all(&d).unwrap();
-        d
+        lg_base::paths::test_dir(&format!("services_cb_{name}"))
     }
 
     #[test]

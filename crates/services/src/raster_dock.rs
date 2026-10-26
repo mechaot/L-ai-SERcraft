@@ -446,8 +446,7 @@ mod tests {
     #[test]
     fn load_image_reads_png() {
         let _g = settings_lock();
-        let dir = std::env::temp_dir().join(format!("lg_raster_dock_{}", std::process::id()));
-        std::fs::create_dir_all(&dir).unwrap();
+        let dir = lg_base::paths::test_dir("raster_dock");
         let path = dir.join("t.png");
         RgbaImage::from_pixel(7, 3, Rgba([1, 2, 3, 255])).save(&path).unwrap();
         let (img, dpi) = load_image(&path).unwrap();

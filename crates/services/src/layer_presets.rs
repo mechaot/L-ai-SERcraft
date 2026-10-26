@@ -271,12 +271,9 @@ impl PresetDb {
 mod tests {
     use super::*;
 
-    /// Fresh temp dir. `tag`: test tag. Returns the dir.
+    /// Fresh scratch dir. `tag`: test tag. Returns the dir.
     fn tmp(tag: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("lg_presets_{tag}_{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&d);
-        std::fs::create_dir_all(&d).unwrap();
-        d
+        lg_base::paths::test_dir(&format!("presets_{tag}"))
     }
 
     fn preset(name: &str, speed: i32) -> LayerPreset {

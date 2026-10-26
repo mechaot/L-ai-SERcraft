@@ -8,8 +8,7 @@ use lg_base::logger;
 
 #[test]
 fn logger_files() {
-    let d = std::env::temp_dir().join(format!("lg_logger_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&d);
+    let d = lg_base::paths::test_dir("logger");
     lg_base::paths::set_data_path_override(d.clone());
 
     // pre-existing log with 1500 lines gets rotated to the last 1000

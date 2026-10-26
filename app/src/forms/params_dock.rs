@@ -1006,7 +1006,7 @@ mod tests {
     }
 
     fn write_svg(tag: &str) -> std::path::PathBuf {
-        let p = std::env::temp_dir().join(format!("lg-params-{tag}-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir(&format!("params_{tag}")).join("in.svg");
         std::fs::write(&p, r#"<svg xmlns="http://www.w3.org/2000/svg" width="20mm" height="20mm" viewBox="0 0 20 20"><path d="M1 1 L19 1 L19 19 Z" stroke="black" fill="none"/></svg>"#).unwrap();
         p
     }
@@ -1153,8 +1153,7 @@ mod tests {
     #[test]
     fn save_preset_overwrites_same_name() {
         let _g = settings_guard();
-        let f = std::env::temp_dir().join(format!("lg-params-presets-{}", std::process::id())).join("LayerPresets.json");
-        let _ = std::fs::remove_file(&f);
+        let f = lg_base::paths::test_dir("params_presets").join("LayerPresets.json");
         let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
         let mut d = ParamsDock::with_presets(db);
         d.preset_name = "Test".into();
@@ -1265,7 +1264,7 @@ mod tests {
 
     /// Two-layer SVG in the scratchpad-independent temp dir. `tag`: file tag. Returns path.
     fn write_layer_svg(tag: &str) -> std::path::PathBuf {
-        let p = std::env::temp_dir().join(format!("lg-params-{tag}-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir(&format!("params_{tag}")).join("in.svg");
         std::fs::write(
             &p,
             r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="40mm" height="40mm" viewBox="0 0 40 40">
@@ -1429,8 +1428,7 @@ mod e2e {
             let (tx, rx) = crossbeam_channel::unbounded();
             let core = GrblCore::new(Firmware::Grbl, tx);
             // temp-file DB with only the example: never the real config file
-            let f = std::env::temp_dir().join(format!("lg-e2e-presets-{}", std::process::id())).join("LayerPresets.json");
-            let _ = std::fs::remove_file(&f);
+            let f = lg_base::paths::test_dir("e2e_presets").join("LayerPresets.json");
             let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
             let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::with_presets(db), texts: Vec::new(), rx };
             h.frame(vec![]);
@@ -1570,7 +1568,7 @@ mod e2e {
 
     /// Write the test SVG. `tag`: file tag. Returns the path.
     fn write_svg(tag: &str) -> std::path::PathBuf {
-        let p = std::env::temp_dir().join(format!("lg-e2e-{tag}-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir(&format!("e2e_{tag}")).join("in.svg");
         std::fs::write(&p, SVG).unwrap();
         p
     }
@@ -1707,7 +1705,7 @@ mod e2e {
     #[test]
     fn fill_and_cross_toggle_lines() {
         let _g = settings_guard();
-        let p = std::env::temp_dir().join(format!("lg-e2e-fill-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir("e2e_fill").join("in.svg");
         std::fs::write(&p, FILL_SVG).unwrap();
         let mut h = Harness::new();
         h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
@@ -1785,7 +1783,7 @@ mod e2e {
     #[test]
     fn fill_per_shape_toggle_keeps_lines() {
         let _g = settings_guard();
-        let p = std::env::temp_dir().join(format!("lg-e2e-pershape-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir("e2e_pershape").join("in.svg");
         std::fs::write(&p, TWO_RECTS_SVG).unwrap();
         let mut h = Harness::new();
         h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);

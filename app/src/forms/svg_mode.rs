@@ -107,11 +107,10 @@ mod tests {
 
     #[test]
     fn renders_preview() {
-        let p = std::env::temp_dir().join(format!("lg-u4a-mode-{}.svg", std::process::id()));
+        let p = lg_base::paths::test_dir("svg_mode").join("mode.svg");
         std::fs::write(&p, r#"<svg xmlns="http://www.w3.org/2000/svg" width="40" height="20"><rect width="40" height="20" fill="red"/></svg>"#).unwrap();
         let img = render_svg_preview(&p, 100).unwrap();
         assert_eq!(img.size, [100, 50]);
-        let _ = std::fs::remove_file(&p);
         assert!(render_svg_preview(Path::new("/nonexistent.svg"), 100).is_none());
     }
 }

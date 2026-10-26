@@ -383,9 +383,11 @@ mod tests {
     fn frame(ctx: &egui::Context, hist: &[u32; 256], start: &mut u8, stop: &mut u8, events: Vec<egui::Event>) -> HistogramOutput {
         let ri = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(300.0, 200.0))), events, ..Default::default() };
         let mut out = HistogramOutput::default();
-        let _ = ctx.run_ui(ri, |ui| {
+        let mut full = ctx.run_ui(ri, |ui| {
             out = BrightnessHistogram::new(hist, start, stop).id(Id::unique("hist-test")).power(PowerScale { s_min: 0, s_max: 1000, s_limit: 1000 }).show(ui);
         });
+        // no renderer here: drop pending texture deltas, else epaint panics on drop in debug builds
+        full.textures_delta.clear();
         out
     }
 

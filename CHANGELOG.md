@@ -23,6 +23,7 @@ newest first.
 - Parameters dock and image dock: the info buttons in Laser Options (links to lasergrbl.com) are gone; the laser mode combo uses the full width.
 - Settings texts no longer say that LaserGRBL does something; other languages fall back to English for them.
 - Dev: all tests now write only to temp folders (`lg_base::paths::isolate_for_tests`), never to `~/.config/L-ai-SERcraft`. `tools/check_test_isolation.py` runs every test alone with a scratch HOME/XDG and fails on any file left behind; CI runs it on Linux.
+- Dev: test scratch files live in one folder per test process, `<temp>/lg-tests/<tag>-<pid>-<time>` (`lg_base::paths::test_dir`, `isolate_for_tests`), which is removed when the process exits; leftovers of killed runs and old `lg_*` folders are swept after one hour. `tools/check_test_isolation.py` also fails on anything a test leaves in its temp dir.
 
 ### Removed
 - Unused texts of the removed donate, community, auto-update and Telegram features from all language files.

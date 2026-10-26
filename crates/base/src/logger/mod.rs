@@ -83,6 +83,13 @@ pub fn start() {
 pub fn stop() {
     log_multi_line("Program", "---------------- PROGRAM STOP -----------------");
     with_file(|f| f.log("\r\n"));
+    shutdown();
+}
+
+/// Drain the queue and stop the writer thread, without a banner. No-op when the log never opened.
+///
+/// Process-exit helper (`test_support` cleanup). Later logs reopen the file.
+pub fn shutdown() {
     let taken = FILE.lock().unwrap_or_else(|e| e.into_inner()).take();
     if let Some(f) = taken {
         f.stop();
