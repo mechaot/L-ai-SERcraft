@@ -17,7 +17,7 @@ use eframe::egui;
 /// Own app version (`Cargo.toml`); display only, never a compat value.
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Window title as in `RefreshFormTitle`: "L-ai-SERcraft v1.3.0" (+ " (for X)" for non-GRBL firmware).
+/// Window title as in `RefreshFormTitle`: "L-ai-SERcraft v<version>" (+ " (for X)" for non-GRBL firmware).
 ///
 /// `firmware_suffix`: Some("Marlin") for non-Grbl firmware. Returns title text.
 pub fn form_title(firmware_suffix: Option<&str>) -> String {
@@ -147,8 +147,10 @@ mod tests {
 
     #[test]
     fn title() {
-        assert_eq!(form_title(None), "L-ai-SERcraft v1.3.0");
-        assert_eq!(form_title(Some("Marlin")), "L-ai-SERcraft v1.3.0 (for Marlin)");
+        // expected text from Cargo version, no hard-coded number
+        let v = env!("CARGO_PKG_VERSION");
+        assert_eq!(form_title(None), format!("L-ai-SERcraft v{v}"));
+        assert_eq!(form_title(Some("Marlin")), format!("L-ai-SERcraft v{v} (for Marlin)"));
     }
 
     #[test]

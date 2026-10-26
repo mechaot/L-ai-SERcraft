@@ -3,7 +3,7 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
-## Unreleased
+## 1.4.0 - 2026-10-26
 
 ### Added
 - Raster images (jpg, jpeg, bmp, png, gif) open straight into the Parameters dock instead of the modal import dialog.

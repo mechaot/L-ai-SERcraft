@@ -131,7 +131,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/main/command_log.rs`](../app/src/forms/main/command_log.rs) | 178 | Ports `UserControls/CommandLog.cs`: virtualised list of sent commands and board messages. |
 | [`app/src/forms/main/connect_log.rs`](../app/src/forms/main/connect_log.rs) | 378 | Ports `ConnectLogForm.cs` (+Designer): connection, file/progress and manual command / log group boxes. |
 | [`app/src/forms/main/dialogs.rs`](../app/src/forms/main/dialogs.rs) | 127 | Dialog host of the main window: one `Overlay` per modal form, shown one at a time (C# `ShowDialog`). |
-| [`app/src/forms/main/exception.rs`](../app/src/forms/main/exception.rs) | 170 | Ports `ExceptionManager.cs` (+Designer): panic hook that logs and queues a report, and the dialog. |
+| [`app/src/forms/main/exception.rs`](../app/src/forms/main/exception.rs) | 172 | Ports `ExceptionManager.cs` (+Designer): panic hook that logs and queues a report, and the dialog. |
 | [`app/src/forms/main/jog.rs`](../app/src/forms/main/jog.rs) | 247 | Ports `JogForm.cs` (+Designer): direction pad, Z buttons, speed and step sliders, and the `StepBar`, `DirectionButton`, `DirectionStepButton` helper controls. |
 | [`app/src/forms/main/menus.rs`](../app/src/forms/main/menus.rs) | 415 | Ports the menu bar of `MainForm.Designer.cs` + `MainForm.AssignIcons/TimerUpdate/*_Click` (menu part). |
 | [`app/src/forms/main/mod.rs`](../app/src/forms/main/mod.rs) | 15 | Main window pieces: `MainForm` menus and status bar, `ConnectLogForm`, `JogForm`, `CommandLog`, `ExceptionManager`, and the dialog host used by `main_form.rs`. |
@@ -153,7 +153,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/save_options.rs`](../app/src/forms/save_options.rs) | 131 | Ports `SaveOptionForm.cs` (+ Designer): "Save G-code options" dialog. |
 | [`app/src/forms/splash.rs`](../app/src/forms/splash.rs) | 84 | Ports `SplashScreenForm.cs` (+ Designer): borderless, top-most splash with logo, version and 2 s timer. |
 | [`app/src/forms/svg_mode.rs`](../app/src/forms/svg_mode.rs) | 116 | Ports `SvgConverter/SvgModeForm.cs` (+ Designer): choose "Load as Vector" / "Load as Image" for an SVG. |
-| [`app/src/main.rs`](../app/src/main.rs) | 159 | L-ai-SERcraft egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`). |
+| [`app/src/main.rs`](../app/src/main.rs) | 161 | L-ai-SERcraft egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`). |
 | [`app/src/main_form.rs`](../app/src/main_form.rs) | 1310 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
 | [`app/src/ui/dialog.rs`](../app/src/ui/dialog.rs) | 419 | Modal-form framework: WinForms `ShowDialog`, `MessageBox.Show`, `OpenFileDialog/SaveFileDialog`. |
 | [`app/src/ui/fonts.rs`](../app/src/ui/fonts.rs) | 117 | Font setup: egui default fonts plus a system CJK fallback font when one exists. |
@@ -219,7 +219,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/base/src/tools/utils.rs`](../crates/base/src/tools/utils.rs) | 201 | Port of class `Utils` in `Tools/HiResTimer.cs` (TimeSpanToString, HumanReadableDateDiff, OpenLink). |
 | [`crates/base/src/tools/word_wrap.rs`](../crates/base/src/tools/word_wrap.rs) | 100 | Port of `Tools/WordWrap.cs`. Works on UTF-16 units like C# so lengths match. |
 | [`crates/base/tests/golden_timespan.rs`](../crates/base/tests/golden_timespan.rs) | 53 | Compare Utils.HumanReadableDateDiff / TimeSpanToString with Mono goldens. |
-| [`crates/base/tests/logger.rs`](../crates/base/tests/logger.rs) | 66 | Logger + ComLogger output tests. |
+| [`crates/base/tests/logger.rs`](../crates/base/tests/logger.rs) | 68 | Logger + ComLogger output tests. |
 | [`crates/base/tests/nrbf.rs`](../crates/base/tests/nrbf.rs) | 153 | NRBF reader / writer tests against StandardButtons.zbn and Mono-generated streams. |
 | [`crates/base/tests/settings.rs`](../crates/base/tests/settings.rs) | 124 | Settings store tests (one process, one test fn: the store is global). |
 
