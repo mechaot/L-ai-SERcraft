@@ -3,7 +3,7 @@
 
 //! Render branding SVGs (resources/branding/*.svg) to PNG. Text uses installed system fonts.
 //!
-//! Usage: `cargo run -p laiserctrl --example render_artwork -- <in.svg> <out.png> <width_px>`
+//! Usage: `cargo run -p laisercraft --example render_artwork -- <in.svg> <out.png> <width_px>`
 
 use std::path::Path;
 

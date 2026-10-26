@@ -9,7 +9,7 @@
 //! `<exe>/Autotrace/autotrace.exe` when present, else `autotrace` from `PATH`.
 //! `AutotraceTest.cs` is a developer test form (N/A).
 //!
-//! Deviation: the temp PNG goes to `<temp>/L-ai-SERctrl/Autotrace/` (C# used `<data>\Autotrace\`).
+//! Deviation: the temp PNG goes to `<temp>/L-ai-SERcraft/Autotrace/` (C# used `<data>\Autotrace\`).
 
 use image::RgbaImage;
 use std::path::{Path, PathBuf};
@@ -47,7 +47,7 @@ impl std::error::Error for AutotraceError {}
 
 /// C# `Autotrace.TempPath`: folder of the temporary PNGs (created on use).
 ///
-/// Returns `<temp>/L-ai-SERctrl/Autotrace`.
+/// Returns `<temp>/L-ai-SERcraft/Autotrace`.
 pub fn temp_path() -> PathBuf {
     lg_base::paths::temp_path().join("Autotrace")
 }

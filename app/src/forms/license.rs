@@ -226,13 +226,13 @@ mod tests {
         // NOTICE links render as clickable segments
         assert!(NOTICE_MD.lines().flat_map(split_links).any(|s| s.0 && s.1 == "https://github.com/arkypita/LaserGRBL"));
         // LICENSE.md carries both copyright blocks
-        assert!(LICENSE_MD.contains("COPYRIGHT NOTICE FOR L-ai-SERctrl") && LICENSE_MD.contains("COPYRIGHT NOTICE FOR LaserGRBL"));
+        assert!(LICENSE_MD.contains("COPYRIGHT NOTICE FOR L-ai-SERcraft") && LICENSE_MD.contains("COPYRIGHT NOTICE FOR LaserGRBL"));
     }
 
     #[test]
     fn source_text_has_version() {
         let s = tr_fmt("LicenseForm.SourceText", &[&"9.9.9"]);
-        assert!(s.contains("L-ai-SERctrl-9.9.9-source.tar.gz"), "{s}");    }
+        assert!(s.contains("L-ai-SERcraft-9.9.9-source.tar.gz"), "{s}");    }
 
     #[test]
     fn credit_links_clickable() {

@@ -3,7 +3,7 @@
 // Copyright (C) 2026 Andreas Pösch (Rust port and changes)
 
 //! Widget gallery: shows every theme color, icon, widget and dialog for visual checks.
-//! Start with `laiserctrl --gallery`.
+//! Start with `laisercraft --gallery`.
 
 use eframe::egui::{self, Color32, RichText, Ui, Vec2};
 

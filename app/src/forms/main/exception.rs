@@ -163,6 +163,6 @@ mod tests {
 
     #[test]
     fn header_mentions_version() {
-        assert!(header(None).starts_with("L-ai-SERctrl v1.2.1"));
+        assert!(header(None).starts_with("L-ai-SERcraft v1.3.0"));
     }
 }

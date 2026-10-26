@@ -2,15 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Andreas Pösch
 
-# build-appimage.sh: build L-ai-SERctrl AppImage.
+# build-appimage.sh: build L-ai-SERcraft AppImage.
 #
 # Usage: packaging/appimage/build-appimage.sh [--native] [--install-deps] [--out DIR] [--skip-build]
 #   --native        plain `cargo build` (binary needs host-new glibc)
 #   --install-deps  install zig + cargo-zigbuild into cache (user space, no root)
 #   --out DIR       output dir (default: <repo>/dist)
 #   --skip-build    reuse existing release binary
-# Env: XDG_CACHE_HOME (cache = $XDG_CACHE_HOME/laiserctrl-appimage, else <repo>/.cache/appimage)
-# Output: DIR/L-ai-SERctrl-<version>-x86_64.AppImage, prints max GLIBC needed.
+# Env: XDG_CACHE_HOME (cache = $XDG_CACHE_HOME/laisercraft-appimage, else <repo>/.cache/appimage)
+# Output: DIR/L-ai-SERcraft-<version>-x86_64.AppImage, prints max GLIBC needed.
 # Default build: cargo-zigbuild vs glibc 2.28 if found; else native with warning.
 set -euo pipefail
 
@@ -21,7 +21,7 @@ TARGET="x86_64-unknown-linux-gnu"
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-CACHE="${XDG_CACHE_HOME:+$XDG_CACHE_HOME/laiserctrl-appimage}"
+CACHE="${XDG_CACHE_HOME:+$XDG_CACHE_HOME/laisercraft-appimage}"
 CACHE="${CACHE:-$ROOT/.cache/appimage}"
 OUT="$ROOT/dist"
 NATIVE=0; INSTALL=0; SKIP=0
@@ -59,17 +59,17 @@ if [ "$SKIP" = 0 ]; then
   if [ "$NATIVE" = 0 ] && command -v cargo-zigbuild >/dev/null 2>&1 \
      && { command -v zig >/dev/null 2>&1 || python3 -m ziglang version >/dev/null 2>&1; }; then
     echo ">> zigbuild, glibc $GLIBC_BASE baseline"
-    cargo zigbuild --release -p laiserctrl --target "$TARGET.$GLIBC_BASE"
-    BIN="$ROOT/target/$TARGET/release/laiserctrl"
+    cargo zigbuild --release -p laisercraft --target "$TARGET.$GLIBC_BASE"
+    BIN="$ROOT/target/$TARGET/release/laisercraft"
   else
     echo "WARNING: native build; binary needs host glibc (not portable to older distros)." >&2
     echo "         Use --install-deps for glibc $GLIBC_BASE baseline via zig." >&2
     cargo build --release
-    BIN="$ROOT/target/release/laiserctrl"
+    BIN="$ROOT/target/release/laisercraft"
   fi
 else
   # Pick newest existing binary.
-  BIN="$(ls -t "$ROOT/target/$TARGET/release/laiserctrl" "$ROOT/target/release/laiserctrl" 2>/dev/null | head -1)"
+  BIN="$(ls -t "$ROOT/target/$TARGET/release/laisercraft" "$ROOT/target/release/laisercraft" 2>/dev/null | head -1)"
 fi
 [ -x "$BIN" ] || { echo "binary not found: $BIN" >&2; exit 1; }
 
@@ -84,28 +84,28 @@ fi
 # Assemble AppDir.
 APPDIR="$CACHE/AppDir"
 rm -rf "$APPDIR"
-mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/laiserctrl" "$APPDIR/usr/share/applications" \
+mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/laisercraft" "$APPDIR/usr/share/applications" \
          "$APPDIR/usr/share/metainfo" "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-install -m755 "$BIN" "$APPDIR/usr/bin/laiserctrl"
-cp -a "$ROOT/resources" "$APPDIR/usr/share/laiserctrl/resources"
+install -m755 "$BIN" "$APPDIR/usr/bin/laisercraft"
+cp -a "$ROOT/resources" "$APPDIR/usr/share/laisercraft/resources"
 install -m755 "$HERE/AppRun" "$APPDIR/AppRun"
-install -m644 "$HERE/laiserctrl.desktop" "$APPDIR/laiserctrl.desktop"
-install -m644 "$HERE/laiserctrl.desktop" "$APPDIR/usr/share/applications/laiserctrl.desktop"
-install -m644 "$HERE/io.github.mechaot.laiserctrl.appdata.xml" "$APPDIR/usr/share/metainfo/"
+install -m644 "$HERE/laisercraft.desktop" "$APPDIR/laisercraft.desktop"
+install -m644 "$HERE/laisercraft.desktop" "$APPDIR/usr/share/applications/laisercraft.desktop"
+install -m644 "$HERE/io.github.mechaot.laisercraft.appdata.xml" "$APPDIR/usr/share/metainfo/"
 # Legal files: license, notices, changelog, Rust dependency license texts (generated now).
-DOCDIR="$APPDIR/usr/share/doc/laiserctrl"
+DOCDIR="$APPDIR/usr/share/doc/laisercraft"
 mkdir -p "$DOCDIR"
 for f in LICENSE.md NOTICE.md CHANGELOG.md; do install -m644 "$ROOT/$f" "$DOCDIR/$f"; done
 python3 -I "$ROOT/tools/gen_third_party.py" --texts "$DOCDIR/THIRD_PARTY_LICENSES.txt"
 # Icon: original artwork, already 256x256 PNG.
-install -m644 "$ROOT/resources/branding/icon.png" "$APPDIR/laiserctrl.png"
-cp "$APPDIR/laiserctrl.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/laiserctrl.png"
+install -m644 "$ROOT/resources/branding/icon.png" "$APPDIR/laisercraft.png"
+cp "$APPDIR/laisercraft.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/laisercraft.png"
 
 # Report max GLIBC symbol version needed.
 MAXG="$(objdump -T "$BIN" 2>/dev/null | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -V | tail -1 || true)"
 echo ">> max GLIBC required: ${MAXG:-unknown}"
 
 # Pack. Extract-and-run: no FUSE needed.
-OUTFILE="$OUT/L-ai-SERctrl-$VERSION-x86_64.AppImage"
+OUTFILE="$OUT/L-ai-SERcraft-$VERSION-x86_64.AppImage"
 ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$TOOL" --no-appstream "$APPDIR" "$OUTFILE"
 echo ">> built $OUTFILE ($(du -h "$OUTFILE" | cut -f1))"

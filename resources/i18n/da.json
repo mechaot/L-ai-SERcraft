@@ -134,7 +134,7 @@
  "SettingsForm.BtnSave.Text": "Gem",
  "SettingsForm.CBSupportPWM.Text": "Understøt PWM",
  "SettingsForm.groupBox1.Text": "Hardware egenskaber",
- "SettingsForm.label1.Text": "L-ai-SERctrl bruger effektmodulering via G-Codes \"S kommando\" til at lave gråtone farver.\\n Din laser skal understøtte TTL kontrol på arduino PIN D11. Hvis ikke, skal du deaktivere PWN understøttelse.",
+ "SettingsForm.label1.Text": "L-ai-SERcraft bruger effektmodulering via G-Codes \"S kommando\" til at lave gråtone farver.\\n Din laser skal understøtte TTL kontrol på arduino PIN D11. Hvis ikke, skal du deaktivere PWN understøttelse.",
  "Strings.BoxAutoUpdateFailed": "Automatic update failed!\nPlease manually download the new version from lasergrbl site.",
  "Strings.BoxAutoUpdateRequireAdmin": "Update require administrator privilege!",
  "Strings.BoxAutoUpdateResult": "Update result",

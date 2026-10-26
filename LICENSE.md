@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------------
-COPYRIGHT NOTICE FOR L-ai-SERctrl:
+COPYRIGHT NOTICE FOR L-ai-SERcraft:
 ------------------------------------------------------------------------------
 
-L-ai-SERctrl - laser engraving & cutting control
+L-ai-SERcraft - laser engraving & cutting control
 Copyright (C) 2026 Andreas Pösch (mechaot)
 
-L-ai-SERctrl is a modified version of LaserGRBL 7.14.1:
+L-ai-SERcraft is a modified version of LaserGRBL 7.14.1:
   LaserGRBL - Laser optimized GUI for Grbl
   Copyright (C) 2016-2025 Diego Settimi (arkypita) and the LaserGRBL contributors
   https://github.com/arkypita/LaserGRBL
@@ -14,7 +14,7 @@ Modification notice (GPLv3 section 5a): starting 2026-10-20, Andreas Pösch
 ported LaserGRBL from C#/WinForms to Rust/egui and changed and extended it.
 All changes, with dates, are listed in CHANGELOG.md.
 
-L-ai-SERctrl also contains third-party code and assets that LaserGRBL
+L-ai-SERcraft also contains third-party code and assets that LaserGRBL
 incorporated (GRBL-Plotter, Potrace, Clipper, Hershey fonts, Material Design
 Icons, ...). Their authors and licenses are listed in NOTICE.md.
 
@@ -28,7 +28,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-L-ai-SERctrl is an independent project. It is not affiliated with or
+L-ai-SERcraft is an independent project. It is not affiliated with or
 endorsed by Diego Settimi or the LaserGRBL project. The name "LaserGRBL"
 is used only to identify and credit the original work.
 

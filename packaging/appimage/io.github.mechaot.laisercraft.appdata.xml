@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.mechaot.laiserctrl</id>
+  <id>io.github.mechaot.laisercraft</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <name>L-ai-SERctrl</name>
+  <name>L-ai-SERcraft</name>
   <summary>GRBL laser engraver and cutter controller</summary>
   <developer_name>Andreas Pösch</developer_name>
   <description>
-    <p>L-ai-SERctrl generates G-code from images and SVG files and streams it to GRBL laser machines. It runs on Linux, Windows and macOS.</p>
+    <p>L-ai-SERcraft generates G-code from images and SVG files and streams it to GRBL laser machines. It runs on Linux, Windows and macOS.</p>
     <p>It is a modified version of LaserGRBL 7.14.1 by Diego Settimi (arkypita) and the LaserGRBL contributors, ported to Rust, and adds per-layer SVG settings, named layer presets and hatch fill.</p>
-    <p>L-ai-SERctrl is an independent project. It is not affiliated with or endorsed by Diego Settimi or the LaserGRBL project.</p>
+    <p>L-ai-SERcraft is an independent project. It is not affiliated with or endorsed by Diego Settimi or the LaserGRBL project.</p>
   </description>
-  <launchable type="desktop-id">laiserctrl.desktop</launchable>
-  <provides><binary>laiserctrl</binary></provides>
+  <launchable type="desktop-id">laisercraft.desktop</launchable>
+  <provides><binary>laisercraft</binary></provides>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="1.3.0" date="2026-10-26"/>
     <release version="1.2.1" date="2026-10-25"/>
     <release version="1.2.0" date="2026-10-25"/>
     <release version="1.1.3" date="2026-10-25"/>
