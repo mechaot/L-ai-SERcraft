@@ -231,6 +231,7 @@ mod tests {
             ]
             .map(|k| format!("ImageDock.{k}")),
         );
+        keys.extend(["Files", "Lines", "Program", "Remove", "StaticNote", "TagGCode", "TagImage", "TagSvg"].map(|k| format!("JobDock.{k}")));
         let r = "RasterConverter.ConvertSizeAndOptionForm.";
         keys.extend(["GbSpeed", "GbLaser", "LblLaserMode", "LblSmin", "LblSmax", "LblLinearFillingmm", "BtnOnOffInfo", "BtnModulationInfo"].map(|k| format!("{r}{k}.{}", if k.starts_with("Btn") { "ToolTip" } else { "Text" })));
         let r = "RasterConverter.RasterToLaserForm.";

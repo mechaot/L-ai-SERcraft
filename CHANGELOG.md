@@ -3,6 +3,23 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## 1.5.0 - 2026-10-27
+
+### Added
+- Several files in one job: after *Append File* the Parameters dock lists every loaded file (SVG, image, G-code) in a
+  *Files* group. A click on a row selects the file and shows its full editor (SVG: layers, presets, speed, power,
+  fill, filter; image: histogram map, position and size, line and laser settings). An edit regenerates only that
+  file's part of the G-code; the other files are not touched and the preview updates. Each row has a remove button.
+  The preview draws the selected file in red when there are several. See the manual, "Several files in one job".
+- Dev: `LASERGRBL_DEV_SEQ` knows `open=PATH` and `append=PATH`. `GrblFile::replace_block`, `remove_block`,
+  `load_serial` and `raise_file_loaded` edit the program block by block.
+
+### Changed
+- Programs of the *Generate* menu replace the job and show up as one *(program)* row without parameters.
+- The classic import dialog result of an image is listed as a *G-code* row. A cancelled dialog puts the image back at
+  the end of the list.
+- *Run* is also refused while an SVG has every layer disabled (it was silently deferred before).
+
 ## 1.4.0 - 2026-10-26
 
 ### Added

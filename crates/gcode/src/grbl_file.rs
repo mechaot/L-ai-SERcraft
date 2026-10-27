@@ -4,6 +4,9 @@
 
 //! Port of `GrblFile.cs` (core part): command list, load/save, analysis, quadrant, events.
 //!
+//! The program can be edited as independent blocks, one per loaded file: [`GrblFile::replace_block`],
+//! [`GrblFile::remove_block`].
+//!
 //! Sibling modules add the generators (`generators.rs`), raster line-to-line (`l2l.rs`),
 //! vector loaders (`vector.rs`), path optimizer (`optimize.rs`) and preview drawing (`draw.rs`).
 //!
@@ -18,8 +21,9 @@ use crate::state_builder::StatePositionBuilder;
 use crate::{GResult, GcodeError};
 use lg_dotnet::{Decimal, TimeSpan};
 use std::io::Write;
+use std::ops::Range;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 
 /// Quadrant of the drawing (C# `CartesianQuadrant`).
@@ -60,6 +64,8 @@ pub struct GrblFile {
     pub(crate) range: ProgramRange,
     pub(crate) estimated_total_time: TimeSpan,
     pub(crate) loading: Arc<AtomicBool>,
+    /// Bumped by every producer that raises `OnFileLoaded` (see [`GrblFile::load_serial`]).
+    load_serial: AtomicU64,
     pub(crate) skipcmd: String,
     on_file_loading: Vec<FileEvent>,
     on_file_loaded: Vec<FileEvent>,
@@ -98,6 +104,7 @@ impl GrblFile {
     }
 
     pub(crate) fn rise_on_file_loaded(&self, filename: &str, elapsed: i64) {
+        self.load_serial.fetch_add(1, Ordering::SeqCst);
         for f in &self.on_file_loaded {
             f(elapsed, filename);
         }
@@ -151,6 +158,22 @@ impl GrblFile {
         self.loading.clone()
     }
 
+    /// Counter of finished loads: every loader, generator and [`GrblFile::raise_file_loaded`] bumps it.
+    /// Lets an owner of command blocks notice that someone else rewrote the program (even to the same length).
+    ///
+    /// Returns the current value.
+    pub fn load_serial(&self) -> u64 {
+        self.load_serial.load(Ordering::SeqCst)
+    }
+
+    /// Raise `OnFileLoaded` by hand (the preview rebuilds). For edits that no loader reports, like
+    /// [`GrblFile::remove_block`].
+    ///
+    /// `filename`: name shown as the loaded file (may be empty).
+    pub fn raise_file_loaded(&self, filename: &str) {
+        self.rise_on_file_loaded(filename, 0);
+    }
+
     /// C# `ClearList()`: dispose and drop all commands.
     pub(crate) fn clear_list(&mut self) {
         for c in &mut self.list {
@@ -168,6 +191,57 @@ impl GrblFile {
             c.dispose();
         }
         self.list.truncate(len);
+    }
+
+    /// Replace one block of commands inside the program, keep the commands before and after it.
+    ///
+    /// The program is treated as a concatenation of independent blocks (one per loaded file). The commands
+    /// after `range` are parked, the block is disposed, `produce` appends the new block at the end of what is left
+    /// (call a loader with `append = true`), the parked commands are put back and the whole program is analyzed.
+    /// A range beyond the list is clamped (an empty range at/after the end appends).
+    ///
+    /// `range`: command indices of the old block. `produce`: producer of the new block; indices it sees (and
+    /// returns) are absolute, so the first new command sits at `range.start`. Returns `produce`'s value and the
+    /// range of the new block. When `produce` fails, whatever it appended is dropped again: the block stays
+    /// removed, the commands around it are intact and the error is returned. A failing analysis of the
+    /// joined program is only logged (the list is complete, ranges / times may be partial), like a G-code
+    /// file that cannot be analyzed. A panic in `produce` also restores the parked commands before it continues.
+    pub fn replace_block<T>(&mut self, range: Range<usize>, produce: impl FnOnce(&mut GrblFile) -> GResult<T>) -> GResult<(T, Range<usize>)> {
+        // clamp to the list
+        let end = range.end.min(self.list.len());
+        let start = range.start.min(end);
+        // park the commands behind the block, drop the block itself
+        let suffix = self.list.split_off(end);
+        self.truncate_list(start);
+        let res = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| produce(self))) {
+            Ok(r) => r,
+            Err(p) => {
+                // never lose the parked commands, even when the producer panics
+                self.truncate_list(start);
+                self.list.extend(suffix);
+                let _ = self.analyze();
+                std::panic::resume_unwind(p);
+            }
+        };
+        // failed producer: drop the partial block
+        if res.is_err() {
+            self.truncate_list(start);
+        }
+        let new = start..self.list.len();
+        self.list.extend(suffix);
+        // ranges and times of the joined program
+        if let Err(e) = self.analyze() {
+            lg_base::logger::log_exception("replace_block", &e);
+        }
+        res.map(|t| (t, new))
+    }
+
+    /// Remove one block of commands, keep the commands before and after it.
+    ///
+    /// `range`: command indices of the block (clamped to the list). Returns Ok(()) when done. Raises no
+    /// `OnFileLoaded` event: call [`GrblFile::raise_file_loaded`] when the preview must follow.
+    pub fn remove_block(&mut self, range: Range<usize>) -> GResult<()> {
+        self.replace_block(range, |_| Ok(())).map(|_| ())
     }
 
     /// C# `CheckInUse(showMessageBox)`. The message box is the caller's job (`Strings.AlreadyLoading`).

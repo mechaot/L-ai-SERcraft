@@ -10,6 +10,7 @@ use eframe::egui::{self, Align, Key, Layout, Modifiers, TextureHandle, Ui, Vec2}
 use lg_gcode::{GResult, GrblFile};
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::Range;
 use std::sync::{Arc, RwLock};
 
 use crate::ui::dialog::{MessageBox, MessageBoxIcon};
@@ -19,6 +20,36 @@ use crate::ui::{tr, tr_plain};
 
 /// Shared file handle used by every form that edits the loaded program.
 pub type SharedFile = Arc<RwLock<GrblFile>>;
+
+/// Command ranges per SVG layer (`None` = layer not generated). Absolute while a producer runs, relative to
+/// the block start once stored by an editor.
+pub type LayerRanges = Vec<Option<Range<u32>>>;
+
+/// Producer of one file's block: appends the commands of the file (loader with `append = true`) and returns
+/// the layer ranges (empty for files without layers).
+pub type ProduceFn = Box<dyn FnOnce(&mut GrblFile) -> GResult<LayerRanges> + Send>;
+
+/// Work order an editor hands to the job coordinator (`JobDock`).
+pub struct GenRequest {
+    /// Edit counter of the editor when the request was taken; given back to `complete`.
+    pub seq: u64,
+    /// File name for status texts.
+    pub name: String,
+    /// Producer of the block.
+    pub produce: ProduceFn,
+}
+
+/// Replace `block` of `f` with the output of `produce` and make the layer ranges block-relative.
+///
+/// `f`: program. `block`: old block (see `GrblFile::replace_block`). `produce`: new block producer.
+/// Returns the layer ranges relative to the new block start and the new block, or the producer error
+/// (the block is gone then).
+pub fn replace_block_rel(f: &mut GrblFile, block: Range<usize>, produce: ProduceFn) -> GResult<(LayerRanges, Range<usize>)> {
+    let (abs, new) = f.replace_block(block, produce)?;
+    let base = new.start as u32;
+    let rel = abs.into_iter().map(|r| r.map(|r| r.start.saturating_sub(base)..r.end.saturating_sub(base))).collect();
+    Ok((rel, new))
+}
 
 /// C# `ComboboxItem[] LaserOptions`: (text, value). Same table in every generator / import form.
 pub const LASER_OPTIONS: [(&str, &str); 2] = [("M3 - Constant Power", "M3"), ("M4 - Dynamic Power", "M4")];

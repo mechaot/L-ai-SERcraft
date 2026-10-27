@@ -1,23 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Andreas Pösch
 
-//! Raster-image dock (right side of the main window). Replaces the modal `RasterToLaserForm` for plain
+//! Raster-image dock editor for one image (right side of the main window). Replaces the modal `RasterToLaserForm` for plain
 //! line-to-line engraving: the image loads at once, a histogram with a brightness to power map, the target
-//! position and size, line settings and laser options are edited here, and every committed edit regenerates the G-code in
-//! the background. The classic dialog stays reachable through a button.
+//! position and size, line settings and laser options are edited here, and every committed edit regenerates the G-code
+//! of this image's block in the background. The classic dialog stays reachable through a button.
+//! One instance edits one image. It owns no program and no worker: the job coordinator (`job_dock.rs`) takes its
+//! [`GenRequest`], runs it and hands the result back.
 //! Not part of the C# app (intentional deviation).
 
 use eframe::egui::{self, Grid, Id, RichText, Ui, Vec2};
 use image::RgbaImage;
-use lasergrbl_core::GrblCore;
 use lg_dotnet::{decimal_to_f64, f64_to_decimal, fmt_double_custom, fmt_float_custom, Decimal};
-use lg_gcode::{Direction, Firmware, GrblFile, PowerMap};
+use lg_gcode::{Direction, Firmware, PowerMap};
 use lg_services::raster_dock::{self, RasterParams};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::path::Path;
 use std::sync::Arc;
-use std::thread::JoinHandle;
 
 use crate::forms::form_util::*;
 use crate::forms::raster::{get_enum, translate_enum, SettingEnum};
@@ -45,13 +44,12 @@ const MAX_SETS: usize = 50;
 #[derive(Clone, Copy)]
 enum Msg {
     WrongLaserMode,
-    Busy,
 }
 
 /// What the dock asks the main window to do.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImageDockAction {
-    /// Hand the image to the classic raster import dialog (see [`ImageDock::take_classic`]).
+    /// Hand the image to the classic raster import dialog (the coordinator cuts its block out first).
     OpenClassic,
 }
 
@@ -254,16 +252,10 @@ fn settings_values(limits: &Limits, max_quality: f64, img_w: u32, img_h: u32) ->
     .sanitized(max_quality, &raster_directions())
 }
 
-/// Image the dock regenerates G-code from.
+/// Image the editor regenerates G-code from.
 struct ImageSource {
-    /// Shared program.
-    file: SharedFile,
     /// Image path.
     path: String,
-    /// Import was an append.
-    append: bool,
-    /// Commands that existed before the import (kept on every re-apply when `append`).
-    base_len: usize,
     /// Opaque gray version of the image (the one brightness definition of histogram and G-code).
     gray: Arc<RgbaImage>,
     /// Brightness histogram of `gray`.
@@ -273,16 +265,7 @@ struct ImageSource {
     img_h: u32,
 }
 
-/// Running G-code generation.
-struct ApplyJob {
-    /// `edit_seq` when the job started.
-    seq: u64,
-    handle: JoinHandle<()>,
-    /// Set by the worker when the generation succeeded.
-    ok: Arc<AtomicBool>,
-}
-
-/// Raster-image dock state.
+/// Raster-image editor state (one image).
 pub struct ImageDock {
     limits: Limits,
     support_pwm: bool,
@@ -300,9 +283,10 @@ pub struct ImageDock {
     dirty: bool,
     /// Bumped on every edit that needs a regen.
     edit_seq: u64,
-    /// `edit_seq` of the last automatic attempt.
-    auto_seq: u64,
-    job: Option<ApplyJob>,
+    /// `edit_seq` of the last request taken (None = no attempt yet); one automatic attempt per edit.
+    auto_seq: Option<u64>,
+    /// `edit_seq` of the request that runs now.
+    inflight: Option<u64>,
     last_error: Option<String>,
     msgs: MessageBoxHost<Msg>,
 }
@@ -324,8 +308,8 @@ impl ImageDock {
             source: None,
             dirty: false,
             edit_seq: 0,
-            auto_seq: 0,
-            job: None,
+            auto_seq: None,
+            inflight: None,
             last_error: None,
             msgs: MessageBoxHost::default(),
         };
@@ -343,16 +327,16 @@ impl ImageDock {
     }
 
     /// Returns true when an image is loaded.
+    #[cfg(test)]
     pub fn has_source(&self) -> bool {
         self.source.is_some()
     }
 
-    /// Load an image and generate at once.
+    /// Load an image into this editor; the editor is dirty afterwards, so the coordinator generates at once.
     ///
-    /// `file`: shared program. `path`: image file. `append`: keep the commands already in `file`.
-    /// Values come from the per-file store, else from the settings. Returns Err with the read / decode error text
-    /// (nothing changed then).
-    pub fn load_image(&mut self, file: SharedFile, path: &Path, append: bool) -> Result<(), String> {
+    /// `path`: image file. Values come from the per-file store, else from the settings. Returns Err with the
+    /// read / decode error text (nothing changed then).
+    pub fn load_image(&mut self, path: &Path) -> Result<(), String> {
         let (img, _dpi) = raster_dock::load_image(path)?;
         let gray = raster_dock::gray_image(&img);
         let hist = raster_dock::histogram(&gray);
@@ -362,46 +346,23 @@ impl ImageDock {
         // stored values of this file win over the last used ones
         let stored = load_sets().into_iter().find(|s| s.path == path_s).map(|s| s.values.sanitized(self.max_quality, &self.line_dirs));
         self.v = stored.unwrap_or_else(|| settings_values(&self.limits, self.max_quality, img_w, img_h));
-        // commands that stay in front of the import
-        let base_len = if append { file.read().map(|f| f.count()).unwrap_or(0) } else { 0 };
-        self.source = Some(ImageSource { file, path: path_s, append, base_len, gray: Arc::new(gray), hist: Box::new(hist), img_w, img_h });
+        self.source = Some(ImageSource { path: path_s, gray: Arc::new(gray), hist: Box::new(hist), img_w, img_h });
         self.dirty = true;
         self.last_error = None;
-        self.apply();
         Ok(())
     }
 
-    /// Forget the image (another file type was opened). Values stay, auto regen stops.
-    pub fn clear_source(&mut self) {
-        self.source = None;
-        self.dirty = false;
-        self.last_error = None;
-    }
-
-    /// Give the image to the classic import dialog and forget it here.
+    /// Test access: set the box as an edit would.
     ///
-    /// Returns `(program, image path, append)`, or None without an image or while a generation runs. When the
-    /// import was an append, the program is cut back to the commands that existed before it.
-    pub fn take_classic(&mut self) -> Option<(SharedFile, PathBuf, bool)> {
-        if self.job.is_some() {
-            return None;
-        }
-        let src = self.source.take()?;
-        self.dirty = false;
-        self.last_error = None;
-        if src.append {
-            // back to the program before the import
-            let mut g = src.file.write().unwrap_or_else(|e| e.into_inner());
-            g.truncate_list(src.base_len);
-            if let Err(e) = g.analyze() {
-                lg_base::logger::log_exception("ImageDock", &e);
-            }
-        }
-        Some((src.file, PathBuf::from(src.path), src.append))
+    /// `x0`/`y0`: lower left in mm. `x1`/`y1`: upper right in mm.
+    #[cfg(test)]
+    pub(crate) fn test_set_box(&mut self, x0: f32, y0: f32, x1: f32, y1: f32) {
+        (self.v.x0, self.v.y0, self.v.x1, self.v.y1) = (x0, y0, x1, y1);
+        self.mark_dirty();
     }
 
     /// Generator parameters of the current values. Returns the parameter set.
-    fn params(&self) -> RasterParams {
+    pub(crate) fn params(&self) -> RasterParams {
         let v = &self.v;
         RasterParams {
             x0: v.x0,
@@ -438,58 +399,63 @@ impl ImageDock {
         self.edit_seq += 1;
     }
 
-    /// Start a regen for the latest edit, at most once per edit, never in a loop.
+    /// Take the work order for the latest edit: persist the values (settings shared with the classic dialog, map,
+    /// per-file store) and hand out the producer of this image's block. The editor counts as generating until
+    /// [`ImageDock::complete`] (or [`ImageDock::cancel_request`]).
     ///
-    /// `can_load`: `core.can_load_new_file()`; false while a program runs, then wait (attempt not consumed).
-    /// A failed generation is not retried until the next edit; Run retries via `request_run`.
-    fn auto_apply(&mut self, can_load: bool) {
-        // nothing new, program busy, or a job runs / nothing to do
-        if self.auto_seq == self.edit_seq || !can_load || !self.is_dirty_idle() {
-            return;
+    /// Returns None without an image, while a request is out, when nothing is dirty, or for an invalid layout
+    /// (the red text says why).
+    pub fn take_request(&mut self) -> Option<GenRequest> {
+        if self.inflight.is_some() || self.source.is_none() || !self.dirty {
+            return None;
         }
-        self.auto_seq = self.edit_seq;
-        self.apply();
-    }
-
-    /// Persist the values (settings shared with the classic dialog, map, per-file store) and start the
-    /// G-code generation on a worker.
-    ///
-    /// Returns false when nothing was started (no source, job running, invalid layout: error set, or file busy:
-    /// busy box queued).
-    pub fn apply(&mut self) -> bool {
-        if self.job.is_some() || self.source.is_none() {
-            return false;
-        }
-        // invalid placement: no job, the red text says why
+        // machine config may have changed while another file was edited
+        self.refresh_settings();
+        // invalid placement: no request, the red text says why
         if let Some(e) = self.layout_error() {
             self.last_error = Some(e);
-            return false;
+            return None;
         }
         self.persist();
         let params = self.params();
-        let Some(src) = &self.source else { return false };
-        let (path, append, base_len, gray) = (src.path.clone(), src.append, src.base_len, src.gray.clone());
-        let ok = Arc::new(AtomicBool::new(false));
-        let ok_w = ok.clone();
-        let handle = GrblFile::spawn_load(&src.file, move |f| {
-            // drop the previous import, keep what was there before it
-            if append {
-                f.truncate_list(base_len);
-            }
-            raster_dock::generate(f, &gray, &path, &params, append)?;
-            ok_w.store(true, Ordering::SeqCst);
-            Ok(())
+        let src = self.source.as_ref()?;
+        let (path, gray) = (src.path.clone(), src.gray.clone());
+        let name = file_name(&path);
+        let seq = self.edit_seq;
+        self.inflight = Some(seq);
+        self.auto_seq = Some(seq);
+        self.last_error = None;
+        // always appends: the coordinator cuts the old block out first
+        let produce: ProduceFn = Box::new(move |f| {
+            raster_dock::generate(f, &gray, &path, &params, true)?;
+            Ok(Vec::new())
         });
-        match handle {
-            Some(handle) => {
-                self.job = Some(ApplyJob { seq: self.edit_seq, handle, ok });
+        Some(GenRequest { seq, name, produce })
+    }
+
+    /// Give a taken request back unrun (the program was busy): the editor stays dirty and may be asked again.
+    ///
+    /// `seq`: the request's `seq`.
+    pub fn cancel_request(&mut self, seq: u64) {
+        if self.inflight == Some(seq) {
+            self.inflight = None;
+            self.auto_seq = None;
+        }
+    }
+
+    /// Result of a request taken with [`ImageDock::take_request`].
+    ///
+    /// `seq`: the request's `seq`. `result`: Ok when the block was generated, else the error text.
+    /// Edits made while the request ran keep the editor dirty. A failed generation is not retried by
+    /// [`ImageDock::wants_auto`] until the next edit.
+    pub fn complete(&mut self, seq: u64, result: Result<(), String>) {
+        self.inflight = None;
+        match result {
+            Ok(()) => {
+                self.dirty = self.edit_seq != seq;
                 self.last_error = None;
-                true
             }
-            None => {
-                self.msgs.push(Msg::Busy, already_loading_box());
-                false
-            }
+            Err(e) => self.last_error = Some(e),
         }
     }
 
@@ -519,42 +485,33 @@ impl ImageDock {
 
     /// Returns true when the G-code is out of date or being generated (image loaded).
     pub fn needs_apply(&self) -> bool {
-        self.source.is_some() && (self.dirty || self.job.is_some())
+        self.source.is_some() && (self.dirty || self.inflight.is_some())
     }
 
-    /// Returns true when edits wait, no generation runs and the values can be generated (`apply()` would start one).
+    /// Returns true when edits wait, no request is out and the values can be generated ([`ImageDock::take_request`] would yield one).
     pub fn is_dirty_idle(&self) -> bool {
-        self.source.is_some() && self.dirty && self.job.is_none() && self.layout_error().is_none()
+        self.source.is_some() && self.dirty && self.inflight.is_none() && self.layout_error().is_none()
+    }
+
+    /// Returns true when the coordinator should start a request by itself: [`ImageDock::is_dirty_idle`] and no
+    /// attempt yet for the latest edit (a failed generation waits for the next edit or for Run).
+    pub fn wants_auto(&self) -> bool {
+        self.is_dirty_idle() && self.auto_seq != Some(self.edit_seq)
     }
 
     /// Returns true when the program is stale and cannot be regenerated because the values are invalid.
     pub fn is_blocked(&self) -> bool {
-        self.source.is_some() && self.dirty && self.job.is_none() && self.layout_error().is_some()
+        self.source.is_some() && self.dirty && self.inflight.is_none() && self.layout_error().is_some()
     }
 
-    /// Returns true while the worker runs.
-    pub fn job_running(&self) -> bool {
-        self.job.is_some()
+    /// Returns true while a request of this editor runs.
+    pub fn in_flight(&self) -> bool {
+        self.inflight.is_some()
     }
 
-    /// Check the worker; call every frame.
-    ///
-    /// Returns `Some(success)` once when a generation finished.
-    pub fn poll(&mut self) -> Option<bool> {
-        if !self.job.as_ref().is_some_and(|j| j.handle.is_finished()) {
-            return None;
-        }
-        let job = self.job.take()?;
-        let _ = job.handle.join();
-        let ok = job.ok.load(Ordering::SeqCst);
-        if ok {
-            // edits made during the job keep the dock dirty
-            self.dirty = self.edit_seq != job.seq;
-            self.last_error = None;
-        } else {
-            self.last_error = Some(tr_plain("ParamsDock.ApplyFailed"));
-        }
-        Some(ok)
+    /// Returns the text of what is wrong with this image (failed generation, invalid size), None when fine.
+    pub fn problem(&self) -> Option<String> {
+        self.last_error.clone().or_else(|| self.source.as_ref().and_then(|_| self.layout_error()))
     }
 
     /// "P1" text of a power value, like the classic dialog's `RefreshPerc`.
@@ -584,38 +541,34 @@ impl ImageDock {
         }
     }
 
-    /// Dock body.
+    /// Editor body (title and scrolling belong to the host).
     ///
-    /// `ui`: panel ui. `core`: for `can_load_new_file` (auto regen). Returns requests for the main window.
-    pub fn show(&mut self, ui: &mut Ui, core: &GrblCore) -> Vec<ImageDockAction> {
+    /// `ui`: parent ui. Returns requests for the main window. Edits mark the editor dirty; the coordinator
+    /// starts the regeneration.
+    pub fn show(&mut self, ui: &mut Ui) -> Vec<ImageDockAction> {
         let mut actions = Vec::new();
         self.refresh_settings();
         let mut edited = false;
 
-        ui.label(RichText::new(tr_plain("ParamsDock.Title")).strong());
-        ui.add_space(2.0);
-        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-            self.map_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.position_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.line_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.speed_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.laser_group(ui, &mut edited);
-            ui.add_space(6.0);
-            let classic = ui.add_enabled(self.job.is_none(), egui::Button::new(tr_plain("ImageDock.Classic")).min_size(egui::vec2(ui.available_width(), 22.0)));
-            if classic.on_hover_text(tr_plain("ImageDock.ClassicTip")).clicked() {
-                actions.push(ImageDockAction::OpenClassic);
-            }
-            ui.add_space(8.0);
-            self.status_row(ui);
-        });
+        self.map_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.position_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.line_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.speed_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.laser_group(ui, &mut edited);
+        ui.add_space(6.0);
+        let classic = ui.add_enabled(self.inflight.is_none(), egui::Button::new(tr_plain("ImageDock.Classic")).min_size(egui::vec2(ui.available_width(), 22.0)));
+        if classic.on_hover_text(tr_plain("ImageDock.ClassicTip")).clicked() {
+            actions.push(ImageDockAction::OpenClassic);
+        }
+        ui.add_space(8.0);
+        self.status_row(ui);
         if edited {
             self.mark_dirty();
         }
-        self.auto_apply(core.can_load_new_file());
         actions
     }
 
@@ -859,7 +812,7 @@ impl ImageDock {
             Some(s) => {
                 let name = file_name(&s.path);
                 let size = format!("{name} ({} × {} px)", s.img_w, s.img_h);
-                if self.job.is_some() { format!("{size} - {}", tr_plain("ParamsDock.Generating")) } else { size }
+                if self.inflight.is_some() { format!("{size} - {}", tr_plain("ParamsDock.Generating")) } else { size }
             }
             None => tr_plain("ImageDock.NoSource"),
         };
@@ -908,12 +861,8 @@ fn file_name(p: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::RwLock;
-    use std::time::{Duration, Instant};
-
-    fn new_file() -> SharedFile {
-        Arc::new(RwLock::new(GrblFile::new()))
-    }
+    use crate::forms::job_test_harness::{Harness, Rig};
+    use std::path::PathBuf;
 
     /// PNG in a scratch dir: `w` x `h` px, gray value per column from `col`. Returns the path.
     fn write_png(tag: &str, w: u32, h: u32, col: impl Fn(u32) -> u8) -> PathBuf {
@@ -926,21 +875,20 @@ mod tests {
         p
     }
 
-    /// Poll until the worker finished (5 s limit).
-    fn wait(d: &mut ImageDock) -> bool {
-        let t = Instant::now();
-        loop {
-            if let Some(ok) = d.poll() {
-                return ok;
-            }
-            assert!(t.elapsed() < Duration::from_secs(5), "worker timeout");
-            std::thread::sleep(Duration::from_millis(5));
-        }
+    /// Take the editor's request, run it on the rig and hand the result back. Returns None without a request, else success.
+    fn pump(rig: &mut Rig, d: &mut ImageDock) -> Option<bool> {
+        let req = d.take_request()?;
+        let (seq, r) = rig.run(req);
+        let ok = r.is_ok();
+        d.complete(seq, r.map(|_| ()));
+        Some(ok)
     }
 
-    /// Program lines of a file. `f`: shared program. Returns the command texts.
-    fn lines(f: &SharedFile) -> Vec<String> {
-        f.read().unwrap().commands().iter().map(|c| c.command().to_owned()).collect()
+    /// Editor for the image at `p`, loaded. Panics when the image cannot be read.
+    fn image_dock(p: &Path) -> ImageDock {
+        let mut d = ImageDock::new();
+        d.load_image(p).unwrap();
+        d
     }
 
     /// Values of word `w` over `lines`. Returns the numbers.
@@ -1009,15 +957,19 @@ mod tests {
         lg_base::settings::set("GrayScaleConversion.Gcode.Offset.Y", 7.0f32);
         lg_base::settings::set("GrayScaleConversion.Gcode.ImageSize.W", 20.0f32);
         let p = write_png("load", 40, 20, |_| 0);
-        let file = new_file();
-        let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, false).unwrap();
-        assert!(d.job_running() && d.has_source());
-        assert!(wait(&mut d));
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
+        // loaded: dirty, the coordinator asks for the first generation
+        assert!(d.has_source() && d.needs_apply() && d.wants_auto());
+        let req = d.take_request().expect("first request");
+        assert!(d.in_flight() && req.name == "img.png");
+        let (seq, r) = rig.run(req);
+        assert!(r.as_ref().is_ok_and(|v| v.is_empty()), "images have no layers");
+        d.complete(seq, r.map(|_| ()));
         assert!(!d.dirty && !d.needs_apply());
         // 2:1 image, 20 mm wide: upper right at (25, 17)
         assert_eq!((d.v.x1, d.v.y1), (25.0, 17.0));
-        let l = lines(&file);
+        let l = rig.lines();
         assert!(l.len() > 5);
         assert_eq!(l[0], "G0 X5 Y7 F1000");
         assert!(words(&l, 'X').iter().all(|x| (5.0 - 1e-3..=25.0 + 1e-3).contains(x)));
@@ -1029,11 +981,11 @@ mod tests {
     fn unreadable_image_is_an_error_and_changes_nothing() {
         let _g = settings_guard();
         let mut d = ImageDock::new();
-        assert!(d.load_image(new_file(), Path::new("/nonexistent/none.png"), false).is_err());
+        assert!(d.load_image(Path::new("/nonexistent/none.png")).is_err());
         assert!(!d.has_source());
         let p = lg_base::paths::test_dir("image_dock_bad").join("bad.png");
         std::fs::write(&p, b"not an image").unwrap();
-        assert!(d.load_image(new_file(), &p, false).is_err());
+        assert!(d.load_image(&p).is_err());
         assert!(!d.has_source());
         let _ = std::fs::remove_file(&p);
     }
@@ -1042,24 +994,47 @@ mod tests {
     fn edit_x1_regenerates_with_larger_max_x() {
         let _g = settings_guard();
         let p = write_png("x1", 40, 20, |_| 0);
-        let file = new_file();
-        let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, false).unwrap();
-        assert!(wait(&mut d));
-        let before = max_x(&lines(&file));
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        let before = max_x(&rig.lines());
         assert!((before - 100.0).abs() < 1e-3, "{before}");
         d.v.x1 = 150.0;
         d.mark_dirty();
-        // program busy: attempt waits, then runs once
-        d.auto_apply(false);
-        assert!(!d.job_running());
-        d.auto_apply(true);
-        assert!(d.job_running());
-        assert!(wait(&mut d));
-        assert!((max_x(&lines(&file)) - 150.0).abs() < 1e-3);
-        // no new edit: no new job
-        d.auto_apply(true);
-        assert!(!d.job_running());
+        // program busy: the coordinator hands the request back, the attempt is not consumed
+        let req = d.take_request().unwrap();
+        d.cancel_request(req.seq);
+        assert!(!d.in_flight() && d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!((max_x(&rig.lines()) - 150.0).abs() < 1e-3);
+        // no new edit: nothing to do
+        assert!(!d.wants_auto() && pump(&mut rig, &mut d).is_none());
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn edit_during_request_keeps_dirty_and_failure_waits_for_an_edit() {
+        let _g = settings_guard();
+        let p = write_png("editjob", 40, 20, |_| 0);
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        d.mark_dirty();
+        let req = d.take_request().unwrap();
+        assert!(d.take_request().is_none(), "one request at a time");
+        d.mark_dirty();
+        let (seq, r) = rig.run(req);
+        d.complete(seq, r.map(|_| ()));
+        assert!(d.dirty && d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(!d.dirty);
+        // a failed generation is not retried without a new edit
+        d.mark_dirty();
+        let req = d.take_request().unwrap();
+        d.complete(req.seq, Err("boom".into()));
+        assert!(d.is_dirty_idle() && !d.wants_auto() && d.problem().as_deref() == Some("boom"));
+        d.mark_dirty();
+        assert!(d.wants_auto());
         let _ = std::fs::remove_file(&p);
     }
 
@@ -1068,62 +1043,56 @@ mod tests {
         let _g = settings_guard();
         // left half gray 100, right half gray 200
         let p = write_png("inv", 40, 20, |x| if x < 20 { 100 } else { 200 });
-        let file = new_file();
-        let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, false).unwrap();
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
         d.v.min_power = 100;
-        assert!(wait(&mut d));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         // first burning value of the program (the left half, rows start there)
-        let first_burn = |f: &SharedFile| words(&lines(f), 'S').into_iter().find(|s| *s > 0.0);
+        let first_burn = |rig: &Rig| words(&rig.lines(), 'S').into_iter().find(|s| *s > 0.0);
         // normal: darker burns harder, both halves are inside [100, 200]
         d.v.start = 100;
         d.v.stop = 200;
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(wait(&mut d));
-        assert_eq!(first_burn(&file), Some(1000.0), "left half (gray 100) burns with S-MAX");
-        let levels = burn_levels(&lines(&file));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert_eq!(first_burn(&rig), Some(1000.0), "left half (gray 100) burns with S-MAX");
+        let levels = burn_levels(&rig.lines());
         assert!(levels.contains(&1000) && levels.contains(&100), "{levels:?}");
         // inverted: brighter burns harder
         d.v.start = 200;
         d.v.stop = 100;
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(wait(&mut d));
-        assert_eq!(first_burn(&file), Some(100.0), "left half (gray 100) burns with S-MIN");
-        let levels = burn_levels(&lines(&file));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert_eq!(first_burn(&rig), Some(100.0), "left half (gray 100) burns with S-MIN");
+        let levels = burn_levels(&rig.lines());
         assert!(levels.contains(&1000) && levels.contains(&100), "{levels:?}");
         // out of range: nothing burns at all
         d.v.start = 20;
         d.v.stop = 60;
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(wait(&mut d));
-        assert!(burn_levels(&lines(&file)).is_empty());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(burn_levels(&rig.lines()).is_empty());
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn layout_error_blocks_apply_until_fixed() {
+    fn layout_error_blocks_request_until_fixed() {
         let _g = settings_guard();
         let p = write_png("err", 40, 20, |_| 0);
-        let file = new_file();
-        let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, false).unwrap();
-        assert!(wait(&mut d));
-        let good = lines(&file);
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        let good = rig.lines();
         // upper right left of lower left
         d.v.x1 = d.v.x0 - 1.0;
         d.mark_dirty();
         assert!(d.layout_error().is_some());
-        d.auto_apply(true);
-        assert!(!d.job_running(), "no job for an invalid layout");
-        assert!(!d.apply());
+        assert!(!d.wants_auto(), "no automatic attempt for an invalid layout");
+        assert!(d.take_request().is_none(), "no request for an invalid layout");
         assert_eq!(d.last_error, d.layout_error());
         assert_eq!(d.last_error.as_deref(), Some(tr_plain("ImageDock.ErrorPlacement").as_str()));
         // program stays as it was, run must be refused
         assert!(d.needs_apply() && !d.is_dirty_idle() && d.is_blocked());
-        assert_eq!(lines(&file), good);
+        assert_eq!(rig.lines(), good);
         // zero height: same message; NaN: generic message
         d.v.x1 = d.v.x0 + 10.0;
         d.v.y1 = d.v.y0;
@@ -1136,11 +1105,10 @@ mod tests {
         // fix: generates again
         d.v.quality = 3.0;
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(d.job_running());
-        assert!(wait(&mut d));
+        assert!(d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         assert!(!d.is_blocked() && d.last_error.is_none());
-        assert_ne!(lines(&file), good);
+        assert_ne!(rig.lines(), good);
         let _ = std::fs::remove_file(&p);
     }
 
@@ -1148,9 +1116,7 @@ mod tests {
     fn default_size_follows_image_aspect_and_info_texts() {
         let _g = settings_guard();
         let p = write_png("fit", 60, 40, |_| 0);
-        let mut d = ImageDock::new();
-        d.load_image(new_file(), &p, false).unwrap();
-        assert!(wait(&mut d));
+        let mut d = image_dock(&p);
         // 3:2 image, width 100: height 66.67
         assert_eq!((d.v.x1 - d.v.x0, d.v.y1 - d.v.y0), (100.0, 66.67));
         assert_eq!(d.map_info(16, 210), tr_fmt("ImageDock.MapNormal", &[&16, &210]));
@@ -1162,16 +1128,15 @@ mod tests {
     }
 
     #[test]
-    fn apply_persists_shared_keys_and_per_file_store_roundtrips() {
+    fn request_persists_shared_keys_and_per_file_store_roundtrips() {
         let _g = settings_guard();
         let p = write_png("store", 40, 20, |_| 0);
-        let mut d = ImageDock::new();
-        d.load_image(new_file(), &p, false).unwrap();
-        assert!(wait(&mut d));
+        let mut rig = Rig::new(&[]);
+        let mut d = image_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         d.v = ImageUi { x0: 3.0, y0: 4.0, x1: 63.0, y1: 34.0, quality: 4.5, direction: "Vertical".into(), start: 20, stop: 200, mark_speed: 1500, min_power: 50, max_power: 800, laser_on: 1 };
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(wait(&mut d));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         let get = |k: &str| lg_base::settings::get(k, -1i32);
         assert_eq!(get("GrayScaleConversion.Gcode.Speed.Mark"), 1500);
         assert_eq!(get("GrayScaleConversion.Gcode.LaserOptions.PowerMin"), 50);
@@ -1184,17 +1149,13 @@ mod tests {
         assert_eq!(q, 4.5);
         assert_eq!(lg_base::settings::get("GrayScaleConversion.Gcode.Offset.X", -1.0f32), 3.0);
         assert_eq!(lg_base::settings::get("GrayScaleConversion.Gcode.ImageSize.W", -1.0f32), 60.0);
-        // same file in a fresh dock: everything restored
+        // same file in a fresh editor: everything restored
         let saved = d.v.clone();
-        let mut d2 = ImageDock::new();
-        d2.load_image(new_file(), &p, false).unwrap();
-        assert!(wait(&mut d2));
+        let d2 = image_dock(&p);
         assert_eq!(d2.v, saved);
         // another file starts from the last used settings, not from the stored set
         let q2 = write_png("store2", 40, 20, |_| 0);
-        let mut d3 = ImageDock::new();
-        d3.load_image(new_file(), &q2, false).unwrap();
-        assert!(wait(&mut d3));
+        let d3 = image_dock(&q2);
         assert_eq!((d3.v.direction.as_str(), d3.v.start, d3.v.stop, d3.v.mark_speed), ("Vertical", 20, 200, 1500));
         let _ = std::fs::remove_file(&p);
         let _ = std::fs::remove_file(&q2);
@@ -1219,66 +1180,28 @@ mod tests {
     }
 
     #[test]
-    fn append_reapply_keeps_head_and_take_classic_restores_it() {
+    fn regeneration_keeps_the_head_and_does_not_duplicate() {
         let _g = settings_guard();
         let p = write_png("append", 40, 20, |_| 0);
-        let file = new_file();
-        for l in ["G0 X1", "G1 X2", "G1 X3"] {
-            file.write().unwrap().commands_mut().push(lg_gcode::GrblCommand::new(l));
-        }
-        let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, true).unwrap();
-        assert!(wait(&mut d));
-        let first = file.read().unwrap().count();
+        let mut rig = Rig::new(&["G0 X1", "G1 X2", "G1 X3"]);
+        let mut d = image_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        let first = rig.count();
         assert!(first > 3);
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(wait(&mut d));
-        assert_eq!(file.read().unwrap().count(), first, "re-apply must not duplicate");
-        assert_eq!(lines(&file)[..3].join("|"), "G0 X1|G1 X2|G1 X3");
-        // classic hand-over: busy job refuses, idle gives the image back and cuts the import
-        d.mark_dirty();
-        d.auto_apply(true);
-        assert!(d.take_classic().is_none());
-        assert!(wait(&mut d));
-        let (f, path, append) = d.take_classic().expect("idle dock hands over");
-        assert!(Arc::ptr_eq(&f, &file) && append);
-        assert_eq!(path, p);
-        assert!(!d.has_source() && !d.needs_apply());
-        assert_eq!(file.read().unwrap().count(), 3);
-        // nothing left to give
-        assert!(d.take_classic().is_none());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert_eq!(rig.count(), first, "re-apply must not duplicate");
+        assert_eq!(rig.lines()[..3].join("|"), "G0 X1|G1 X2|G1 X3");
+        assert_eq!(rig.block, 3..first);
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn take_classic_without_append_keeps_the_program() {
+    fn request_without_source_does_nothing() {
         let _g = settings_guard();
-        let p = write_png("plain", 40, 20, |_| 0);
-        let file = new_file();
         let mut d = ImageDock::new();
-        d.load_image(file.clone(), &p, false).unwrap();
-        assert!(wait(&mut d));
-        let n = file.read().unwrap().count();
-        let (_, _, append) = d.take_classic().unwrap();
-        assert!(!append);
-        assert_eq!(file.read().unwrap().count(), n);
-        let _ = std::fs::remove_file(&p);
-    }
-
-    #[test]
-    fn clear_source_stops_regen() {
-        let _g = settings_guard();
-        let p = write_png("clear", 40, 20, |_| 0);
-        let mut d = ImageDock::new();
-        d.load_image(new_file(), &p, false).unwrap();
-        assert!(wait(&mut d));
-        d.mark_dirty();
-        assert!(d.needs_apply() && d.is_dirty_idle());
-        d.clear_source();
-        assert!(!d.needs_apply() && !d.is_dirty_idle() && !d.is_blocked());
-        assert!(!d.apply());
-        let _ = std::fs::remove_file(&p);
+        assert!(d.take_request().is_none());
+        assert!(!d.needs_apply() && !d.is_dirty_idle() && !d.is_blocked() && !d.wants_auto() && d.problem().is_none());
     }
 
     /// Values with only the box set, the rest default. `x0`/`y0`/`x1`/`y1`: corners in mm. Returns the values.
@@ -1287,19 +1210,16 @@ mod tests {
     }
 
     #[test]
-    fn aspect_lock_is_on_at_start_and_survives_load_and_clear() {
+    fn aspect_lock_is_on_for_every_editor_and_survives_load() {
         let _g = settings_guard();
         let mut d = ImageDock::new();
         assert!(d.keep_aspect);
-        // user switches it off: loading another image or dropping the source does not touch it
+        // user switches it off: loading an image does not touch it
         d.keep_aspect = false;
         let p = write_png("lock", 40, 20, |_| 0);
-        d.load_image(new_file(), &p, false).unwrap();
-        assert!(wait(&mut d));
+        d.load_image(&p).unwrap();
         assert!(!d.keep_aspect);
-        d.clear_source();
-        assert!(!d.keep_aspect);
-        // a new dock (app start) is locked again, whatever was stored
+        // a new editor (every image has its own) is locked again, whatever was stored
         assert!(ImageDock::new().keep_aspect);
         let _ = std::fs::remove_file(&p);
     }
@@ -1345,138 +1265,22 @@ mod tests {
         }
     }
 
-    /// Headless egui driver around one dock (same technique as the SVG dock's e2e tests).
-    mod e2e {
-        use super::*;
-        use lg_gcode::Firmware;
-
-        pub(super) struct Harness {
-            pub ctx: egui::Context,
-            pub core: Arc<GrblCore>,
-            pub dock: ImageDock,
-            /// Text shapes of the last frame: (text, screen rect).
-            texts: Vec<(String, egui::Rect)>,
-            /// Actions of the last frame.
-            pub actions: Vec<ImageDockAction>,
-        }
-
-        /// Collect text shapes recursively. `s`: shape. `out`: sink.
-        fn collect(s: &egui::Shape, out: &mut Vec<(String, egui::Rect)>) {
-            match s {
-                egui::Shape::Text(t) => out.push((t.galley.text().to_owned(), t.galley.rect.translate(t.pos.to_vec2()))),
-                egui::Shape::Vec(v) => v.iter().for_each(|c| collect(c, out)),
-                _ => {}
-            }
-        }
-
-        impl Harness {
-            /// Build core + dock. Returns the harness.
-            pub fn new() -> Self {
-                let (tx, _rx) = crossbeam_channel::unbounded();
-                let core = GrblCore::new(Firmware::Grbl, tx);
-                let mut h = Harness { ctx: egui::Context::default(), core, dock: ImageDock::new(), texts: Vec::new(), actions: Vec::new() };
-                h.frame(vec![]);
-                h
-            }
-
-            /// Run one frame. `events`: input events.
-            pub fn frame(&mut self, events: Vec<egui::Event>) {
-                let ri = egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(320.0, 1100.0))), events, ..Default::default() };
-                let (dock, core) = (&mut self.dock, &self.core);
-                let mut acts = Vec::new();
-                let mut out = self.ctx.run_ui(ri, |ui| {
-                    acts = dock.show(ui, core);
-                });
-                self.actions.extend(acts);
-                out.textures_delta.clear();
-                self.texts.clear();
-                for cs in &out.shapes {
-                    collect(&cs.shape, &mut self.texts);
-                }
-            }
-
-            /// Click at `p` (press frame + release frame + settle frame).
-            pub fn click_at(&mut self, p: egui::Pos2) {
-                let btn = |pressed| egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE };
-                self.frame(vec![egui::Event::PointerMoved(p), btn(true)]);
-                self.frame(vec![btn(false)]);
-                self.frame(vec![]);
-            }
-
-            /// Two quiet frames: grids settle their column widths before the next rect is read.
-            fn stabilize(&mut self) {
-                self.frame(vec![]);
-                self.frame(vec![]);
-            }
-
-            /// Click the last drawn text equal to `t`. Panics when absent.
-            pub fn click_text(&mut self, t: &str) {
-                self.stabilize();
-                let r = self.texts.iter().rev().find(|(s, _)| s == t).map(|(_, r)| *r).unwrap_or_else(|| panic!("text {t:?} not on screen: {:?}", self.texts.iter().map(|x| &x.0).collect::<Vec<_>>()));
-                self.click_at(r.center());
-            }
-
-            /// Type `v` into the numeric field `id` and press Enter.
-            pub fn type_into(&mut self, id: &str, v: &str) {
-                self.stabilize();
-                let r = self.ctx.read_response(egui::Id::unique(id)).unwrap_or_else(|| panic!("field {id} not shown")).rect;
-                self.click_at(r.center());
-                let all = egui::Event::Key { key: egui::Key::A, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
-                self.frame(vec![all, egui::Event::Text(v.into())]);
-                let enter = |p| egui::Event::Key { key: egui::Key::Enter, physical_key: None, pressed: p, repeat: false, modifiers: egui::Modifiers::NONE };
-                self.frame(vec![enter(true), enter(false)]);
-                self.frame(vec![]);
-            }
-
-            /// True when a text is on screen. `t`: text.
-            pub fn shows(&self, t: &str) -> bool {
-                self.texts.iter().any(|(s, _)| s.trim() == t.trim())
-            }
-
-            /// Returns how often a text is on screen. `t`: text.
-            pub fn count(&self, t: &str) -> usize {
-                self.texts.iter().filter(|(s, _)| s.trim() == t.trim()).count()
-            }
-
-            /// Click the aspect lock (right of the width input, one grid gap away).
-            pub fn click_lock(&mut self) {
-                self.stabilize();
-                let w = self.ctx.read_response(egui::Id::unique("image-w")).expect("width input not shown").rect;
-                self.click_at(egui::pos2(w.max.x + 6.0 + 8.5, w.center().y));
-            }
-
-            /// Wait until auto regen caught up with all edits. Panics when none was triggered or one failed.
-            pub fn settle(&mut self) {
-                assert!(self.dock.job.is_some() || self.dock.dirty, "edit did not trigger regen");
-                let t = Instant::now();
-                while !(self.dock.job.is_none() && !self.dock.dirty) {
-                    if let Some(ok) = self.dock.poll() {
-                        assert!(ok, "generation failed");
-                    }
-                    assert!(t.elapsed() < Duration::from_secs(10), "settle timeout");
-                    std::thread::sleep(Duration::from_millis(5));
-                    self.frame(vec![]);
-                }
-            }
-
-            /// Whole program text lines.
-            pub fn all_lines(&self) -> Vec<String> {
-                lines(&self.core.loaded_file())
-            }
-        }
+    /// Open one image in a headless job dock and generate it. `h`: harness. `p`: image file.
+    fn open_in_dock(h: &mut Harness, p: &Path) {
+        h.job.add_image(p, false).unwrap();
+        assert!(h.wait());
+        h.frame(vec![]);
     }
 
     #[test]
     fn every_input_reaches_the_gcode() {
         let _g = settings_guard();
         let p = write_png("e2e", 40, 20, |_| 0);
-        let mut h = e2e::Harness::new();
-        h.dock.load_image(h.core.loaded_file(), &p, false).unwrap();
-        assert!(wait(&mut h.dock));
-        h.frame(vec![]);
+        let mut h = Harness::new();
+        open_in_dock(&mut h, &p);
         assert!(h.shows(&tr_plain("ImageDock.GroupMap")));
         // size row with the lock on, upper right calculated (x0 = 0: x1 equals w, so label + input = 2)
-        assert!(h.shows(&tr_plain("ImageDock.SizeRow")) && h.dock.keep_aspect);
+        assert!(h.shows(&tr_plain("ImageDock.SizeRow")) && h.image().keep_aspect);
         assert_eq!((h.count("100.00"), h.count("50.00")), (2, 2));
         assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"2.000", &"2.000"])));
         assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&300, &150])));
@@ -1486,7 +1290,7 @@ mod tests {
         // width typed, lock on: height follows the 2:1 ratio, upper right follows, regenerated
         h.type_into("image-w", "150");
         h.settle();
-        assert_eq!((h.dock.v.x0, h.dock.v.y0, h.dock.v.x1, h.dock.v.y1), (0.0, 0.0, 150.0, 75.0));
+        assert_eq!((h.image().v.x0, h.image().v.y0, h.image().v.x1, h.image().v.y1), (0.0, 0.0, 150.0, 75.0));
         assert!((max_x(&h.all_lines()) - 150.0).abs() < 1e-3);
         assert_eq!((h.count("150.00"), h.count("75.00")), (2, 2));
         assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"2.000", &"2.000"])));
@@ -1494,27 +1298,28 @@ mod tests {
 
         // lock click: opens, toggling alone does not regenerate
         h.click_lock();
-        assert!(!h.dock.keep_aspect && !h.dock.needs_apply());
+        assert!(!h.image().keep_aspect && !h.job.needs_apply());
         // height typed, lock off: width stays
         h.type_into("image-h", "40");
         h.settle();
-        assert_eq!((h.dock.v.x1, h.dock.v.y1), (150.0, 40.0));
+        assert_eq!((h.image().v.x1, h.image().v.y1), (150.0, 40.0));
         assert!(h.shows(&tr_fmt("ImageDock.Aspect", &[&"3.750", &"2.000"])));
         assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&450, &120])));
         // lock on again: width typed, height follows the new 3.75 ratio
         h.click_lock();
-        assert!(h.dock.keep_aspect && !h.dock.needs_apply());
+        assert!(h.image().keep_aspect && !h.job.needs_apply());
         h.type_into("image-w", "75");
         h.settle();
-        assert_eq!((h.dock.v.x1, h.dock.v.y1), (75.0, 20.0));
+        assert_eq!((h.image().v.x1, h.image().v.y1), (75.0, 20.0));
         h.type_into("image-h", "40");
         h.settle();
-        assert_eq!((h.dock.v.x1, h.dock.v.y1), (150.0, 40.0));
+        assert_eq!((h.image().v.x1, h.image().v.y1), (150.0, 40.0));
 
         // x0 typed: upper right moves, size stays, first move goes to the new X
         h.type_into("image-x0", "10");
         h.settle();
-        assert_eq!((h.dock.v.x0, h.dock.v.x1, h.dock.v.width(), h.dock.v.height()), (10.0, 160.0, 150.0, 40.0));
+        let v = &h.image().v;
+        assert_eq!((v.x0, v.x1, v.width(), v.height()), (10.0, 160.0, 150.0, 40.0));
         assert!(h.shows("160.00") && h.shows("10.00"));
         let l = h.all_lines();
         assert!(l[0].starts_with("G0 X10 "), "{}", l[0]);
@@ -1529,7 +1334,7 @@ mod tests {
         let l = h.all_lines();
         assert!(words(&l, 'F').contains(&1800.0), "speed: {:?}", &l[..3]);
         assert_eq!(burn_levels(&l), vec![400]);
-        assert_eq!((h.dock.v.quality, h.dock.v.start, h.dock.v.stop), (1.0, 0, 100));
+        assert_eq!((h.image().v.quality, h.image().v.start, h.image().v.stop), (1.0, 0, 100));
         assert!(h.shows(&tr_fmt("ImageDock.RasterSize", &[&150, &40])));
         // start above black: black is outside the range and no longer burns
         h.type_into("image-start", "10");
@@ -1540,12 +1345,13 @@ mod tests {
         // layout error: red text, program stays, no generation (lock is on: height goes to 0 as well)
         h.type_into("image-w", "0");
         assert!(h.shows(&tr_plain("ImageDock.ErrorPlacement")));
-        assert!(!h.dock.job_running() && h.dock.is_blocked());
+        assert!(!h.job.job_running() && h.job.is_blocked());
         assert_eq!(h.all_lines(), l);
 
         // classic button
         h.click_text(&tr_plain("ImageDock.Classic"));
-        assert_eq!(h.actions, vec![ImageDockAction::OpenClassic]);
+        let id = h.job.selected_id().unwrap();
+        assert_eq!(h.actions, vec![crate::forms::job_dock::JobAction::OpenClassic { id }]);
         let _ = std::fs::remove_file(&p);
     }
 
@@ -1553,16 +1359,14 @@ mod tests {
     fn direction_combo_and_laser_mode_reach_the_gcode() {
         let _g = settings_guard();
         let p = write_png("combo", 20, 20, |_| 0);
-        let mut h = e2e::Harness::new();
-        h.dock.load_image(h.core.loaded_file(), &p, false).unwrap();
-        assert!(wait(&mut h.dock));
-        h.frame(vec![]);
+        let mut h = Harness::new();
+        open_in_dock(&mut h, &p);
         let horizontal = h.all_lines();
         // combo texts are cut at "(" like in the classic dialog
         let text = |d| crate::ui::widgets::combo::enum_item_text(&translate_enum(d, "Direction"), true);
         h.click_text(&text(Direction::Horizontal));
         h.click_text(&text(Direction::Vertical));
-        assert_eq!(h.dock.v.direction, "Vertical");
+        assert_eq!(h.image().v.direction, "Vertical");
         h.settle();
         assert_ne!(h.all_lines(), horizontal);
         h.click_text("M3 - Constant Power");
@@ -1577,10 +1381,8 @@ mod tests {
         let _g = settings_guard();
         lg_base::settings::set("Support Hardware PWM", false);
         let p = write_png("nopwm", 20, 20, |_| 0);
-        let mut h = e2e::Harness::new();
-        h.dock.load_image(h.core.loaded_file(), &p, false).unwrap();
-        assert!(wait(&mut h.dock));
-        h.frame(vec![]);
+        let mut h = Harness::new();
+        open_in_dock(&mut h, &p);
         assert!(h.ctx.read_response(egui::Id::unique("image-smax")).is_none());
         assert!(h.ctx.read_response(egui::Id::unique("image-smin")).is_none());
         assert!(h.ctx.read_response(egui::Id::unique("image-start")).is_some());
