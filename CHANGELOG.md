@@ -3,7 +3,7 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
-## Unreleased
+## 1.5.0 - 2026-10-27
 
 ### Added
 - Several files in one job: after *Append File* the Parameters dock lists every loaded file (SVG, image, G-code) in a
