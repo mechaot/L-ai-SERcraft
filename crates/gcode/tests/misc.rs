@@ -176,3 +176,139 @@ fn svg_layered_ranges_cover_layers() {
     assert!(r[0].is_none() && r[1].is_some());
     std::fs::remove_dir_all(&dir).ok();
 }
+
+/// Program text of a file. `f`: program. Returns one entry per command.
+fn text(f: &GrblFile) -> Vec<String> {
+    f.iter().map(|c| c.command().to_owned()).collect()
+}
+
+/// File with the given command lines. `lines`: commands. Returns the program.
+fn file_of(lines: &[&str]) -> GrblFile {
+    let mut f = GrblFile::new();
+    for l in lines {
+        f.commands_mut().push(GrblCommand::new(l));
+    }
+    f
+}
+
+#[test]
+fn replace_block_keeps_neighbours_and_returns_new_range() {
+    let _g = sandbox();
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X10", "G1 X11", "G1 X12", "G1 X20", "G1 X21"]);
+    // middle block 3..6 becomes two lines; the value of the producer is handed back
+    let (v, new) = f
+        .replace_block(3..6, |f| {
+            f.commands_mut().push(GrblCommand::new("G1 X30"));
+            f.commands_mut().push(GrblCommand::new("G1 X31"));
+            Ok(f.count())
+        })
+        .unwrap();
+    // the producer saw the prefix only
+    assert_eq!((v, new.clone()), (5, 3..5));
+    assert_eq!(text(&f), ["G0 X1", "G1 X2", "G1 X3", "G1 X30", "G1 X31", "G1 X20", "G1 X21"]);
+    // grow the block again: the suffix moves back
+    let (_, new) = f
+        .replace_block(new, |f| {
+            for l in ["G1 X40", "G1 X41", "G1 X42", "G1 X43"] {
+                f.commands_mut().push(GrblCommand::new(l));
+            }
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(new, 3..7);
+    assert_eq!(text(&f)[7..], ["G1 X20", "G1 X21"]);
+    // the joined program was analyzed: moving range covers the last suffix move
+    assert!(f.range().moving_range.x.max >= lg_dotnet::Decimal::from(43));
+    // first and last block, empty producer
+    f.replace_block(0..3, |_| Ok(())).unwrap();
+    assert_eq!(text(&f).first().map(String::as_str), Some("G1 X40"));
+    f.replace_block(4..6, |_| Ok(())).unwrap();
+    assert_eq!(text(&f), ["G1 X40", "G1 X41", "G1 X42", "G1 X43"]);
+}
+
+#[test]
+fn replace_block_with_layered_svg_returns_absolute_ranges() {
+    use lg_svg2gcode::{ColorFilter, LayerParams};
+    let _g = sandbox();
+    let dir = lg_base::paths::test_dir("replace_block_svg");
+    let svg = dir.join("two.svg");
+    std::fs::write(
+        &svg,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="50mm" height="50mm" viewBox="0 0 50 50">
+<g id="a"><rect x="1" y="1" width="10" height="10"/></g>
+<g id="b"><circle cx="30" cy="30" r="5"/></g></svg>"#,
+    )
+    .unwrap();
+    let path = svg.to_str().unwrap();
+    let base = LayerParams::from_options(&lg_gcode::svg_conv_options(), ColorFilter::All);
+    let layers = [base.clone(), base];
+    // reference: head, svg appended, tail
+    let mut want = file_of(&["G0 X1", "G1 X2", "G1 X3"]);
+    let r_want = want.load_imported_svg_layered(path, true, &layers).unwrap();
+    for l in ["G1 X90", "G1 X91"] {
+        want.commands_mut().push(GrblCommand::new(l));
+    }
+    // same through replace_block: an old block of 4 lines sits between head and tail
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X70", "G1 X71", "G1 X72", "G1 X73", "G1 X90", "G1 X91"]);
+    let (r, new) = f.replace_block(3..7, |f| f.load_imported_svg_layered(path, true, &layers)).unwrap();
+    assert_eq!(r, r_want);
+    assert_eq!(new.start, 3);
+    let (a, b) = (r[0].clone().unwrap(), r[1].clone().unwrap());
+    assert!(a.start as usize >= 3 && a.end == b.start && b.end as usize <= new.end);
+    assert_eq!(text(&f), text(&want));
+    assert_eq!(f.count() - new.end, 2);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn remove_block_and_out_of_range_clamp() {
+    let _g = sandbox();
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X4"]);
+    f.remove_block(1..3).unwrap();
+    assert_eq!(text(&f), ["G0 X1", "G1 X4"]);
+    // end beyond the list: only the existing tail goes
+    f.remove_block(1..99).unwrap();
+    assert_eq!(text(&f), ["G0 X1"]);
+    // empty range far behind the end appends at the end
+    let (_, new) = f
+        .replace_block(10..20, |f| {
+            f.commands_mut().push(GrblCommand::new("G1 X5"));
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!((new, text(&f)), (1..2, vec!["G0 X1".to_owned(), "G1 X5".to_owned()]));
+    // everything away
+    f.remove_block(0..2).unwrap();
+    assert_eq!(f.count(), 0);
+}
+
+#[test]
+fn replace_block_error_removes_block_and_keeps_the_rest() {
+    let _g = sandbox();
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X4"]);
+    let r: GResult<((), std::ops::Range<usize>)> = f.replace_block(1..3, |f| {
+        // half a block, then the failure
+        f.commands_mut().push(GrblCommand::new("G1 X99"));
+        Err(GcodeError::Other("boom".into()))
+    });
+    assert!(r.is_err());
+    assert_eq!(text(&f), ["G0 X1", "G1 X4"]);
+}
+
+#[test]
+fn load_serial_counts_loads_and_manual_events() {
+    let _g = sandbox();
+    let dir = lg_base::paths::test_dir("load_serial");
+    let nc = dir.join("a.nc");
+    std::fs::write(&nc, "G0 X1\nG1 X2\n").unwrap();
+    let mut f = GrblFile::new();
+    let s0 = f.load_serial();
+    f.load_file(nc.to_str().unwrap(), false).unwrap();
+    assert_eq!(f.load_serial(), s0 + 1);
+    f.raise_file_loaded("x");
+    assert_eq!(f.load_serial(), s0 + 2);
+    // block edits themselves report nothing
+    f.remove_block(0..1).unwrap();
+    assert_eq!(f.load_serial(), s0 + 2);
+    std::fs::remove_dir_all(&dir).ok();
+}

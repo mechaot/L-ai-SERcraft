@@ -2,28 +2,24 @@
 // Copyright (C) 2016-2025 Diego Settimi and LaserGRBL contributors (original C# code)
 // Copyright (C) 2026 Andreas Pösch (Rust port and changes)
 
-//! "Parameters" dock (right side of the main window). Replaces the modal `SvgToGCodeForm`
+//! "Parameters" dock editor for one SVG file (right side of the main window). Replaces the modal `SvgToGCodeForm`
 //! (`SvgConverter/ConvertSizeAndOptionForm.cs`): SVG is loaded at once, power/speed are tweaked
-//! here and every committed edit regenerates the G-code in the background. Settings are kept per SVG layer (top-level `<g>`).
+//! here and every committed edit regenerates the G-code of this file's block in the background. Settings are kept per SVG layer (top-level `<g>`).
+//! One instance edits one file; without a file it is the "(defaults)" editor. It owns no program and no worker:
+//! the job coordinator (`job_dock.rs`) takes its [`GenRequest`], runs it and hands the result back.
 //! Not part of the C# app (intentional deviation).
 
 use eframe::egui::{self, Grid, RichText, Ui};
-use lasergrbl_core::GrblCore;
 use lg_dotnet::Decimal;
-use lg_gcode::GrblFile;
 use lg_services::layer_presets::LayerPreset;
 use lg_svg2gcode::{ColorFilter, HatchFill, LayerInfo, LayerParams};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::ops::Range;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use std::thread::JoinHandle;
 
 use crate::forms::form_util::*;
 use crate::forms::material::{default_presets, SharedPresetDb};
 use crate::ui::dialog::{MessageBox, MessageBoxHost, MessageBoxIcon};
-use crate::ui::preview::LayerView;
 use crate::ui::widgets::{flat_combo, grbl_group_box_wide, DecimalInputRanged, ImageButton};
 use crate::ui::{tr, tr_fmt, tr_plain};
 
@@ -65,7 +61,6 @@ pub fn filter_name(f: ColorFilter) -> &'static str {
 #[derive(Clone, Copy)]
 enum Msg {
     WrongLaserMode,
-    Busy,
 }
 
 /// What the dock asks the main window to do.
@@ -151,35 +146,27 @@ fn now_secs() -> u64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs())
 }
 
-/// SVG the dock regenerates G-code from.
+/// SVG the editor regenerates G-code from.
 struct SvgSource {
-    /// Shared program.
-    file: SharedFile,
     /// SVG path.
     path: String,
-    /// Import was an append.
-    append: bool,
-    /// Commands that existed before the import (kept on every re-apply when `append`).
-    base_len: usize,
     /// Layers could be listed: use the layered converter.
     layered: bool,
 }
 
-/// Command ranges per layer, filled by the worker.
-type Ranges = Vec<Option<Range<u32>>>;
+/// Command ranges per layer (relative to the start of this file's block).
+type Ranges = LayerRanges;
 
-/// Running G-code generation.
-struct ApplyJob {
-    /// `edit_seq` when the job started.
-    seq: u64,
-    handle: JoinHandle<()>,
-    /// Set by the worker when the conversion succeeded.
-    ok: Arc<AtomicBool>,
-    /// Command range per layer, written by the worker.
-    ranges: Arc<Mutex<Ranges>>,
+/// Overlay data of one SVG for the preview; ranges are relative to the start of the file's block.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SvgView {
+    /// Ranges of layers the user disabled (not drawn).
+    pub hidden: Vec<Range<u32>>,
+    /// Range of the selected layer, only set when the SVG has more than one layer and it is enabled.
+    pub highlight: Option<Range<u32>>,
 }
 
-/// Parameters dock state.
+/// Parameters editor state (one SVG file, or the defaults without a file).
 pub struct ParamsDock {
     limits: Limits,
     support_pwm: bool,
@@ -202,12 +189,13 @@ pub struct ParamsDock {
     dirty: bool,
     /// Bumped on every edit that needs a regen.
     edit_seq: u64,
-    /// `edit_seq` of the last automatic attempt.
-    auto_seq: u64,
-    job: Option<ApplyJob>,
+    /// `edit_seq` of the last request taken (None = no attempt yet); one automatic attempt per edit.
+    auto_seq: Option<u64>,
+    /// `edit_seq` of the request that runs now.
+    inflight: Option<u64>,
     last_error: Option<String>,
     msgs: MessageBoxHost<Msg>,
-    /// Command ranges of the layers in the loaded program (from the last good generation).
+    /// Command ranges of the layers in this file's block (from the last good generation).
     generated: Ranges,
     /// Bumped on every change the preview overlay depends on.
     revision: u64,
@@ -238,8 +226,8 @@ impl ParamsDock {
             source: None,
             dirty: false,
             edit_seq: 0,
-            auto_seq: 0,
-            job: None,
+            auto_seq: None,
+            inflight: None,
             last_error: None,
             msgs: MessageBoxHost::default(),
             generated: Vec::new(),
@@ -300,12 +288,42 @@ impl ParamsDock {
         &mut self.layers[i].1
     }
 
-    /// Set a new SVG source and generate at once.
+    /// Editor for a new SVG file. The values seed like the old dock did: per-file store, else the edited layer
+    /// of `seed_from` (or the last-used settings).
     ///
-    /// `file`: shared program. `path`: SVG path. `append`: keep the commands already in `file`.
-    /// `from_settings`: reload the values from settings first (project restore stored them just before);
-    /// otherwise the per-file store and the current values seed the layers.
-    pub fn load_svg(&mut self, file: SharedFile, path: &str, append: bool, from_settings: bool) {
+    /// `seed_from`: editor whose limits, presets and current layer values are copied (the defaults editor, or the
+    /// editor of the SVG selected so far). `path`: SVG path. `from_settings`: take the values from the settings
+    /// (project restore stored them just before) and ignore the per-file store.
+    /// Returns an editor that is dirty, so the coordinator generates it at once.
+    pub fn for_svg(seed_from: &ParamsDock, path: &str, from_settings: bool) -> ParamsDock {
+        let mut d = ParamsDock {
+            limits: seed_from.limits,
+            support_pwm: seed_from.support_pwm,
+            layers: vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, seed_from.cur().clone())],
+            selected: 0,
+            border_max: seed_from.border_max,
+            power_max_limit: seed_from.power_max_limit,
+            presets_db: seed_from.presets_db.clone(),
+            presets: seed_from.presets.clone(),
+            preset_name: seed_from.preset_name.clone(),
+            source: None,
+            dirty: false,
+            edit_seq: 0,
+            auto_seq: None,
+            inflight: None,
+            last_error: None,
+            msgs: MessageBoxHost::default(),
+            generated: Vec::new(),
+            revision: 0,
+        };
+        d.set_svg(path, from_settings);
+        d
+    }
+
+    /// List the layers of `path`, seed their values and mark the editor dirty.
+    ///
+    /// `path`: SVG path. `from_settings`: see [`ParamsDock::for_svg`].
+    fn set_svg(&mut self, path: &str, from_settings: bool) {
         // seed values for layers without stored settings
         let seed = if from_settings {
             self.settings_layer()
@@ -326,25 +344,51 @@ impl ParamsDock {
         self.selected = 0;
         self.generated.clear();
         self.revision += 1;
-        // commands that stay in front of the import
-        let base_len = if append { file.read().map(|f| f.count()).unwrap_or(0) } else { 0 };
-        self.source = Some(SvgSource { file, path: path.to_owned(), append, base_len, layered });
+        self.source = Some(SvgSource { path: path.to_owned(), layered });
         self.dirty = true;
         self.last_error = None;
-        self.apply();
     }
 
-    /// Forget the SVG (another file type was opened). Values stay, auto regen stops.
-    pub fn clear_source(&mut self) {
-        self.source = None;
-        self.dirty = false;
-        self.last_error = None;
-        self.generated.clear();
-        // keep the edited layer as the plain defaults
-        let keep = self.cur().clone();
-        self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, keep)];
+    /// Take over the edited layer values of a dropped SVG editor as the plain defaults (the next SVG starts there).
+    ///
+    /// `from`: editor that goes away. Only meant for the defaults editor (no source).
+    pub fn adopt_defaults(&mut self, from: &ParamsDock) {
+        self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, from.cur().clone())];
         self.selected = 0;
+        self.preset_name = from.preset_name.clone();
         self.revision += 1;
+    }
+
+    /// Test access: command ranges of the layers in this file's block (relative to the block start).
+    #[cfg(test)]
+    pub(crate) fn generated_ranges(&self) -> &Ranges {
+        &self.generated
+    }
+
+    /// Test access: set S-MAX of layer `layer` as an edit would.
+    ///
+    /// `layer`: layer index. `power`: new S-MAX.
+    #[cfg(test)]
+    pub(crate) fn test_set_power(&mut self, layer: usize, power: i32) {
+        self.layers[layer].1.max_power = power;
+        self.mark_dirty();
+    }
+
+    /// Test access: S-MAX of the edited layer. Returns the value.
+    #[cfg(test)]
+    pub(crate) fn test_power_of_current(&self) -> i32 {
+        self.cur().max_power
+    }
+
+    /// Returns the SVG path of this editor, None for the defaults editor.
+    #[cfg(test)]
+    pub fn path(&self) -> Option<&str> {
+        self.source.as_ref().map(|s| s.path.as_str())
+    }
+
+    /// Returns the number of layers (1 for the defaults pseudo-layer and for SVGs without groups).
+    pub fn layer_count(&self) -> usize {
+        self.layers.len()
     }
 
     /// Dev hook (`LASERGRBL_DEV_SEQ` `fill=N` / `nofill=N` / `cross=N` / `nocross=N` / `pershape=N` / `nopershape=N`): set fill flags of layer `i`.
@@ -387,7 +431,7 @@ impl ParamsDock {
     }
 
     /// Converter parameters of all layers. Returns one entry per layer, in layer order.
-    fn layer_params(&self) -> Vec<LayerParams> {
+    pub(crate) fn layer_params(&self) -> Vec<LayerParams> {
         self.layers
             .iter()
             .map(|(_, l)| LayerParams {
@@ -408,33 +452,19 @@ impl ParamsDock {
         self.edit_seq += 1;
     }
 
-    /// Start a regen for the latest edit, at most once per edit, never in a loop.
+    /// Take the work order for the latest edit: persist the settings and hand out the producer of this file's
+    /// block. The editor counts as generating until [`ParamsDock::complete`] (or [`ParamsDock::cancel_request`]).
     ///
-    /// `can_load`: `core.can_load_new_file()`; false while a program runs, then wait (attempt not consumed).
-    /// A failed generation is not retried until the next edit; Run retries via `request_run`.
-    fn auto_apply(&mut self, can_load: bool) {
-        // nothing new, program busy, or a job runs / nothing to do
-        if self.auto_seq == self.edit_seq || !can_load || !self.is_dirty_idle() {
-            return;
-        }
-        self.auto_seq = self.edit_seq;
-        self.apply();
-    }
-
-    /// Persist the settings and start the G-code generation on a worker.
-    ///
-    /// Returns false when nothing was started (no source, no layer enabled, or file busy: busy box queued).
-    pub fn apply(&mut self) -> bool {
+    /// Returns None without a source, while a request is out, when nothing is dirty, or when no layer is enabled
+    /// (the red text says so).
+    pub fn take_request(&mut self) -> Option<GenRequest> {
         use lg_base::settings::set;
-        if self.job.is_some() {
-            return false;
-        }
-        if self.source.is_none() {
-            return false;
+        if self.inflight.is_some() || self.source.is_none() || !self.dirty {
+            return None;
         }
         if !self.any_enabled() {
             self.last_error = Some(tr_plain("ParamsDock.NoLayerEnabled"));
-            return false;
+            return None;
         }
         // selected layer becomes the "last used" values
         let c = self.cur().clone();
@@ -445,36 +475,54 @@ impl ParamsDock {
 
         let params = self.layer_params();
         let filter = FILTER_OPTIONS[c.filter];
-        let Some(src) = &self.source else { return false };
-        let (path, append, base_len, layered) = (src.path.clone(), src.append, src.base_len, src.layered);
-        let ok = Arc::new(AtomicBool::new(false));
-        let ranges: Arc<Mutex<Ranges>> = Arc::new(Mutex::new(Vec::new()));
-        let (ok_w, ranges_w) = (ok.clone(), ranges.clone());
-        let handle = GrblFile::spawn_load(&src.file, move |f| {
-            // drop the previous import, keep what was there before it
-            if append {
-                f.truncate_list(base_len);
-            }
+        let src = self.source.as_ref()?;
+        let (path, layered) = (src.path.clone(), src.layered);
+        let name = file_name(&path);
+        let seq = self.edit_seq;
+        self.inflight = Some(seq);
+        self.auto_seq = Some(seq);
+        self.last_error = None;
+        // always appends: the coordinator cuts the old block out first
+        let produce: ProduceFn = Box::new(move |f| {
             if layered {
-                let r = f.load_imported_svg_layered(&path, append, &params)?;
-                *ranges_w.lock().unwrap_or_else(|e| e.into_inner()) = r;
+                f.load_imported_svg_layered(&path, true, &params)
             } else {
-                f.load_imported_svg(&path, append, filter)?;
+                f.load_imported_svg(&path, true, filter).map(|()| Vec::new())
             }
-            ok_w.store(true, Ordering::SeqCst);
-            Ok(())
         });
-        match handle {
-            Some(handle) => {
-                self.job = Some(ApplyJob { seq: self.edit_seq, handle, ok, ranges });
+        Some(GenRequest { seq, name, produce })
+    }
+
+    /// Give a taken request back unrun (the program was busy): the editor stays dirty and may be asked again.
+    ///
+    /// `seq`: the request's `seq`.
+    pub fn cancel_request(&mut self, seq: u64) {
+        if self.inflight == Some(seq) {
+            self.inflight = None;
+            self.auto_seq = None;
+        }
+    }
+
+    /// Result of a request taken with [`ParamsDock::take_request`].
+    ///
+    /// `seq`: the request's `seq`. `result`: layer ranges relative to the block start, or the error text.
+    /// Edits made while the request ran keep the editor dirty. A failed generation is not retried by
+    /// [`ParamsDock::wants_auto`] until the next edit.
+    pub fn complete(&mut self, seq: u64, result: Result<Ranges, String>) {
+        self.inflight = None;
+        match result {
+            Ok(ranges) => {
+                self.dirty = self.edit_seq != seq;
                 self.last_error = None;
-                true
+                self.generated = ranges;
             }
-            None => {
-                self.msgs.push(Msg::Busy, already_loading_box());
-                false
+            Err(e) => {
+                self.last_error = Some(e);
+                // the block is gone
+                self.generated.clear();
             }
         }
+        self.revision += 1;
     }
 
     /// Save the layer values of the current file into the per-file store.
@@ -488,45 +536,44 @@ impl ParamsDock {
 
     /// Returns true when the G-code is out of date or being generated (SVG loaded).
     pub fn needs_apply(&self) -> bool {
-        self.source.is_some() && (self.dirty || self.job.is_some())
+        self.source.is_some() && (self.dirty || self.inflight.is_some())
     }
 
-    /// Returns true when edits wait and no generation runs (an `apply()` call would start one).
+    /// Returns true when edits wait, no request is out and a layer is enabled ([`ParamsDock::take_request`] would yield one).
     pub fn is_dirty_idle(&self) -> bool {
-        self.source.is_some() && self.dirty && self.job.is_none() && self.any_enabled()
+        self.source.is_some() && self.dirty && self.inflight.is_none() && self.any_enabled()
     }
 
-    /// Returns true while the worker runs.
-    pub fn job_running(&self) -> bool {
-        self.job.is_some()
+    /// Returns true when the coordinator should start a request by itself: [`ParamsDock::is_dirty_idle`] and no
+    /// attempt yet for the latest edit (a failed generation waits for the next edit or for Run).
+    pub fn wants_auto(&self) -> bool {
+        self.is_dirty_idle() && self.auto_seq != Some(self.edit_seq)
     }
 
-    /// Check the worker; call every frame.
-    ///
-    /// Returns `Some(success)` once when a generation finished.
-    pub fn poll(&mut self) -> Option<bool> {
-        if !self.job.as_ref().is_some_and(|j| j.handle.is_finished()) {
-            return None;
-        }
-        let job = self.job.take()?;
-        let _ = job.handle.join();
-        let ok = job.ok.load(Ordering::SeqCst);
-        if ok {
-            // edits made during the job keep the dock dirty
-            self.dirty = self.edit_seq != job.seq;
-            self.last_error = None;
-            self.generated = std::mem::take(&mut *job.ranges.lock().unwrap_or_else(|e| e.into_inner()));
-            self.revision += 1;
-        } else {
-            self.last_error = Some(tr_plain("ParamsDock.ApplyFailed"));
-        }
-        Some(ok)
+    /// Returns true when the program is stale and cannot be regenerated because every layer is off.
+    pub fn is_blocked(&self) -> bool {
+        self.source.is_some() && self.dirty && self.inflight.is_none() && !self.any_enabled()
+    }
+
+    /// Returns true while a request of this editor runs.
+    pub fn in_flight(&self) -> bool {
+        self.inflight.is_some()
+    }
+
+    /// Returns the text of what is wrong with this file (failed generation, no layer enabled), None when fine.
+    pub fn problem(&self) -> Option<String> {
+        self.last_error.clone().or_else(|| self.is_blocked().then(|| tr_plain("ParamsDock.NoLayerEnabled")))
+    }
+
+    /// Returns the counter that grows on every change the preview overlay depends on.
+    pub fn revision(&self) -> u64 {
+        self.revision
     }
 
     /// Overlay for the preview: highlight of the selected layer, hidden disabled layers.
     ///
-    /// Returns None without an SVG source.
-    pub fn layer_view(&self) -> Option<LayerView> {
+    /// Returns ranges relative to the file's block; None without an SVG source.
+    pub fn view(&self) -> Option<SvgView> {
         self.source.as_ref()?;
         let hidden = self
             .layers
@@ -537,7 +584,7 @@ impl ParamsDock {
             .collect();
         let sel_on = self.layers.get(self.selected).is_some_and(|(_, l)| l.enabled);
         let highlight = if self.layers.len() > 1 && sel_on { self.generated.get(self.selected).cloned().flatten() } else { None };
-        Some(LayerView { revision: self.revision, highlight, hidden })
+        Some(SvgView { hidden, highlight })
     }
 
     /// Rebuild the dropdown list from the preset database (after the editor closed).
@@ -680,10 +727,11 @@ impl ParamsDock {
         }
     }
 
-    /// Dock body.
+    /// Editor body (title and scrolling belong to the host).
     ///
-    /// `ui`: panel ui. `core`: for `can_load_new_file` (auto regen). Returns requests for the main window.
-    pub fn show(&mut self, ui: &mut Ui, core: &GrblCore) -> Vec<ParamsAction> {
+    /// `ui`: parent ui. Returns requests for the main window. Edits mark the editor dirty; the coordinator
+    /// starts the regeneration.
+    pub fn show(&mut self, ui: &mut Ui) -> Vec<ParamsAction> {
         let mut actions = Vec::new();
         // config changes after connecting
         self.limits = Limits::from_config();
@@ -691,29 +739,24 @@ impl ParamsDock {
         self.power_max_limit = self.limits.max_pwm;
         let mut edited = false;
 
-        ui.label(RichText::new(tr_plain("ParamsDock.Title")).strong());
-        ui.add_space(2.0);
-        egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-            if self.source.is_some() {
-                self.layer_group(ui, &mut edited);
-                ui.add_space(4.0);
-            }
-            self.preset_group(ui, &mut actions, &mut edited);
+        if self.source.is_some() {
+            self.layer_group(ui, &mut edited);
             ui.add_space(4.0);
-            self.speed_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.laser_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.fill_group(ui, &mut edited);
-            ui.add_space(4.0);
-            self.filter_group(ui, &mut edited);
-            ui.add_space(8.0);
-            self.status_row(ui);
-        });
+        }
+        self.preset_group(ui, &mut actions, &mut edited);
+        ui.add_space(4.0);
+        self.speed_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.laser_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.fill_group(ui, &mut edited);
+        ui.add_space(4.0);
+        self.filter_group(ui, &mut edited);
+        ui.add_space(8.0);
+        self.status_row(ui);
         if edited {
             self.mark_dirty();
         }
-        self.auto_apply(core.can_load_new_file());
         actions
     }
 
@@ -959,7 +1002,7 @@ impl ParamsDock {
         }
         // status line
         let status = match &self.source {
-            Some(s) if self.job.is_some() => format!("{} - {}", file_name(&s.path), tr_plain("ParamsDock.Generating")),
+            Some(s) if self.inflight.is_some() => format!("{} - {}", file_name(&s.path), tr_plain("ParamsDock.Generating")),
             Some(s) => file_name(&s.path),
             None => tr_plain("ParamsDock.NoSource"),
         };
@@ -992,17 +1035,27 @@ fn file_name(p: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::forms::job_test_harness::Rig;
     use lg_services::layer_presets::{PresetDb, EXAMPLE_NAME};
-    use std::sync::RwLock;
-    use std::time::{Duration, Instant};
+    use std::sync::{Arc, Mutex};
 
-    /// Dock on an in-memory DB holding the example (never touches the real config file).
+    /// Defaults editor on an in-memory DB holding the example (never touches the real config file).
     fn new_dock() -> ParamsDock {
         ParamsDock::with_presets(Arc::new(Mutex::new(PresetDb::in_memory(vec![LayerPreset::example()]))))
     }
 
-    fn new_file() -> SharedFile {
-        Arc::new(RwLock::new(GrblFile::new()))
+    /// Editor for the SVG at `path`, seeded from a fresh defaults editor.
+    fn svg_dock(path: &std::path::Path) -> ParamsDock {
+        ParamsDock::for_svg(&new_dock(), path.to_str().unwrap(), false)
+    }
+
+    /// Take the editor's request, run it on the rig and hand the result back. Returns None without a request, else success.
+    fn pump(rig: &mut Rig, d: &mut ParamsDock) -> Option<bool> {
+        let req = d.take_request()?;
+        let (seq, r) = rig.run(req);
+        let ok = r.is_ok();
+        d.complete(seq, r);
+        Some(ok)
     }
 
     fn write_svg(tag: &str) -> std::path::PathBuf {
@@ -1011,60 +1064,69 @@ mod tests {
         p
     }
 
-    /// Poll until the worker finished (5 s limit).
-    fn wait(d: &mut ParamsDock) -> bool {
-        let t = Instant::now();
-        loop {
-            if let Some(ok) = d.poll() {
-                return ok;
-            }
-            assert!(t.elapsed() < Duration::from_secs(5), "worker timeout");
-            std::thread::sleep(Duration::from_millis(5));
-        }
-    }
-
     #[test]
-    fn edit_during_job_keeps_dirty() {
+    fn edit_during_request_keeps_dirty() {
         let _g = settings_guard();
         let p = write_svg("editjob");
-        let mut d = new_dock();
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
-        assert!(wait(&mut d));
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         d.mark_dirty();
-        assert!(d.apply());
-        // edit while the job runs
+        let req = d.take_request().expect("dirty editor hands out a request");
+        assert!(d.in_flight() && d.take_request().is_none(), "one request at a time");
+        // edit while the request is out
         d.mark_dirty();
-        assert!(wait(&mut d));
-        assert!(d.dirty);
-        d.auto_apply(true);
-        assert!(d.job_running());
-        assert!(wait(&mut d));
+        let (seq, r) = rig.run(req);
+        d.complete(seq, r);
+        assert!(d.dirty && d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         assert!(!d.dirty);
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn auto_apply_once_per_edit_and_waits_for_can_load() {
+    fn auto_attempt_once_per_edit_and_cancel_gives_it_back() {
         let _g = settings_guard();
         let p = write_svg("autoonce");
-        let mut d = new_dock();
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
-        assert!(wait(&mut d));
-        // program busy: wait, attempt not consumed
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        // the load itself is the first automatic attempt
+        assert!(d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(!d.wants_auto());
+        // program busy: the coordinator hands the request back, the attempt is not consumed
         d.mark_dirty();
-        d.auto_apply(false);
-        assert!(!d.job_running());
-        d.auto_apply(true);
-        assert!(d.job_running());
-        assert!(wait(&mut d));
-        // failing generation is not retried without a new edit
+        let req = d.take_request().unwrap();
+        assert!(!d.wants_auto(), "a request is out");
+        d.cancel_request(req.seq);
+        assert!(!d.in_flight() && d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        // failing generation is not retried without a new edit ...
         let _ = std::fs::remove_file(&p);
         d.mark_dirty();
-        d.auto_apply(true);
-        assert!(d.job_running());
-        assert!(!wait(&mut d));
-        d.auto_apply(true);
-        assert!(!d.job_running());
+        assert!(d.wants_auto());
+        assert_eq!(pump(&mut rig, &mut d), Some(false));
+        assert!(!d.wants_auto() && d.is_dirty_idle());
+        // the failure stays visible, the next edit makes the attempt automatic again
+        d.mark_dirty();
+        assert!(d.wants_auto());
+        assert!(d.problem().is_some(), "the failure stays visible");
+    }
+
+    #[test]
+    fn failed_generation_clears_the_block_ranges() {
+        let _g = settings_guard();
+        let p = write_svg("failed");
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&["G0 X1"]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(!d.generated.is_empty());
+        let _ = std::fs::remove_file(&p);
+        d.mark_dirty();
+        assert_eq!(pump(&mut rig, &mut d), Some(false));
+        // the block is gone from the program, the head stays
+        assert!(d.generated.is_empty() && rig.block.is_empty());
+        assert_eq!(rig.lines(), ["G0 X1"]);
     }
 
     #[test]
@@ -1191,18 +1253,18 @@ mod tests {
     }
 
     #[test]
-    fn apply_persists_settings_and_loads() {
+    fn request_persists_settings_and_loads() {
         let _g = settings_guard();
         let p = write_svg("persist");
-        let file = new_file();
-        let mut d = new_dock();
-        d.cur_mut().border_speed = 1500;
-        d.cur_mut().max_power = 800;
-        d.cur_mut().laser_on = 1;
-        d.load_svg(file.clone(), p.to_str().unwrap(), false, false);
-        assert!(d.job_running());
-        assert!(wait(&mut d));
-        assert!(file.read().unwrap().count() > 0);
+        let mut defaults = new_dock();
+        defaults.cur_mut().border_speed = 1500;
+        defaults.cur_mut().max_power = 800;
+        defaults.cur_mut().laser_on = 1;
+        // a new SVG starts from the edited defaults
+        let mut d = ParamsDock::for_svg(&defaults, p.to_str().unwrap(), false);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(rig.count() > 0);
         let get = |k: &str| lg_base::settings::get(k, -1i32);
         assert_eq!(get("GrayScaleConversion.VectorizeOptions.BorderSpeed"), 1500);
         // S-MIN is not part of the dock: raster default stays untouched
@@ -1213,53 +1275,51 @@ mod tests {
     }
 
     #[test]
-    fn apply_clears_dirty_and_edit_sets_it() {
+    fn request_clears_dirty_and_edit_sets_it() {
         let _g = settings_guard();
         let p = write_svg("dirty");
-        let mut d = new_dock();
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
         assert!(d.needs_apply());
-        assert!(wait(&mut d));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         assert!(!d.dirty && !d.needs_apply());
         // edit marks dirty again
         d.dirty = true;
         assert!(d.needs_apply() && d.is_dirty_idle());
-        // clear_source stops auto regen
-        d.clear_source();
-        assert!(!d.needs_apply());
+        // the defaults editor never asks for a request and adopts the values of a dropped file
+        let mut defaults = new_dock();
+        assert!(defaults.take_request().is_none() && !defaults.needs_apply());
+        d.cur_mut().border_speed = 333;
+        defaults.adopt_defaults(&d);
+        assert_eq!(defaults.cur().border_speed, 333);
+        assert!(defaults.path().is_none() && d.path().is_some());
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn append_reapply_does_not_duplicate() {
+    fn regeneration_keeps_the_head_and_does_not_duplicate() {
         let _g = settings_guard();
         let p = write_svg("append");
-        let file = new_file();
-        for l in ["G0 X1", "G1 X2", "G1 X3"] {
-            file.write().unwrap().commands_mut().push(lg_gcode::GrblCommand::new(l));
-        }
-        let mut d = new_dock();
-        d.load_svg(file.clone(), p.to_str().unwrap(), true, false);
-        assert!(wait(&mut d));
-        let first = file.read().unwrap().count();
+        let mut rig = Rig::new(&["G0 X1", "G1 X2", "G1 X3"]);
+        let mut d = svg_dock(&p);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        let first = rig.count();
         assert!(first > 3);
         d.dirty = true;
-        assert!(d.apply());
-        assert!(wait(&mut d));
-        assert_eq!(file.read().unwrap().count(), first);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert_eq!(rig.count(), first);
         // old head untouched
-        let g = file.read().unwrap();
-        assert_eq!(g.get(0).map(|c| c.command()), Some("G0 X1"));
-        assert_eq!(g.get(2).map(|c| c.command()), Some("G1 X3"));
+        assert_eq!(rig.lines()[..3], ["G0 X1", "G1 X2", "G1 X3"]);
+        assert_eq!(rig.block, 3..first);
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn apply_without_source_does_nothing() {
+    fn request_without_source_does_nothing() {
         let _g = settings_guard();
         let mut d = new_dock();
-        assert!(!d.apply());
-        assert!(d.poll().is_none());
+        assert!(d.take_request().is_none());
+        assert!(!d.needs_apply() && !d.is_dirty_idle() && !d.wants_auto() && d.view().is_none());
     }
 
     /// Two-layer SVG in the scratchpad-independent temp dir. `tag`: file tag. Returns path.
@@ -1279,9 +1339,9 @@ mod tests {
     fn layers_listed_and_sync_copies_all_but_enabled() {
         let _g = settings_guard();
         let p = write_layer_svg("sync");
-        let mut d = new_dock();
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
-        assert!(wait(&mut d));
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         assert_eq!(d.layers.len(), 2);
         assert_eq!(d.layers[1].0.label, "Cut");
         d.layers[1].1.enabled = false;
@@ -1304,21 +1364,34 @@ mod tests {
         let _g = settings_guard();
         let p = write_layer_svg("store");
         let path = p.to_str().unwrap();
-        let mut d = new_dock();
-        d.load_svg(new_file(), path, false, false);
-        assert!(wait(&mut d));
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         d.layers[1].1.border_speed = 555;
         d.layers[1].1.passes = 4;
         d.layers[0].1.enabled = false;
         d.dirty = true;
-        assert!(d.apply());
-        assert!(wait(&mut d));
-        // reopen with a fresh dock
-        let mut d2 = new_dock();
-        d2.load_svg(new_file(), path, false, false);
-        assert!(wait(&mut d2));
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        // reopen with a fresh editor
+        let d2 = ParamsDock::for_svg(&new_dock(), path, false);
         assert_eq!((d2.layers[1].1.border_speed, d2.layers[1].1.passes), (555, 4));
         assert!(!d2.layers[0].1.enabled);
+        let _ = std::fs::remove_file(&p);
+    }
+
+    #[test]
+    fn project_restore_ignores_the_per_file_store() {
+        let _g = settings_guard();
+        let p = write_layer_svg("fromsettings");
+        let path = p.to_str().unwrap();
+        let mut d = svg_dock(&p);
+        d.layers[1].1.border_speed = 555;
+        d.dirty = true;
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        lg_base::settings::set("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1234);
+        let d2 = ParamsDock::for_svg(&new_dock(), path, true);
+        assert_eq!((d2.layers[0].1.border_speed, d2.layers[1].1.border_speed), (1234, 1234));
         let _ = std::fs::remove_file(&p);
     }
 
@@ -1341,53 +1414,54 @@ mod tests {
     }
 
     #[test]
-    fn all_layers_disabled_refuses_apply() {
+    fn all_layers_disabled_refuses_request() {
         let _g = settings_guard();
         let p = write_layer_svg("off");
-        let mut d = new_dock();
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
-        assert!(wait(&mut d));
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
         for (_, l) in d.layers.iter_mut() {
             l.enabled = false;
         }
         d.dirty = true;
-        assert!(!d.apply());
-        assert!(!d.job_running() && d.last_error.is_some());
-        assert!(!d.is_dirty_idle());
+        assert!(d.take_request().is_none());
+        assert!(!d.in_flight() && d.last_error.is_some());
+        assert!(!d.is_dirty_idle() && d.is_blocked() && d.problem().is_some());
         let _ = std::fs::remove_file(&p);
     }
 
     #[test]
-    fn layer_view_highlights_selected_and_hides_disabled() {
+    fn view_highlights_selected_and_hides_disabled() {
         let _g = settings_guard();
         let p = write_layer_svg("view");
-        let mut d = new_dock();
-        assert!(d.layer_view().is_none());
-        d.load_svg(new_file(), p.to_str().unwrap(), false, false);
-        assert!(wait(&mut d));
-        let v = d.layer_view().unwrap();
+        let mut d = svg_dock(&p);
+        assert!(new_dock().view().is_none());
+        let mut rig = Rig::new(&["G0 X1", "G1 X2"]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        // ranges are relative to the block: small numbers although two lines sit in front
+        assert!((d.generated[0].as_ref().unwrap().start as usize) < rig.block.len());
+        let v = d.view().unwrap();
         assert_eq!(v.highlight, d.generated[0]);
         assert!(v.hidden.is_empty());
         // select layer 2, disable layer 1
         d.selected = 1;
         d.layers[0].1.enabled = false;
-        let v2 = d.layer_view().unwrap();
+        let v2 = d.view().unwrap();
         assert_eq!(v2.highlight, d.generated[1]);
         assert_eq!(v2.hidden, vec![d.generated[0].clone().unwrap()]);
-        // ranges are disjoint
+        // ranges are disjoint and inside the block
         let (a, b) = (d.generated[0].clone().unwrap(), d.generated[1].clone().unwrap());
-        assert!(a.end <= b.start);
+        assert!(a.end <= b.start && b.end as usize <= rig.block.len());
         let _ = std::fs::remove_file(&p);
     }
 }
 
-/// End-to-end: drive the dock through egui input events, edit, let auto regen run, check the G-code.
+/// End-to-end: drive the editor through egui input events inside the job dock, edit, let auto regen run, check the G-code.
 #[cfg(test)]
 mod e2e {
     use super::*;
-    use lg_gcode::Firmware;
-    use lg_services::layer_presets::{PresetDb, EXAMPLE_NAME};
-    use std::time::{Duration, Instant};
+    use crate::forms::job_test_harness::Harness;
+    use lg_services::layer_presets::EXAMPLE_NAME;
 
     /// Three layers: ungrouped (X 5..10), Cut (red X 20..30, black X 45..50), Engrave (X 60..80, nested group).
     const SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="100mm" height="100mm" viewBox="0 0 100 100">
@@ -1401,141 +1475,6 @@ mod e2e {
     <g><path d="M62 90 L70 90" style="stroke:#000000;fill:none"/></g>
   </g>
 </svg>"##;
-
-    /// Headless egui driver around one dock.
-    pub(super) struct Harness {
-        pub ctx: egui::Context,
-        pub core: Arc<GrblCore>,
-        pub dock: ParamsDock,
-        /// Text shapes of the last frame: (text, screen rect).
-        texts: Vec<(String, egui::Rect)>,
-        /// Core events (the preview bumps its rebuild counter on `FileLoaded`).
-        rx: crossbeam_channel::Receiver<lasergrbl_core::CoreEvent>,
-    }
-
-    /// Collect text shapes recursively. `s`: shape. `out`: sink.
-    fn collect(s: &egui::Shape, out: &mut Vec<(String, egui::Rect)>) {
-        match s {
-            egui::Shape::Text(t) => out.push((t.galley.text().to_owned(), t.galley.rect.translate(t.pos.to_vec2()))),
-            egui::Shape::Vec(v) => v.iter().for_each(|c| collect(c, out)),
-            _ => {}
-        }
-    }
-
-    impl Harness {
-        /// Build core + dock. Returns the harness.
-        pub fn new() -> Self {
-            let (tx, rx) = crossbeam_channel::unbounded();
-            let core = GrblCore::new(Firmware::Grbl, tx);
-            // temp-file DB with only the example: never the real config file
-            let f = lg_base::paths::test_dir("e2e_presets").join("LayerPresets.json");
-            let db = Arc::new(Mutex::new(PresetDb::load_from(&f)));
-            let mut h = Harness { ctx: egui::Context::default(), core, dock: ParamsDock::with_presets(db), texts: Vec::new(), rx };
-            h.frame(vec![]);
-            h
-        }
-
-        /// Run one frame. `events`: input events.
-        pub fn frame(&mut self, events: Vec<egui::Event>) {
-            let ri = egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(320.0, 1000.0))), events, ..Default::default() };
-            let (dock, core) = (&mut self.dock, &self.core);
-            let mut out = self.ctx.run_ui(ri, |ui| {
-                dock.show(ui, core);
-            });
-            out.textures_delta.clear();
-            self.texts.clear();
-            for cs in &out.shapes {
-                collect(&cs.shape, &mut self.texts);
-            }
-        }
-
-        /// Click at `p` (press frame + release frame + settle frame).
-        pub fn click_at(&mut self, p: egui::Pos2) {
-            let btn = |pressed| egui::Event::PointerButton { pos: p, button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE };
-            self.frame(vec![egui::Event::PointerMoved(p), btn(true)]);
-            self.frame(vec![btn(false)]);
-            self.frame(vec![]);
-        }
-
-        /// Click the last drawn text equal to `t` (popup items are drawn last). Panics when absent.
-        pub fn click_text(&mut self, t: &str) {
-            let r = self.texts.iter().rev().find(|(s, _)| s == t).map(|(_, r)| *r).unwrap_or_else(|| panic!("text {t:?} not on screen: {:?}", self.texts.iter().map(|x| &x.0).collect::<Vec<_>>()));
-            self.click_at(r.center());
-        }
-
-        /// Pick `item` in the combo currently showing `current`.
-        pub fn pick(&mut self, current: &str, item: &str) {
-            self.click_text(current);
-            self.click_text(item);
-        }
-
-        /// Type `v` into the numeric field `id` and press Enter.
-        pub fn type_into(&mut self, id: &str, v: &str) {
-            let r = self.ctx.read_response(egui::Id::unique(id)).unwrap_or_else(|| panic!("field {id} not shown")).rect;
-            self.click_at(r.center());
-            let all = egui::Event::Key { key: egui::Key::A, physical_key: None, pressed: true, repeat: false, modifiers: egui::Modifiers::COMMAND };
-            self.frame(vec![all, egui::Event::Text(v.into())]);
-            let enter = |p| egui::Event::Key { key: egui::Key::Enter, physical_key: None, pressed: p, repeat: false, modifiers: egui::Modifiers::NONE };
-            self.frame(vec![enter(true), enter(false)]);
-            self.frame(vec![]);
-        }
-
-        /// True when a text is on screen. `t`: text.
-        pub fn shows(&self, t: &str) -> bool {
-            // also accept captions with a trailing colon/space difference
-            let t = t.trim();
-            self.texts.iter().any(|(s, _)| s.trim() == t)
-        }
-
-        /// Wait for the running generation (frames keep going). Returns success.
-        pub fn wait(&mut self) -> bool {
-            let t = Instant::now();
-            loop {
-                if let Some(ok) = self.dock.poll() {
-                    self.frame(vec![]);
-                    return ok;
-                }
-                assert!(t.elapsed() < Duration::from_secs(10), "generation timeout");
-                std::thread::sleep(Duration::from_millis(5));
-                self.frame(vec![]);
-            }
-        }
-
-        /// Wait until auto regen caught up with all edits. Panics when no regen was triggered or one failed.
-        pub fn settle(&mut self) {
-            assert!(self.dock.job.is_some() || self.dock.dirty, "edit did not trigger regen");
-            let t = Instant::now();
-            // frames keep running: the next show() starts the follow-up regen
-            while !(self.dock.job.is_none() && !self.dock.dirty) {
-                if let Some(ok) = self.dock.poll() {
-                    assert!(ok, "generation failed");
-                }
-                assert!(t.elapsed() < Duration::from_secs(10), "settle timeout");
-                std::thread::sleep(Duration::from_millis(5));
-                self.frame(vec![]);
-            }
-        }
-
-        /// G-code lines of layer `i` (None = layer not generated).
-        pub fn layer_lines(&self, i: usize) -> Option<Vec<String>> {
-            let r = self.dock.generated.get(i)?.clone()?;
-            let f = self.core.loaded_file();
-            let g = f.read().unwrap();
-            Some(g.commands()[r.start as usize..r.end as usize].iter().map(|c| c.command().to_owned()).collect())
-        }
-
-        /// Number of `FileLoaded` events since the last call. Each one makes `PreviewForm` rebuild its scene.
-        pub fn file_loaded_events(&self) -> usize {
-            self.rx.try_iter().filter(|e| matches!(e, lasergrbl_core::CoreEvent::FileLoaded { .. })).count()
-        }
-
-        /// Whole program text lines.
-        pub fn all_lines(&self) -> Vec<String> {
-            let f = self.core.loaded_file();
-            let g = f.read().unwrap();
-            g.commands().iter().map(|c| c.command().to_owned()).collect()
-        }
-    }
 
     /// Values of word `w` (e.g. 'F') over `lines`. Returns the numbers.
     pub(super) fn words(lines: &[String], w: char) -> Vec<f64> {
@@ -1583,10 +1522,10 @@ mod e2e {
         let _g = settings_guard();
         let p = write_svg("all");
         let mut h = Harness::new();
-        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h.job.add_svg(&p, false, false);
         assert!(h.wait());
         // layers listed: ungrouped, Cut, Engrave
-        let labels: Vec<String> = (0..h.dock.layers.len()).map(|i| h.dock.layer_text(i)).collect();
+        let labels: Vec<String> = (0..h.svg().layers.len()).map(|i| h.svg().layer_text(i)).collect();
         assert_eq!(labels, ["(ungrouped) (1)", "Cut (2)", "Engrave (2)"].map(|s| s.replace("(ungrouped)", &tr_plain("ParamsDock.Ungrouped"))));
         // defaults: every layer F1000 S1000
         for i in 0..3 {
@@ -1599,7 +1538,7 @@ mod e2e {
 
         // --- Cut: speed, S-MAX, mode, passes, filter via the UI
         h.pick(&labels[0], &labels[1]);
-        assert_eq!(h.dock.selected, 1);
+        assert_eq!(h.svg().selected, 1);
         h.type_into("params-border", "1500");
         h.type_into("params-smax", "400");
         h.pick("M3 - Constant Power", "M4 - Dynamic Power");
@@ -1623,17 +1562,17 @@ mod e2e {
         assert!(words(&eng, 'F').contains(&1000.0), "engrave feed: {eng:?}");
 
         // --- Engrave disabled: gone from the program
-        h.pick(&h.dock.layer_text(1), &h.dock.layer_text(2));
-        assert_eq!(h.dock.selected, 2);
+        h.pick(&h.svg().layer_text(1), &h.svg().layer_text(2));
+        assert_eq!(h.svg().selected, 2);
         h.click_text(&tr_plain("ParamsDock.Enabled"));
-        assert!(!h.dock.layers[2].1.enabled);
+        assert!(!h.svg().layers[2].1.enabled);
         h.settle();
         assert!(h.layer_lines(2).is_none());
         assert!(xs(&h.all_lines()).iter().all(|x| *x < 60), "engrave still in program");
 
         // --- re-enable, Cut filter back to All, sync Cut to every layer
         h.click_text(&tr_plain("ParamsDock.Enabled"));
-        h.pick(&h.dock.layer_text(2), &h.dock.layer_text(1));
+        h.pick(&h.svg().layer_text(2), &h.svg().layer_text(1));
         h.pick("Red", "All");
         h.click_text(&tr_plain("ParamsDock.SyncLayers"));
         h.settle();
@@ -1653,7 +1592,7 @@ mod e2e {
 
         // --- preset pick: passes, speed, power %, mode and filter of the example
         h.pick(&tr_plain("ParamsDock.PresetNone"), EXAMPLE_NAME);
-        assert_eq!(h.dock.cur().preset.as_deref(), Some(EXAMPLE_NAME));
+        assert_eq!(h.svg().cur().preset.as_deref(), Some(EXAMPLE_NAME));
         h.settle();
         let cut = h.layer_lines(1).unwrap();
         assert_eq!(pen_downs(&cut), [450.0; 2], "2 paths x 1 pass at 45 %: {cut:?}");
@@ -1664,7 +1603,7 @@ mod e2e {
         // --- reopen: per-file store restores everything, identical G-code
         let before = h.all_lines();
         let mut h2 = Harness::new();
-        h2.dock.load_svg(h2.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h2.job.add_svg(&p, false, false);
         assert!(h2.wait());
         assert_eq!(h2.all_lines(), before);
         let _ = std::fs::remove_file(&p);
@@ -1708,7 +1647,7 @@ mod e2e {
         let p = lg_base::paths::test_dir("e2e_fill").join("in.svg");
         std::fs::write(&p, FILL_SVG).unwrap();
         let mut h = Harness::new();
-        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h.job.add_svg(&p, false, false);
         assert!(h.wait());
         h.frame(vec![]);
         let base = h.all_lines();
@@ -1786,7 +1725,7 @@ mod e2e {
         let p = lg_base::paths::test_dir("e2e_pershape").join("in.svg");
         std::fs::write(&p, TWO_RECTS_SVG).unwrap();
         let mut h = Harness::new();
-        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h.job.add_svg(&p, false, false);
         assert!(h.wait());
         h.frame(vec![]);
         let base = h.all_lines();
@@ -1825,7 +1764,7 @@ mod e2e {
         let _g = settings_guard();
         let p = write_svg("smin");
         let mut h = Harness::new();
-        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h.job.add_svg(&p, false, false);
         assert!(h.wait());
         h.frame(vec![]);
         assert!(h.shows(&ctl_text(P, "LblSmax")));
@@ -1840,11 +1779,11 @@ mod e2e {
         lg_base::settings::set("Support Hardware PWM", false);
         let p = write_svg("nopwm");
         let mut h = Harness::new();
-        h.dock.load_svg(h.core.loaded_file(), p.to_str().unwrap(), false, false);
+        h.job.add_svg(&p, false, false);
         assert!(h.wait());
         // no power input without PWM
         assert!(!h.shows(&ctl_text(P, "LblSmax")));
-        let labels: Vec<String> = (0..3).map(|i| h.dock.layer_text(i)).collect();
+        let labels: Vec<String> = (0..3).map(|i| h.svg().layer_text(i)).collect();
         h.pick(&labels[0], &labels[1]);
         h.type_into("params-border", "700");
         h.pick("M3 - Constant Power", "M4 - Dynamic Power");

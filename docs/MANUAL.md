@@ -7,8 +7,10 @@ black box in its middle that is **engraved** (filled).
 Example file: [`manual/layers-example.svg`](manual/layers-example.svg) (100 × 100 mm). Screenshots: Inkscape
 1.4 and L-ai-SERcraft.
 
-Photos and other bitmaps (JPG, PNG, BMP, GIF) are described at the end:
-[Raster images in the Parameters dock](#manual-raster-images-in-the-parameters-dock).
+Photos and other bitmaps (JPG, PNG, BMP, GIF) are described further down:
+[Raster images in the Parameters dock](#manual-raster-images-in-the-parameters-dock). Several files in one job
+(for example a photo and a cut outline) are described at the end:
+[Several files in one job](#manual-several-files-in-one-job).
 
 ## How layers are read
 
@@ -195,5 +197,45 @@ the last used values.
 ## Classic import dialog
 
 *Classic import dialog…* at the bottom hands the image to the original raster dialog, which also offers
-dithering, vectorize and centerline. If you cancel that dialog the image returns to the dock. Entries of `.lps`
-project files always open in the classic dialog.
+dithering, vectorize and centerline. If you cancel that dialog the image returns to the file list (at the end of
+the job). A result of the dialog is listed as a *G-code* file without parameters. Entries of `.lps` project files
+always open in the classic dialog.
+
+# Manual: several files in one job
+
+*File ▸ Open File* replaces the whole job with one file. *File ▸ Append File* adds another file behind the ones that
+are loaded, for example a photo and an SVG with the cut outline, or two SVGs. The program is the concatenation of
+one **block** of G-code per file, in the order of the list.
+
+## The file list
+
+The top of the dock shows a group *Files* with one row per loaded file:
+
+* a short type tag (*SVG*, *IMG*, *G-code*) and the file name. Hover the name for the full path.
+* *…* behind the name while the file is generated, a red *!* when it failed. Hover the mark for the reason.
+* the **×** button removes the file from the job: its commands leave the program, the others stay as they are.
+  It is disabled while a file is being generated.
+* a click on a row selects the file. With more files than fit (six rows) the list scrolls.
+
+The dock below the list is the editor of the **selected** file: the layers, presets, speed, power, fill and filter
+of an SVG, or the histogram, position and size, line and laser settings of an image. Switch between the files and
+tweak each one, for example place the photo and then choose its power so that it fits to the power of the SVG
+layers. G-code files (*G-code* tag) have no parameters. Every edit regenerates **only the block of that file**,
+the preview follows, and the other files are not touched. Their position in the program moves when a block in
+front of them gets longer or shorter. Values are saved per file path, as before.
+
+## Preview
+
+With more than one file the preview draws the **selected** file in red: the selected layer of an SVG that has
+several layers, otherwise the whole file. Disabled layers of all SVG files are hidden.
+
+## Good to know
+
+* One file is generated at a time. Edits made meanwhile are queued, and the selected file goes first.
+* *Run* waits until every file is generated. A file with invalid values (an image with width 0, an SVG with all
+  layers off) blocks *Run* until it is fixed.
+* *Append File* with a G-code file adds it as a *G-code* row. A plain *Open File* of any file drops all rows.
+* Programs from the *Generate* menu (cutting test, power vs speed, shake test) replace the job. They appear as
+  one *(program)* row without parameters.
+* An `.lps` project opens its SVG entries as editable rows, its raster entries through the classic dialog as
+  *G-code* rows.

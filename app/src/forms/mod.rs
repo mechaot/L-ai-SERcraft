@@ -10,6 +10,9 @@ pub mod form_util;
 pub mod gallery_tab;
 pub mod generators;
 pub mod image_dock;
+pub mod job_dock;
+#[cfg(test)]
+pub(crate) mod job_test_harness;
 pub mod legal_disclaimer;
 pub mod license;
 pub mod save_options;
