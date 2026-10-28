@@ -1412,7 +1412,7 @@ dependencies = [
 
 [[package]]
 name = "laisercraft"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "chrono",
  "crossbeam-channel",
@@ -1437,7 +1437,7 @@ dependencies = [
 
 [[package]]
 name = "lasergrbl-core"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "base64",
  "chrono",
@@ -1467,7 +1467,7 @@ dependencies = [
 
 [[package]]
 name = "lg-base"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "base64",
  "chrono",
@@ -1483,25 +1483,25 @@ dependencies = [
 
 [[package]]
 name = "lg-clipper"
-version = "1.5.3"
+version = "1.6.0"
 
 [[package]]
 name = "lg-dotnet"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "rust_decimal",
 ]
 
 [[package]]
 name = "lg-expr"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "lg-dotnet",
 ]
 
 [[package]]
 name = "lg-gcode"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "image",
  "lg-base",
@@ -1519,14 +1519,14 @@ dependencies = [
 
 [[package]]
 name = "lg-hershey"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "lg-dotnet",
 ]
 
 [[package]]
 name = "lg-potrace"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "image",
  "lg-clipper",
@@ -1536,7 +1536,7 @@ dependencies = [
 
 [[package]]
 name = "lg-raster"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "image",
  "lg-dotnet",
@@ -1545,7 +1545,7 @@ dependencies = [
 
 [[package]]
 name = "lg-services"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "base64",
  "chrono",
@@ -1568,7 +1568,7 @@ dependencies = [
 
 [[package]]
 name = "lg-svg2gcode"
-version = "1.5.3"
+version = "1.6.0"
 dependencies = [
  "lg-dotnet",
  "regex",

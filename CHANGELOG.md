@@ -3,7 +3,7 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
-## Unreleased
+## 1.6.0 - 2026-10-29
 
 ### Added
 
