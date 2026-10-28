@@ -91,6 +91,41 @@ host's. GL/EGL/X11/Wayland/xkbcommon libraries are not bundled: they are loaded 
 graphics drivers always come from the host system. `appimagetool` (pinned, sha256-checked) is downloaded to
 `.cache/appimage/` and run without FUSE.
 
+## Install on Linux (menu entry)
+
+The script picks the mode from the user running it:
+
+| run as | installs to | build |
+|---|---|---|
+| normal user | `~/.local` (only for you) | runs `cargo build --release` |
+| root | `/usr` (all users) | none: build as normal user first, or pass `--appimage` |
+
+```sh
+# per user
+packaging/install-linux.sh                                  # build + install to ~/.local
+packaging/install-linux.sh --appimage dist/L-ai-SERcraft-*-x86_64.AppImage   # install a built AppImage instead
+
+# system-wide (also for home directories mounted noexec)
+cargo build --release -p laisercraft                        # as normal user
+sudo bash packaging/install-linux.sh                        # install to /usr (bash: script itself may sit on noexec)
+
+packaging/install-linux.sh --uninstall                      # remove again, same user as install (settings kept)
+# options: --skip-build (reuse target/release), --force (skip the up-to-date check), --prefix DIR (override the default above)
+```
+
+Before copying anything, the script checks that the binary (or AppImage) exists and is newer than every source it
+is built from (`app/`, `crates/`, `resources/`, `Cargo.toml`, `Cargo.lock`, `LICENSE.md`, `NOTICE.md`). Otherwise
+it stops and names the files that changed, so a root install never picks up a stale build.
+
+Layout under the prefix: binary `bin/laisercraft`, resources `share/laisercraft/resources`, plus the `.desktop`
+file, icons (SVG + 256 px PNG) and AppStream metadata under `share/`. The app then shows in the KDE/LXDE/XFCE
+start menu and the GNOME app overview, and SVG and G-code files get an *Open with L-ai-SERcraft* entry. KDE and
+GNOME pick it up right away; LXDE may need a re-login (or `lxpanelctl restart`). Run it again after `git pull` to
+update.
+
+If your home directory is mounted `noexec`, the per-user binary in `~/.local/bin` cannot start; the script warns
+about this. Use the system-wide install instead.
+
 ## CI
 
 `.gitlab-ci.yml` (GitLab CE, docker executor): `lint:clippy` (warnings are errors) and `test:cargo` (whole

@@ -3,6 +3,12 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## Unreleased
+
+### Added
+
+- `packaging/install-linux.sh`: install with start menu / app overview entry (KDE, GNOME, LXDE, XFCE), from a source build or an AppImage. As root system-wide to `/usr` (works with `noexec` home directories), otherwise per user to `~/.local`; `--uninstall` removes it.
+
 ## 1.5.3 - 2026-10-28
 
 ### Removed
