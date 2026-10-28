@@ -3,6 +3,12 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## Unreleased
+
+### Removed
+
+- *Tools > Install CH340 Driver* menu item (it only showed a hint; Linux kernels ship the ch341 driver).
+
 ## 1.5.2 - 2026-10-28
 
 ### Fixed
