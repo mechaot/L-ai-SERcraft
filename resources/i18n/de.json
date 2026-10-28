@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Abbrechen",
  "CustomButtonForm.BtnCreate.Text": "Erzeugen!",
  "CustomButtonForm.LblCaption.Text": "Beschriftung",
- "CustomButtonForm.LblDescription.Text": "- Verwenden Sie einen Punkt als Dezimaltrennzeichen\n- Unterstützt mathematische Ausdrücke in eckigen Klammern: z.B. G0 X[left-5] Y[bottom-5]\n- Verfügbare Variablen: left, right, top, bottom, width, height.. (und mehr)\n\nSiehe https://lasergrbl.com/usage/custom-buttons/\n\n",
+ "CustomButtonForm.LblDescription.Text": "- Verwenden Sie einen Punkt als Dezimaltrennzeichen\n- Unterstützt mathematische Ausdrücke in eckigen Klammern: z.B. G0 X[left-5] Y[bottom-5]\n- Verfügbare Variablen: left, right, top, bottom, width, height.. (und mehr)",
  "CustomButtonForm.LblEnabled.Text": "Aktiviert",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

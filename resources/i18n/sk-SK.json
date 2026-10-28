@@ -13,7 +13,7 @@
  "CustomButtonForm.$this.Text": "Vlastné tlačítko",
  "CustomButtonForm.BtnCancel.Text": "Storno",
  "CustomButtonForm.BtnCreate.Text": "Vytvořit!",
- "CustomButtonForm.LblDescription.Text": "- Bodka \".\" ako desatinný oddeľovač\n- Podpora matematických výrazov v hranatých zátvorkách: napr. GOX[left-5] Y[bottom-5]\n- Možnosti : left, right, top, bottom, width, height.. (a dalšie)\n\nViz. https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Bodka \".\" ako desatinný oddeľovač\n- Podpora matematických výrazov v hranatých zátvorkách: napr. GOX[left-5] Y[bottom-5]\n- Možnosti : left, right, top, bottom, width, height.. (a dalšie)",
  "CustomButtonForm.LblEnabled.Text": "Povolene",
  "CustomButtonForm.LblGCode.Text": "G-kód",
  "CustomButtonForm.LblGCode2.Text": "G-kód2",

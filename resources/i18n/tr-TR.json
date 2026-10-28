@@ -12,7 +12,7 @@
  "CustomButtonForm.BtnCancel.Text": "İptal",
  "CustomButtonForm.BtnCreate.Text": "Oluştur!",
  "CustomButtonForm.LblCaption.Text": "Başlık",
- "CustomButtonForm.LblDescription.Text": "- Noktayı ondalık ayırıcı olarak kullanın\n- Köşeli parantez içindeki matematik ifadesini destekleyin: ör. G0 X [sol-5] Y [alt-5]\n- Mevcut değişkenler: left(sol), right(sağ), top(üst), bottom(alt), width(genişlik), height(yükseklik) .. (ve daha fazlası)\n\nBkz. Https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Noktayı ondalık ayırıcı olarak kullanın\n- Köşeli parantez içindeki matematik ifadesini destekleyin: ör. G0 X [sol-5] Y [alt-5]\n- Mevcut değişkenler: left(sol), right(sağ), top(üst), bottom(alt), width(genişlik), height(yükseklik) .. (ve daha fazlası)",
  "CustomButtonForm.LblEnabled.Text": "Etkin",
  "CustomButtonForm.LblImage.Text": "Görüntü",
  "CustomButtonForm.LblToolTip.Text": "Araç ipucu",

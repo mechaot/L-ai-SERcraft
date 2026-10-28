@@ -136,8 +136,6 @@ pub struct MessageBox {
     pub icon: MessageBoxIcon,
     /// 0-based default button index (`MessageBoxDefaultButton`).
     pub default_button: usize,
-    /// `MessageBox.Show(.., helpLink)`: adds a Help button that opens this URL (box stays open).
-    help_url: Option<String>,
     id: u64,
     focused: bool,
 }
@@ -155,7 +153,6 @@ impl MessageBox {
             buttons: MessageBoxButtons::Ok,
             icon: MessageBoxIcon::None,
             default_button: 0,
-            help_url: None,
             id: NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             focused: false,
         }
@@ -176,14 +173,6 @@ impl MessageBox {
         self
     }
 
-    /// Add a Help button (C# `MessageBox.Show(.., 0, url)`).
-    ///
-    /// `url`: link opened with `open_link` when Help is pressed.
-    pub fn help_url(mut self, url: impl Into<String>) -> Self {
-        self.help_url = Some(url.into());
-        self
-    }
-
     /// Draw the box; call every frame while open.
     ///
     /// `ctx`: egui context. Returns the pressed result on the closing frame, else None.
@@ -196,7 +185,6 @@ impl MessageBox {
         let first = !self.focused;
         self.focused = true;
         let mid = self.id;
-        let help = self.help_url.clone();
         let mut res = show_modal(ctx, ("msgbox", mid), &self.title.clone(), |ui| {
             ui.horizontal(|ui| {
                 if let Some((key, col)) = glyph {
@@ -208,12 +196,6 @@ impl MessageBox {
             ui.add_space(10.0);
             let mut out = None;
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                // Help sits right of the answer buttons and keeps the box open
-                if let Some(url) = &help {
-                    if ui.add_sized(Vec2::new(80.0, 24.0), egui::Button::new("Help")).clicked() {
-                        lg_base::tools::utils::open_link(url);
-                    }
-                }
                 for (i, b) in list.iter().enumerate().rev() {
                     let r = ui.add_sized(Vec2::new(80.0, 24.0), egui::Button::new(b.caption()));
                     if i == def && first {

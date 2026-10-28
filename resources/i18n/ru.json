@@ -15,7 +15,7 @@
  "CustomButtonForm.$this.Text": "Пользовательская кнопка",
  "CustomButtonForm.BtnCancel.Text": "Отмена",
  "CustomButtonForm.BtnCreate.Text": "Создать!",
- "CustomButtonForm.LblDescription.Text": "- Используйте точку в качестве десятичного разделителя\n- Поддерживаются математические выражения в квадратных скобках: то есть G0 X [left-5] Y [bottom-5]\n- Доступные переменные: left, right, top, bottom, width, height.. (и многое другое)\n\nСмотрите https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Используйте точку в качестве десятичного разделителя\n- Поддерживаются математические выражения в квадратных скобках: то есть G0 X [left-5] Y [bottom-5]\n- Доступные переменные: left, right, top, bottom, width, height.. (и многое другое)",
  "CustomButtonForm.LblEnabled.Text": "Включить",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

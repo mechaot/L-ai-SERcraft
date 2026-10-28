@@ -9,7 +9,7 @@ use eframe::egui::{self, Align, Layout, RichText, TextureHandle, Ui, Vec2};
 
 use crate::forms::form_util::*;
 use crate::ui::widgets::GrblButton;
-use crate::ui::{i18n, tr};
+use crate::ui::tr;
 
 /// i18n prefix of the form (root form).
 const P: &str = "LegalDisclaimer.";
@@ -23,21 +23,6 @@ pub enum LegalOutcome {
     Declined,
 }
 
-/// `HttpUtility.UrlEncode(string)`: UTF-8, space as `+`, lowercase hex.
-///
-/// `s`: text. Returns the encoded text.
-pub fn url_encode(s: &str) -> String {
-    let mut out = String::with_capacity(s.len() * 2);
-    for b in s.bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'!' | b'*' | b'(' | b')' => out.push(b as char),
-            b' ' => out.push('+'),
-            _ => out.push_str(&format!("%{b:02x}")),
-        }
-    }
-    out
-}
-
 /// Legal disclaimer dialog state.
 #[derive(Default)]
 pub struct LegalDisclaimer {
@@ -49,16 +34,6 @@ impl LegalDisclaimer {
     /// `new LegalDisclaimer()` (Accept starts disabled).
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Google-translate URL of `LlTranslate_LinkClicked`.
-    ///
-    /// Returns the URL for the current UI culture (two-letter code).
-    pub fn translate_url() -> String {
-        let t = |c: &str| tr(&format!("{P}{c}.Text")).replace('\n', "\r\n");
-        let text = url_encode(&format!("{}\r\n\r\n{}\r\n\r\n{}", t("LblNotToy"), t("LblFree"), t("CbIHaveRead")));
-        let lng = i18n::catalog().culture().split('-').next().unwrap_or("en").to_owned();
-        format!("https://translate.google.it/?sl=en&tl={lng}&text={text}&op=translate")
     }
 
     /// Draw the modal form; call every frame while open.
@@ -85,11 +60,8 @@ impl LegalDisclaimer {
         ui.add_space(6.0);
         ui.add(egui::Label::new(RichText::new(tr(&format!("{P}LblFree.Text"))).size(13.0)).wrap());
         ui.add_space(6.0);
-        // row 2: translate link left, "have fun" right
+        // row 2: "have fun" right
         ui.horizontal(|ui| {
-            if ui.link(ctl_text(P, "LlTranslate")).clicked() {
-                open_link(&Self::translate_url());
-            }
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.label(RichText::new(tr(&format!("{P}LblHaveFun.Text"))).size(13.0));
             });
@@ -107,26 +79,5 @@ impl LegalDisclaimer {
             });
         });
         out
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn url_encoding_matches_httputility() {
-        assert_eq!(url_encode("a b\r\nä!"), "a+b%0d%0a%c3%a4!");
-        assert_eq!(url_encode("x=1&y/z"), "x%3d1%26y%2fz");
-    }
-
-    #[test]
-    fn translate_url_shape() {
-        // isolated settings + data dir
-        let _g = crate::forms::form_util::test_guard();
-        let u = LegalDisclaimer::translate_url();
-        assert!(u.starts_with("https://translate.google.it/?sl=en&tl="));
-        assert!(u.ends_with("&op=translate"));
-        assert!(u.contains("Laser+engraver+are+not+toys!"));
     }
 }

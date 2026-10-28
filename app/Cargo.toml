@@ -28,3 +28,6 @@ serde_json.workspace = true
 crossbeam-channel.workspace = true
 chrono.workspace = true
 log.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+winit.workspace = true

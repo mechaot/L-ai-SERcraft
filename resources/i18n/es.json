@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Cancelar",
  "CustomButtonForm.BtnCreate.Text": "Crear!",
  "CustomButtonForm.LblCaption.Text": "Etiqueta",
- "CustomButtonForm.LblDescription.Text": "- Usar punto como separador decimal\n- Soporta la expresión matemática entre corchetes: ej. G0 X[left-5] Y[bottom-5]\n- Variables disponibles: izquierda, derecha, arriba, abajo, ancho, altura.. (y más)\n\nVer https://lasergrbl.com/usage/custom-buttons/\n\n",
+ "CustomButtonForm.LblDescription.Text": "- Usar punto como separador decimal\n- Soporta la expresión matemática entre corchetes: ej. G0 X[left-5] Y[bottom-5]\n- Variables disponibles: izquierda, derecha, arriba, abajo, ancho, altura.. (y más)",
  "CustomButtonForm.LblEnabled.Text": "Habilitado",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Storno",
  "CustomButtonForm.BtnCreate.Text": "Vytvořit!",
  "CustomButtonForm.LblCaption.Text": "Titulek",
- "CustomButtonForm.LblDescription.Text": "- Tečka \".\" jako desetinný oddělovač\n- Podpora matematický výrazů v hranatých závorkách: např. GOX[left-5] Y[bottom-5]\n- Možnosti : left, right, top, bottom, width, height.. (a další)\n\nViz https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Tečka \".\" jako desetinný oddělovač\n- Podpora matematický výrazů v hranatých závorkách: např. GOX[left-5] Y[bottom-5]\n- Možnosti : left, right, top, bottom, width, height.. (a další)",
  "CustomButtonForm.LblEnabled.Text": "Povoleno",
  "CustomButtonForm.LblGCode.Text": "G-kód",
  "CustomButtonForm.LblGCode2.Text": "G-kód2",

@@ -17,7 +17,7 @@
  "CustomButtonForm.BtnCancel.Text": "Annulla",
  "CustomButtonForm.BtnCreate.Text": "Crea!",
  "CustomButtonForm.LblCaption.Text": "Etichetta",
- "CustomButtonForm.LblDescription.Text": "- Punto come separatore decimale\n- Supporta espressioni tra parentesi quadre: G0 X [left-5] Y [bottom-5]\n- Variabili disponibili: left, right, top, bottom, width, height .. (e altro)\n\nVedi https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Punto come separatore decimale\n- Supporta espressioni tra parentesi quadre: G0 X [left-5] Y [bottom-5]\n- Variabili disponibili: left, right, top, bottom, width, height .. (e altro)",
  "CustomButtonForm.LblEnabled.Text": "Abilitazione",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",
