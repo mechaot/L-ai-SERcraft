@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Mégsem",
  "CustomButtonForm.BtnCreate.Text": "Léterhoz!",
  "CustomButtonForm.LblCaption.Text": "Felirat",
- "CustomButtonForm.LblDescription.Text": "- Használjon pontot decimális elválasztóként\n- Támogatja a matematikai kifejezést szögletes zárójelben: azaz G0 X [left-5] Y [bottom-5]\n- Elérhető változók: left, right, top, bottom, width, height.. (stb.)\n\nLásd: https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Használjon pontot decimális elválasztóként\n- Támogatja a matematikai kifejezést szögletes zárójelben: azaz G0 X [left-5] Y [bottom-5]\n- Elérhető változók: left, right, top, bottom, width, height.. (stb.)",
  "CustomButtonForm.LblEnabled.Text": "Bekapcsolva",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

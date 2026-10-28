@@ -220,7 +220,7 @@ mod tests {
         for k in ["$this.Text", "BtnSave.Text", "CBBetween.Text", "CBFooter.Text", "CBHeader.Text", "CBLFLineEndings.Text", "groupBox1.Text", "label1.Text", "label2.Text"] {
             keys.push(format!("SaveOptionForm.{k}"));
         }
-        for k in ["$this.Text", "BtnAccept.Text", "CbIHaveRead.Text", "LblFree.Text", "LblHaveFun.Text", "LblNotToy.Text", "LlTranslate.Text"] {
+        for k in ["$this.Text", "BtnAccept.Text", "CbIHaveRead.Text", "LblFree.Text", "LblHaveFun.Text", "LblNotToy.Text"] {
             keys.push(format!("LegalDisclaimer.{k}"));
         }
         keys.extend(["Title", "Preset", "PresetNone", "EditPresets", "PresetInfo", "PresetNameHint", "SavePresetTip", "Modified", "NoSource", "Generating", "ApplyFailed", "Fill", "FillEnabled", "FillDistance", "FillAngle", "FillCross", "FillPerShape", "FillPerShapeTip", "PresetFillInfo"].map(|k| format!("ParamsDock.{k}")));

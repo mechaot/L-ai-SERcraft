@@ -3,6 +3,19 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## 1.5.2 - 2026-10-28
+
+### Fixed
+
+- Linux/Wayland: window title bar shows the app name (was a blank gray bar).
+
+### Removed
+
+- Help button of the connection-failed message box (opened lasergrbl.com).
+- lasergrbl.com reference in the custom button description (all languages).
+- Google Translate link in the legal disclaimer (and its text in all languages).
+- Dev gallery demo link.
+
 ## 1.5.1 - 2026-10-28
 
 ### Changed

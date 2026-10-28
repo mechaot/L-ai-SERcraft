@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "キャンセル",
  "CustomButtonForm.BtnCreate.Text": "作成!",
  "CustomButtonForm.LblCaption.Text": "キャプション",
- "CustomButtonForm.LblDescription.Text": "- ドットを小数の区切り文字として使用\n- 角括弧内の数式をサポート：例：G0 X[left-5] Y[bottom-5］\n- 使用可能な変数: left, right, top, bottom, width, height... (その他)\n\nhttps://lasergrbl.com/usage/custom-buttons/ を参照。",
+ "CustomButtonForm.LblDescription.Text": "- ドットを小数の区切り文字として使用\n- 角括弧内の数式をサポート：例：G0 X[left-5] Y[bottom-5］\n- 使用可能な変数: left, right, top, bottom, width, height... (その他)",
  "CustomButtonForm.LblEnabled.Text": "有効",
  "CustomButtonForm.LblGCode.Text": "Gコード",
  "CustomButtonForm.LblGCode2.Text": "Gコード2",

@@ -12,7 +12,6 @@ scheme_CADStyle/BlueLaser/Hacker, lang_zh-CN/ja-JP/ru (+ default CADDark everywh
 | NumericUpDown | spinner arrows were missing-glyph boxes: now painted triangles (`ui/widgets/numeric.rs::spin_button`) |
 | Bold | `ui/fonts.rs`: bold family from system Ubuntu-B / DejaVuSans-Bold / NotoSans-Bold / Liberation / Windows fonts, `fonts::bold()` helper; group box falls back to fake bold; dialog/exception captions use it |
 | EmulatorUI position | C# `CenterScreen`: first fixed in `main_form.rs`; P4-4's `emulator_ui.rs` now centres itself (pivot centre, fixed size), so my workaround was removed |
-| Help button | `MessageBox::help_url(url)` adds a Help button (opens `open_link`, box stays open); used by the failed-connection box in `MainForm::on_machine_status` like C# `MessageBox.Show(.., 0, url)` |
 | ConnectLogForm | panels are borderless like the Designer (were framed); address/emulator rows rebuilt (text box was squeezed to 40 px), `TxtEmulator` is a disabled text box; Panel1MinSize 210 |
 | CommandLog | monospace (Consolas 8.25) font, row height 17; icon 4 = real `IL` image 4, icon 5 = real diagnostic icon extracted from `CommandLog.resx` with the Mono oracle (`resources/icons/diagnostic.png`, `logwarning.png`; README row added) |
 | JogForm | Z buttons got the designer tooltips (0.1mm/1mm/10mm); "Jog Speed"/"Jog Step" written only on change (C# `ValueChanged`) |

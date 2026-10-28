@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "取消",
  "CustomButtonForm.BtnCreate.Text": "創建!",
  "CustomButtonForm.LblCaption.Text": "標題",
- "CustomButtonForm.LblDescription.Text": "- 使用點作為小數分隔符\n- 支持方括號中的數學表達式：即 G0 X[left-5] Y[bottom-5]\n\n- 可用變量： left, right, top, bottom, width, height.. (及 more)\n\n\n\n参考 http://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- 使用點作為小數分隔符\n- 支持方括號中的數學表達式：即 G0 X[left-5] Y[bottom-5]\n\n- 可用變量： left, right, top, bottom, width, height.. (及 more)",
  "CustomButtonForm.LblEnabled.Text": "啟用",
  "CustomButtonForm.LblGCode.Text": "GCode按第一次代碼",
  "CustomButtonForm.LblGCode2.Text": "GCode按第二次代碼",

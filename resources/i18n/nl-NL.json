@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Annuleren",
  "CustomButtonForm.BtnCreate.Text": "Creër!",
  "CustomButtonForm.LblCaption.Text": "Opschrift",
- "CustomButtonForm.LblDescription.Text": "- Gebruik punt als decimaal scheidingsteken\n- Ondersteun wiskundige expressies met vierkante haakjes: bv G0 X[left-5] Y[bottom-5]\n- Toegestane variabele: left, right, top, bottom, width, height.. (etc)\n\nZie https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Gebruik punt als decimaal scheidingsteken\n- Ondersteun wiskundige expressies met vierkante haakjes: bv G0 X[left-5] Y[bottom-5]\n- Toegestane variabele: left, right, top, bottom, width, height.. (etc)",
  "CustomButtonForm.LblEnabled.Text": "Ingeschakeld",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

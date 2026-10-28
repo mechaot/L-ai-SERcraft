@@ -16,7 +16,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.5.1"
+version = "1.5.2"
 edition = "2024"
 license = "GPL-3.0-or-later"
 rust-version = "1.95"
@@ -54,6 +54,8 @@ chrono = "0.4"
 log = "0.4"
 eframe = { version = "0.37", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
 egui_extras = { version = "0.37", features = ["image"] }
+# Wayland CSD: adwaita frame w/ title text (fallback frame = blank gray bar)
+winit = { version = "0.30", default-features = false, features = ["wayland-csd-adwaita"] }
 rfd = { version = "0.17", default-features = false, features = ["xdg-portal", "wayland"] }
 
 [profile.dev.package."*"]

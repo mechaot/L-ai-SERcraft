@@ -16,7 +16,7 @@
  "CustomButtonForm.BtnCancel.Text": "Anuluj",
  "CustomButtonForm.BtnCreate.Text": "Utwórz!",
  "CustomButtonForm.LblCaption.Text": "Podpis",
- "CustomButtonForm.LblDescription.Text": "-Użyj kropki jako separatora dziesiętnego \n- Obsługa wyrażeń matematycznych w nawiasach kwadratowych: np. GOX[lewy-5] Y[dolny-5]\n- Opcje: lewy, prawy, górny, dolny, szerokość, wysokość .. (i więcej) \n\nZobacz https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "-Użyj kropki jako separatora dziesiętnego \n- Obsługa wyrażeń matematycznych w nawiasach kwadratowych: np. GOX[lewy-5] Y[dolny-5]\n- Opcje: lewy, prawy, górny, dolny, szerokość, wysokość .. (i więcej) ",
  "CustomButtonForm.LblEnabled.Text": "Włączone",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

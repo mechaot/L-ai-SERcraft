@@ -237,7 +237,7 @@ impl Gallery {
                 ui.label(RichText::new(format!("{r:?}: {n}")).color(t.log_color(r)).monospace());
             }
         });
-        ui.hyperlink_to("link color", "https://lasergrbl.com");
+        let _ = ui.link("link color");
     }
 
     /// Icons tab: filterable grid with tooltips.

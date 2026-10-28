@@ -15,7 +15,7 @@
  "CustomButtonForm.BtnCancel.Text": "Ακύρωση",
  "CustomButtonForm.BtnCreate.Text": "Δημιουργία",
  "CustomButtonForm.LblCaption.Text": "Λεζάντα",
- "CustomButtonForm.LblDescription.Text": "- Χρησιμοποιήστε την τελεία ως δεκαδικό διαχωριστικό\n- Υποστήριξη έκφρασης μαθηματικών σε αγκύλες: δηλαδή G0 X [αριστερά-5] Y [κάτω-5]\n- Διαθέσιμες μεταβλητές: αριστερά, δεξιά, πάνω, κάτω, πλάτος, ύψος .. (και περισσότερα)\n\nΔείτε https://lasergrbl.com/usage/custom-buttons/",
+ "CustomButtonForm.LblDescription.Text": "- Χρησιμοποιήστε την τελεία ως δεκαδικό διαχωριστικό\n- Υποστήριξη έκφρασης μαθηματικών σε αγκύλες: δηλαδή G0 X [αριστερά-5] Y [κάτω-5]\n- Διαθέσιμες μεταβλητές: αριστερά, δεξιά, πάνω, κάτω, πλάτος, ύψος .. (και περισσότερα)",
  "CustomButtonForm.LblEnabled.Text": "Eνεργοποιήθηκε",
  "CustomButtonForm.LblGCode.Text": "GCode",
  "CustomButtonForm.LblGCode2.Text": "GCode2",

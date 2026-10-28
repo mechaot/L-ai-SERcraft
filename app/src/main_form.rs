@@ -530,20 +530,15 @@ impl MainForm {
         }
     }
 
-    /// `OnMachineStatus`: failed-connection help, laser life on (dis)connect.
+    /// `OnMachineStatus`: failed-connection message, laser life on (dis)connect.
     fn on_machine_status(&mut self) {
         let core = &self.state.core;
         if core.machine_status() == MacStatus::Disconnected && core.failed_connection_count() >= 3 {
             let wt: lasergrbl_core::com::WrapperType = settings::get("ComWrapper Protocol", lasergrbl_core::com::WrapperType::UsbSerial);
             use lasergrbl_core::com::WrapperType as W;
-            let url = match wt {
-                W::UsbSerial | W::UsbSerial2 | W::RJCPSerial => Some("https://lasergrbl.com/usage/arduino-connection/"),
-                W::Telnet | W::LaserWebESP8266 => Some("https://lasergrbl.com/usage/wifi-with-esp8266/"),
-                _ => None,
-            };
-            if let Some(url) = url {
-                // Help button opens the URL (C# `MessageBox.Show(.., 0, url)`)
-                self.msgs.push(MsgTag::Info, MessageBox::new(tr("Strings.ProblemConnectingText"), tr("Strings.ProblemConnectingTitle")).icon(MessageBoxIcon::Information).help_url(url));
+            // serial + network wrappers only, not emulator
+            if matches!(wt, W::UsbSerial | W::UsbSerial2 | W::RJCPSerial | W::Telnet | W::LaserWebESP8266) {
+                self.msgs.push(MsgTag::Info, MessageBox::new(tr("Strings.ProblemConnectingText"), tr("Strings.ProblemConnectingTitle")).icon(MessageBoxIcon::Information));
             }
         }
         let connected = core.is_connected();
