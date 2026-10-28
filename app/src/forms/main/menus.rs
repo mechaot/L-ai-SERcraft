@@ -56,7 +56,6 @@ pub enum MenuAction {
     AutoSize,
     ZoomIn,
     ZoomOut,
-    InstallDriver,
     FlashFirmware,
     ConfigureWifi,
     OpenSessionLog,
@@ -310,9 +309,6 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
 
         // ---- Tools ----
         top_menu(ui, ico("mdi-tools"), &tr_plain("MainForm.toolsToolStripMenuItem.Text"), |ui| {
-            if item(ui, Some("mdi-usb"), false, &tr_plain("MainForm.installCH340DriverToolStripMenuItem.Text"), true, None) {
-                out.push(MenuAction::InstallDriver);
-            }
             let disconnected = core.machine_status() == lasergrbl_core::MacStatus::Disconnected;
             if item(ui, Some("mdi-chip"), false, &tr_plain("MainForm.flashGrblFirmwareToolStripMenuItem.Text"), disconnected, None) {
                 out.push(MenuAction::FlashFirmware);

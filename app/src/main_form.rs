@@ -1125,10 +1125,6 @@ impl MainForm {
             MenuAction::AutoSize => core.auto_size_drawing(),
             MenuAction::ZoomIn => core.zoom_in_drawing(),
             MenuAction::ZoomOut => core.zoom_out_drawing(),
-            MenuAction::InstallDriver => {
-                // Linux kernels ship ch341; no installer exists
-                self.msgs.push(MsgTag::Info, MessageBox::new("The CH340/CH341 USB serial driver is built into the Linux kernel: no driver installation is needed.\nIf the port does not appear, check that your user is in the 'dialout' group.", "CH340").icon(MessageBoxIcon::Information));
-            }
             MenuAction::FlashFirmware => {
                 if core.machine_status() == MacStatus::Disconnected {
                     self.overlays.push_back(Overlay::Flash(FlashGrbl::open()));

@@ -2690,7 +2690,7 @@ Vendored libraries are not listed (see PLAN.md §6).
 | `method MnFileAppend_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method hungarianToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method czechToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
-| `method installCH340DriverToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
+| `method installCH340DriverToolStripMenuItem_Click` | N/A | removed: Windows driver installer, Linux kernel ships ch341 |
 | `method flashGrblFirmwareToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method toolsToolStripMenuItem_DropDownOpening` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
 | `method activateExtendedLogToolStripMenuItem_Click` | DONE | app/src/main_form.rs, app/src/forms/main/{menus,status_bar,dialogs}.rs |
