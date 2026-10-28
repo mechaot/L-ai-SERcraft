@@ -60,7 +60,6 @@ enum MsgTag {
     DisconnectAnyway,
     AbortProgram,
     UnlockStuck,
-    LanguageRestart(String),
     RunMulti,
     Info,
 }
@@ -635,14 +634,6 @@ impl MainForm {
             }
             MsgTag::AbortProgram if yes => self.state.core.abort_program(),
             MsgTag::UnlockStuck if yes => self.state.core.unlock_from_buffer_stuck(false),
-            MsgTag::LanguageRestart(culture) => {
-                // SetLanguage stored first, restart only on OK
-                let _ = culture;
-                if yes {
-                    self.restart_on_exit = true;
-                    self.want_close = true;
-                }
-            }
             MsgTag::RunMulti if yes => {
                 lasergrbl_core::sincro_start::signal();
                 self.multi_run_shown = true;
@@ -1139,10 +1130,6 @@ impl MainForm {
             MenuAction::AutoSize => core.auto_size_drawing(),
             MenuAction::ZoomIn => core.zoom_in_drawing(),
             MenuAction::ZoomOut => core.zoom_out_drawing(),
-            MenuAction::SetLanguage(c) => {
-                crate::ui::i18n::set_language(Some(&c));
-                self.msgs.push(MsgTag::LanguageRestart(c), MessageBox::new(tr("Strings.LanguageRequireRestartNow"), tr("Strings.LanguageRequireRestart")).buttons(MessageBoxButtons::OkCancel));
-            }
             MenuAction::InstallDriver => {
                 // Linux kernels ship ch341; no installer exists
                 self.msgs.push(MsgTag::Info, MessageBox::new("The CH340/CH341 USB serial driver is built into the Linux kernel: no driver installation is needed.\nIf the port does not appear, check that your user is in the 'dialout' group.", "CH340").icon(MessageBoxIcon::Information));

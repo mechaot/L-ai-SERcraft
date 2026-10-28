@@ -3,6 +3,12 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## Unreleased
+
+### Changed
+
+- Language selection moved from the main menu to a new *Language* tab in Settings; a changed language asks for a restart on *Save*.
+
 ## 1.5.0 - 2026-10-27
 
 ### Added
