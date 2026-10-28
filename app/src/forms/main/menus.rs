@@ -9,34 +9,9 @@ use lasergrbl_core::com::WrapperType;
 use lasergrbl_core::GrblCore;
 use lg_base::settings;
 
-use crate::ui::i18n::cultures;
 use crate::ui::icons::icons;
 use crate::ui::theme::{Scheme, Theme};
 use crate::ui::tr_plain;
-
-/// Control names of the language items in menu order (same order as `cultures.json`).
-const LANGUAGE_KEYS: [&str; 20] = [
-    "MNEnglish",
-    "MNItalian",
-    "MNSpanish",
-    "MNFrench",
-    "MNGerman",
-    "MNDanish",
-    "MNBrazilian",
-    "russianToolStripMenuItem",
-    "chinexeToolStripMenuItem",
-    "traditionalChineseToolStripMenuItem",
-    "slovakianToolStripMenuItem",
-    "hungarianToolStripMenuItem",
-    "czechToolStripMenuItem",
-    "polishToolStripMenuItem",
-    "greekToolStripMenuItem",
-    "turkishToolStripMenuItem",
-    "romanianToolStripMenuItem",
-    "dutchToolStripMenuItem",
-    "ukrainianToolStripMenuItem",
-    "japaneseToolStripMenuItem",
-];
 
 /// Scheme menu items: (scheme, control name).
 const SCHEME_ITEMS: [(Scheme, &str); 7] = [
@@ -81,8 +56,6 @@ pub enum MenuAction {
     AutoSize,
     ZoomIn,
     ZoomOut,
-    /// `SetLanguage(culture)`.
-    SetLanguage(String),
     InstallDriver,
     FlashFirmware,
     ConfigureWifi,
@@ -335,15 +308,6 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
             });
         }
 
-        // ---- Language ----
-        top_menu(ui, ico("mdi-flag-variant"), &tr_plain("MainForm.linguaToolStripMenuItem.Text"), |ui| {
-            for (c, key) in cultures().iter().zip(LANGUAGE_KEYS) {
-                if item(ui, Some(&c.flag), true, &tr_plain(&format!("MainForm.{key}.Text")), true, None) {
-                    out.push(MenuAction::SetLanguage(c.culture.clone()));
-                }
-            }
-        });
-
         // ---- Tools ----
         top_menu(ui, ico("mdi-tools"), &tr_plain("MainForm.toolsToolStripMenuItem.Text"), |ui| {
             if item(ui, Some("mdi-usb"), false, &tr_plain("MainForm.installCH340DriverToolStripMenuItem.Text"), true, None) {
@@ -391,25 +355,4 @@ pub fn show_menu_bar(ui: &mut Ui, core: &GrblCore, st: &mut MenuState) -> Vec<Me
         });
     });
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn language_table_matches_cultures() {
-        assert_eq!(cultures().len(), LANGUAGE_KEYS.len());
-        assert_eq!(cultures()[0].culture, "en");
-        assert_eq!(cultures()[9].culture, "zh-TW");
-    }
-
-    #[test]
-    fn every_language_key_has_text() {
-        // isolated settings + data dir
-        let _g = crate::forms::form_util::test_guard();
-        for k in LANGUAGE_KEYS {
-            assert!(crate::ui::i18n::catalog().has(&format!("MainForm.{k}.Text")), "{k}");
-        }
-    }
 }

@@ -21,6 +21,7 @@ use crate::forms::form_util::{load_texture, native_image};
 use super::common::{ModalEvent, button, modal, open_link, setting_row, trf};
 use crate::ui::dialog::{DialogResult, FileDialogOptions, MessageBox, MessageBoxButtons, PendingFile};
 use crate::ui::widgets::{flat_combo, grbl_group_box};
+use crate::ui::i18n::{self, cultures, resolve_culture};
 use crate::ui::{icons, tr, tr_plain};
 
 /// Sound events in the order of the form rows.
@@ -35,6 +36,31 @@ pub struct SoundSetting {
     pub enabled: bool,
     pub file: String,
 }
+
+/// Control names of the language captions, same order as `cultures.json`; they are the old
+/// `MainForm` menu item keys, translated in every catalog.
+const LANGUAGE_KEYS: [&str; 20] = [
+    "MNEnglish",
+    "MNItalian",
+    "MNSpanish",
+    "MNFrench",
+    "MNGerman",
+    "MNDanish",
+    "MNBrazilian",
+    "russianToolStripMenuItem",
+    "chinexeToolStripMenuItem",
+    "traditionalChineseToolStripMenuItem",
+    "slovakianToolStripMenuItem",
+    "hungarianToolStripMenuItem",
+    "czechToolStripMenuItem",
+    "polishToolStripMenuItem",
+    "greekToolStripMenuItem",
+    "turkishToolStripMenuItem",
+    "romanianToolStripMenuItem",
+    "dutchToolStripMenuItem",
+    "ukrainianToolStripMenuItem",
+    "japaneseToolStripMenuItem",
+];
 
 /// Every value edited by the form, same defaults as the C# constructor.
 #[derive(Debug, Clone, PartialEq)]
@@ -64,6 +90,8 @@ pub struct SettingsData {
     pub disable_safety_cd: bool,
     pub quiet_safety_cd: bool,
     pub legacy_icons: bool,
+    /// `User Language` culture; None = not set (system locale).
+    pub language: Option<String>,
     pub graphic_mode: GraphicMode,
     pub auto_cooling: bool,
     pub on_min: i32,
@@ -145,6 +173,7 @@ impl SettingsData {
             disable_safety_cd: settings::get("DisableSafetyCountdown", false),
             quiet_safety_cd: settings::get("QuietSafetyCountdown", false),
             legacy_icons: settings::get("LegacyIcons", false),
+            language: settings::get(i18n::SETTING_KEY, None::<String>),
             graphic_mode: settings::configured_graphic_mode(),
             auto_cooling: settings::get("AutoCooling", false),
             // out-of-range value leaves the C# combo empty; clamp to the item range instead
@@ -197,6 +226,10 @@ impl SettingsData {
         settings::set("DisableSafetyCountdown", self.disable_safety_cd);
         settings::set("QuietSafetyCountdown", self.quiet_safety_cd);
         settings::set("LegacyIcons", self.legacy_icons);
+        // unset stays unset: no pinning of the system locale
+        if let Some(c) = &self.language {
+            i18n::set_language(Some(c));
+        }
         settings::set_configured_graphic_mode(self.graphic_mode);
     }
 }
@@ -222,6 +255,7 @@ enum Tab {
     GCode,
     Sound,
     Options,
+    Language,
 }
 
 /// Restart question kinds, asked in this order after save.
@@ -230,6 +264,7 @@ enum Ask {
     Graphic,
     Firmware,
     Icons,
+    Language,
 }
 
 /// Dialog phase.
@@ -318,9 +353,9 @@ impl SettingsForm {
 
     /// Select a tab by designer index (dev screenshots).
     ///
-    /// `i`: tab index 0..=7, others are ignored.
+    /// `i`: tab index 0..=8, others are ignored.
     pub fn select_tab(&mut self, i: usize) {
-        const ALL: [Tab; 8] = [Tab::Hardware, Tab::Raster, Tab::Vector, Tab::Jog, Tab::Cooling, Tab::GCode, Tab::Sound, Tab::Options];
+        const ALL: [Tab; 9] = [Tab::Hardware, Tab::Raster, Tab::Vector, Tab::Jog, Tab::Cooling, Tab::GCode, Tab::Sound, Tab::Options, Tab::Language];
         if let Some(t) = ALL.get(i) {
             self.tab = *t;
         }
@@ -369,7 +404,7 @@ impl SettingsForm {
     /// `BtnSave_Click`: store settings and queue the restart questions.
     fn on_save(&mut self) -> Option<SettingsOutcome> {
         self.data.save();
-        let q = Self::restart_questions(self.prev_graphic, self.core.firmware(), icons::icons().is_legacy());
+        let q = Self::restart_questions(self.prev_graphic, self.core.firmware(), icons::icons().is_legacy(), i18n::catalog().culture());
         if q.is_empty() {
             return Some(SettingsOutcome::Saved { restart: false });
         }
@@ -377,11 +412,12 @@ impl SettingsForm {
         None
     }
 
-    /// The three "restart now?" checks of `BtnSave_Click` (read from the just saved settings).
+    /// The four "restart now?" checks of `BtnSave_Click` (read from the just saved settings).
     ///
     /// `prev_graphic`: graphic mode at dialog open. `core_fw`: firmware of the running core.
-    /// `legacy_now`: legacy icon flag of the running process. Returns questions in C# order.
-    fn restart_questions(prev_graphic: GraphicMode, core_fw: Firmware, legacy_now: bool) -> VecDeque<(Ask, MessageBox)> {
+    /// `legacy_now`: legacy icon flag of the running process. `culture_now`: culture of the running
+    /// catalog. Returns questions in C# order.
+    fn restart_questions(prev_graphic: GraphicMode, core_fw: Firmware, legacy_now: bool, culture_now: &str) -> VecDeque<(Ask, MessageBox)> {
         let mut q = VecDeque::new();
         let title = tr("Strings.FirmwareRequireRestart");
         let ask = |key: &str| MessageBox::new(tr(key), title).buttons(MessageBoxButtons::OkCancel);
@@ -393,6 +429,11 @@ impl SettingsForm {
         }
         if legacy_now != settings::get("LegacyIcons", false) {
             q.push_back((Ask::Icons, ask("Strings.IconsChangesRequiresRestart")));
+        }
+        // saved culture differs from the running catalog
+        let saved: Option<String> = settings::get(i18n::SETTING_KEY, None::<String>);
+        if saved.is_some_and(|c| resolve_culture(&c).unwrap_or("en") != culture_now) {
+            q.push_back((Ask::Language, ask("Strings.LanguageRequireRestartNow")));
         }
         q
     }
@@ -411,19 +452,21 @@ impl SettingsForm {
 
     /// Form body: tab strip, tab page, save/cancel row. Returns Some(true)=save, Some(false)=cancel.
     fn body(&mut self, ui: &mut Ui) -> Option<bool> {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             let tabs = [
-                (Tab::Hardware, "TpHardware"),
-                (Tab::Raster, "TpRasterImport"),
-                (Tab::Vector, "TpVectorImport"),
-                (Tab::Jog, "TpJogControl"),
-                (Tab::Cooling, "TpAutoCooling"),
-                (Tab::GCode, "TpGCodeSettings"),
-                (Tab::Sound, "TpSoundSettings"),
-                (Tab::Options, "TpOptions"),
+                (Tab::Hardware, "SettingsForm.TpHardware.Text"),
+                (Tab::Raster, "SettingsForm.TpRasterImport.Text"),
+                (Tab::Vector, "SettingsForm.TpVectorImport.Text"),
+                (Tab::Jog, "SettingsForm.TpJogControl.Text"),
+                (Tab::Cooling, "SettingsForm.TpAutoCooling.Text"),
+                (Tab::GCode, "SettingsForm.TpGCodeSettings.Text"),
+                (Tab::Sound, "SettingsForm.TpSoundSettings.Text"),
+                (Tab::Options, "SettingsForm.TpOptions.Text"),
+                // old menu caption reused: translated in every catalog
+                (Tab::Language, "MainForm.linguaToolStripMenuItem.Text"),
             ];
-            for (tab, ctl) in tabs {
-                ui.selectable_value(&mut self.tab, tab, tr_plain(&format!("SettingsForm.{ctl}.Text")));
+            for (tab, key) in tabs {
+                ui.selectable_value(&mut self.tab, tab, tr_plain(key));
             }
         });
         ui.separator();
@@ -437,6 +480,7 @@ impl SettingsForm {
             Tab::GCode => self.tab_gcode(ui),
             Tab::Sound => self.tab_sound(ui),
             Tab::Options => self.tab_options(ui),
+            Tab::Language => self.tab_language(ui),
         });
         ui.separator();
         let mut out = None;
@@ -656,6 +700,27 @@ impl SettingsForm {
             open_link("https://lasergrbl.com/configuration/#rendering-mode");
         }
     }
+
+    /// Language tab (replaces the C# main menu `linguaToolStripMenuItem`).
+    ///
+    /// `ui`: parent ui.
+    fn tab_language(&mut self, ui: &mut Ui) {
+        // active culture: chosen one, else the running catalog
+        let active = self.data.language.as_deref().and_then(resolve_culture).unwrap_or_else(|| i18n::catalog().culture());
+        egui::Grid::new("lang-grid").spacing([12.0, 4.0]).show(ui, |ui| {
+            for (n, (c, key)) in cultures().iter().zip(LANGUAGE_KEYS).enumerate() {
+                // grow atom pushes flag + name to the left
+                let atoms = (icons::icons().image_plain(ui.ctx(), &c.flag, 16.0), tr_plain(&format!("MainForm.{key}.Text")), egui::Atom::grow());
+                // uniform width so columns line up
+                if ui.add(egui::Button::selectable(c.culture == active, atoms).min_size(Vec2::new(200.0, 22.0))).clicked() {
+                    self.data.language = Some(c.culture.clone());
+                }
+                if n % 2 == 1 {
+                    ui.end_row();
+                }
+            }
+        });
+    }
 }
 
 #[cfg(test)]
@@ -672,6 +737,7 @@ mod tests {
         assert_eq!(d.protocol, WrapperType::UsbSerial);
         assert_eq!(d.streaming_mode, StreamingMode::Buffered);
         assert_eq!(d.threading_mode, ThreadingMode::UltraFast);
+        assert_eq!(d.language, None);
         assert!(!d.hard_reset && !d.unidirectional && !d.disable_g0_skip && !d.continuous_jog && !d.legacy_icons);
         assert_eq!((d.on_min, d.on_sec, d.off_min, d.off_sec), (10, 0, 1, 0));
         assert_eq!(d.header, GCODE_STD_HEADER);
@@ -699,6 +765,7 @@ mod tests {
         d.sounds[2].file = "/tmp/x.wav".into();
         d.sounds[2].enabled = false;
         d.graphic_mode = GraphicMode::Dib;
+        d.language = Some("it".into());
         d.save();
         let r = SettingsData::load();
         assert_eq!(r.firmware, Firmware::Marlin);
@@ -710,6 +777,7 @@ mod tests {
         assert_eq!(r.header, "G21\nM8");
         assert_eq!(r.sounds[2], SoundSetting { enabled: false, file: "/tmp/x.wav".into() });
         assert_eq!(r.graphic_mode, GraphicMode::Dib);
+        assert_eq!(r.language.as_deref(), Some("it"));
         // raw keys exactly as C#
         assert!(settings::get("Do not show Issue Detector", false));
         assert_eq!(settings::get("AutoCooling TOn", String::new()), "00:03:30");
@@ -717,6 +785,30 @@ mod tests {
         assert_eq!(settings::get("GCode.CustomHeader", String::new()), "G21\r\nM8");
         // untouched default sound text must not become a stored key
         assert!(!settings::exists("Sound.Success"));
+    }
+
+    #[test]
+    fn unset_language_stays_unset() {
+        let _g = settings_guard();
+        let d = SettingsData::load();
+        d.save();
+        assert!(!settings::exists(i18n::SETTING_KEY));
+    }
+
+    #[test]
+    fn language_table_matches_cultures() {
+        assert_eq!(cultures().len(), LANGUAGE_KEYS.len());
+        assert_eq!(cultures()[0].culture, "en");
+        assert_eq!(cultures()[9].culture, "zh-TW");
+    }
+
+    #[test]
+    fn every_language_key_has_text() {
+        // isolated settings + data dir
+        let _g = settings_guard();
+        for k in LANGUAGE_KEYS {
+            assert!(i18n::catalog().has(&format!("MainForm.{k}.Text")), "{k}");
+        }
     }
 
     #[test]
@@ -742,11 +834,13 @@ mod tests {
         settings::set("LegacyIcons", true);
         settings::set("Firmware Type", Firmware::Smoothie);
         settings::set_configured_graphic_mode(GraphicMode::Gdi);
-        let q = SettingsForm::restart_questions(GraphicMode::Auto, Firmware::Grbl, false);
-        assert_eq!(q.len(), 3);
+        settings::set(i18n::SETTING_KEY, "de");
+        let q = SettingsForm::restart_questions(GraphicMode::Auto, Firmware::Grbl, false, "en");
+        assert_eq!(q.len(), 4);
         assert_eq!(q[0].0, Ask::Graphic);
         assert_eq!(q[1].0, Ask::Firmware);
         assert_eq!(q[2].0, Ask::Icons);
-        assert!(SettingsForm::restart_questions(GraphicMode::Gdi, Firmware::Smoothie, true).is_empty());
+        assert_eq!(q[3].0, Ask::Language);
+        assert!(SettingsForm::restart_questions(GraphicMode::Gdi, Firmware::Smoothie, true, "de").is_empty());
     }
 }

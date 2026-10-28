@@ -47,8 +47,8 @@ enum Open {
 }
 
 /// Form names in screenshot order (see [`Dialogs2Tab::open_by_index`]).
-const SHOT_NAMES: [&str; 22] = [
-    "settings", "settings_raster", "settings_vector", "settings_jog", "settings_cooling", "settings_gcode", "settings_notification", "settings_options", "grbl_config", "hotkey_manager", "resume_job", "run_from_position", "safety_countdown", "laser_usage", "laser_life_edit", "laser_selector",
+const SHOT_NAMES: [&str; 23] = [
+    "settings", "settings_raster", "settings_vector", "settings_jog", "settings_cooling", "settings_gcode", "settings_notification", "settings_options", "settings_language", "grbl_config", "hotkey_manager", "resume_job", "run_from_position", "safety_countdown", "laser_usage", "laser_life_edit", "laser_selector",
     "issue_detector", "flash_grbl", "discovery", "ortur_wifi_config", "ortur_wifi_config_prompt", "emulator_ui",
 ];
 
@@ -103,14 +103,14 @@ impl Dialogs2Tab {
     /// `i`: index. `core`: core on the emulator.
     fn open_by_index(&mut self, i: usize, core: &Arc<GrblCore>) {
         let core = core.clone();
-        // settings tabs take the first 8 shot slots; the other dialogs follow
-        if i < 8 {
+        // settings tabs take the first 9 shot slots; the other dialogs follow
+        if i < 9 {
             let mut f = SettingsForm::open(&core);
             f.select_tab(i);
             self.open = Some(Open::Settings(f));
             return;
         }
-        let i = i - 7;
+        let i = i - 8;
         match i {
             0 => self.open = Some(Open::Settings(SettingsForm::open(&core))),
             1 => self.open = Some(Open::Config(GrblConfig::open(&core))),
