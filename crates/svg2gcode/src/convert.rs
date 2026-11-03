@@ -384,6 +384,8 @@ pub struct GCodeFromSvg {
     nspace: String,
     /// `UseLegacyBezier`: fixed-segment bezier instead of adaptive flattening (C# default false).
     pub use_legacy_bezier: bool,
+    /// Convert `<text>` to glyph outline paths first (not in C#; default false keeps golden parity).
+    pub text_to_path: bool,
     gcode: Gcode,
     pen_is_down: bool,
     start_sub_path: bool,
@@ -449,6 +451,7 @@ impl GCodeFromSvg {
             import_in_mm: false,
             nspace: String::new(),
             use_legacy_bezier: false,
+            text_to_path: false,
             gcode: Gcode::default(),
             pen_is_down: true,
             start_sub_path: true,
@@ -491,6 +494,8 @@ impl GCodeFromSvg {
         // strip chars not valid in XML 1.0 (upstream regex also drops astral chars, see NOTE)
         // NOTE(upstream): `က0-u10FFFF` in the regex is a typo; effective allowed set is 09 0A 0D 20-D7FF E000-FFFD.
         let cleaned = clean_xml(text);
+        // text to glyph paths when asked
+        let cleaned = if self.text_to_path { crate::text::text_to_paths(&cleaned) } else { cleaned };
         let opt = roxmltree::ParsingOptions { allow_dtd: true, ..Default::default() };
         let doc = roxmltree::Document::parse_with_options(&cleaned, opt)
             .map_err(|e| SvgError::new("System.Xml.XmlException", e.to_string()))?;

@@ -22,7 +22,11 @@ Photos and other bitmaps (JPG, PNG, BMP, GIF) are described further down:
   the **bottom** row to the **top** row. Put the cut layer at the top so that it is cut last, after
   the engraving. Otherwise the part may shift or fall out before it is engraved.
 * Hidden or locked Inkscape layers **are still converted**. To skip a layer, untick *Enabled* in L-ai-SERcraft.
-* Text is not burned. Convert it first with *Path ▸ Object to Path*. Embedded bitmaps are ignored.
+* Text is burned as the outline of its letters, set in the fonts installed on this computer. A missing font is
+  replaced by a similar one (generic `sans-serif`, `serif` and `monospace` map to e.g. DejaVu or Liberation).
+  The whole text takes the colour and style of its `<text>` element; differently coloured parts (`<tspan>`)
+  are not kept apart. For the exact letter shapes on every computer, use *Path ▸ Object to Path* in Inkscape.
+  Embedded bitmaps are ignored.
 * Save as **Inkscape SVG**. *Plain SVG* removes the layer names, so the layers then show up under their ids
   (`layer1`, `layer2`, …).
 
@@ -65,7 +69,8 @@ order later, drag a layer in the panel or use *Layer ▸ Raise Layer* / *Lower L
 
 The black fill only shows the intention in Inkscape. L-ai-SERcraft reads the **outline** of the shape and fills
 it with hatch lines when *Fill closed shapes* is on for this layer (step 6). Hatch fill needs **closed**
-shapes: rectangles, circles, ellipses, polygons and closed paths.
+shapes: rectangles, circles, ellipses, polygons, closed paths and text. Every letter is made of closed
+outlines, so the holes of `o`, `8` or `%` stay empty.
 
 ![Box selected: status bar shows "Rectangle in layer Fill"](manual/img/inkscape-layers-fill.png)
 
@@ -130,7 +135,8 @@ How the settings behave:
 | layer names show as `layer1`, `layer2` | the file was saved as Plain SVG: save as Inkscape SVG |
 | cut runs before the engraving | move the cut layer to the top of the Inkscape panel |
 | no hatch lines | *Fill closed shapes* is off for that layer, or the path is not closed (join the end nodes with the Node tool, `N`) |
-| text is missing | *Path ▸ Object to Path* before saving |
+| text is missing | no font is installed (Linux: e.g. `fonts-dejavu-core`), or the text sits in `<defs>`: *Path ▸ Object to Path* before saving |
+| letters look different than in Inkscape | the font is not installed on this computer: install it, or *Path ▸ Object to Path* before saving |
 | a hidden Inkscape layer is burned | hidden layers are converted too: untick *Enabled* in the Parameters dock |
 
 # Manual: raster images in the Parameters dock

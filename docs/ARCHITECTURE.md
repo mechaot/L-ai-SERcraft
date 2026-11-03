@@ -101,6 +101,8 @@ Raster image (jpg, jpeg, bmp, png, gif; not `.lps` entries) ──► ImageDock 
    The dock replaces the modal dialog for plain line-to-line engraving. Its button "Classic import dialog…" and
    every `.lps` project entry still use the RasterImport dialog above (dithering, vectorize, centerline).
 SVG file ──► ParamsDock (editor of one SVG, auto regen on edit) ──► GrblFile::load_imported_svg ──► lg-svg2gcode
+                                                     (`GCodeFromSvg::text_to_path`: text.rs first rewrites each `<text>` as a `<path>` of its glyph
+                                                      outlines, laid out by usvg with the system fonts; off by default so the golden paths match C#)
                                                      (auto regen: per-layer params via GrblFile::load_imported_svg_layered → GCodeFromSvg::convert_from_file_layered,
                                                       not used by the golden paths; returns each layer's command range for the preview highlight/hide;
                                                       optional per-layer hatch fill (hatch.rs) of closed curves, per connected area or row by row, emitted as normal burn lines after each pass's outline)

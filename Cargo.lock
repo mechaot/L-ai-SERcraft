@@ -1572,6 +1572,7 @@ version = "1.6.0"
 dependencies = [
  "lg-dotnet",
  "regex",
+ "resvg",
  "roxmltree 0.21.1",
 ]
 
