@@ -254,12 +254,19 @@ mod tests {
 
     #[test]
     fn periodic_timer() {
+        // a stalled runner may pass a whole period between two calls: check "expired == count grew",
+        // not "not expired right after"
+        let expired_iff_counted = |p: &mut PeriodicEventTimer| {
+            let n = p.num_period();
+            let e = p.expired();
+            assert_eq!(e, p.num_period() > n);
+        };
         let mut p = PeriodicEventTimer::new(TimeSpan::from_milliseconds(20.0), true);
-        assert!(!p.expired());
+        expired_iff_counted(&mut p);
         std::thread::sleep(Duration::from_millis(50));
         assert!(p.expired());
         assert!(p.num_period() >= 2);
-        assert!(!p.expired());
+        expired_iff_counted(&mut p);
         p.set_period(TimeSpan::from_milliseconds(30.0));
         assert!(p.running());
         // C# ReInit keeps m_periodcount

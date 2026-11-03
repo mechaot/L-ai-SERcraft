@@ -4,8 +4,11 @@
 
 //! Engine tests against a recording fake link (deterministic replies) and against the in-process emulator.
 //! Expected command strings were derived by reading `Core/GrblCore.cs`.
+//! Speed independent: wait for conditions (`wait_until`), never "sleep N ms, then it happened". Timer driven
+//! `?` polls can land between any two writes, compare realtime bytes without them (`realtime_bytes`).
 
 use crossbeam_channel::Receiver;
+use lasergrbl_core::com::fake::Written;
 use lasergrbl_core::com::{ComWrapper, EmulatorCom, FakeCom};
 use lasergrbl_core::emulator::Grblv11Emulator;
 use lasergrbl_core::*;
@@ -13,7 +16,7 @@ use lg_dotnet::Decimal;
 use lg_gcode::Firmware;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 type Responder = lasergrbl_core::com::fake::Responder;
 
@@ -43,16 +46,7 @@ fn setup(name: &str) -> MutexGuard<'static, ()> {
     g
 }
 
-fn wait_until(what: &str, mut cond: impl FnMut() -> bool) {
-    let end = Instant::now() + Duration::from_secs(10);
-    while Instant::now() < end {
-        if cond() {
-            return;
-        }
-        std::thread::sleep(Duration::from_millis(10));
-    }
-    panic!("timeout waiting for: {what}");
-}
+use lg_base::test_support::wait_until;
 
 fn write_nc(name: &str, body: &str) -> std::path::PathBuf {
     let p = lg_base::paths::test_dir(&format!("core_it_{name}_nc")).join(format!("{name}.nc"));
@@ -106,8 +100,8 @@ fn connect_idle(r: &Rig) {
     if r.auto_ok {
         r.fake.inject("ok");
     }
-    // both waits end after 500 ms of silence at the latest
-    std::thread::sleep(Duration::from_millis(700));
+    // refresh owns the queue until its last wait ends (500 ms silence): wait for it, not a fixed time
+    wait_until("on-connect refresh done", || !r.core.refresh_active());
 }
 
 /// `connect_idle` and forget what was written so far.
@@ -307,7 +301,7 @@ fn abort_reset_and_resume_dialog_data() {
     r.fake.inject("ok");
     r.fake.inject("ok");
     r.fake.inject("ok");
-    std::thread::sleep(Duration::from_millis(100));
+    wait_until("oks processed", || r.core.can_send_file());
     match r.core.run_program() {
         RunDecision::AskResume(i) => {
             assert_eq!(i.last_issue, DetectedIssue::ManualAbort);
@@ -320,7 +314,7 @@ fn abort_reset_and_resume_dialog_data() {
     r.core.set_t_override_g1(120);
     r.fake.clear_written();
     r.core.grbl_reset();
-    assert_eq!(r.fake.written_bytes(), vec![24]);
+    assert_eq!(realtime_bytes(&r), vec![24]);
     assert_eq!(r.core.t_override_g1(), 100);
     r.core.close_com(true).unwrap();
 }
@@ -527,7 +521,11 @@ fn custom_code_expressions_and_immediates() {
     r.core.execute_custom_code("G91\n?\n0x85\nG0 X[width]");
     wait_until("lines", || r.fake.written_lines().len() == 2);
     assert_eq!(r.fake.written_lines(), vec!["G91", "G0X30.000"]);
-    assert_eq!(r.fake.written_bytes(), vec![63, 0x85]);
+    // timer `?` polls may land anywhere: check custom `?` by position (right before 0x85), rest without polls
+    assert_eq!(realtime_bytes(&r), vec![0x85]);
+    let w = r.fake.written();
+    let rt = w.iter().position(|x| matches!(x, Written::Byte(0x85))).unwrap();
+    assert!(rt > 0 && matches!(w[rt - 1], Written::Byte(b'?')), "{w:?}");
     let out = lg_base::paths::test_dir("core_it_saved").join("saved.nc");
     r.core.save_program(&out, true, true, false, 1, true).unwrap();
     assert_eq!(std::fs::read_to_string(&out).unwrap(), "G90\nM3 S500\nG1 X10 Y20\nG1 X30 Y50\nM5\n");

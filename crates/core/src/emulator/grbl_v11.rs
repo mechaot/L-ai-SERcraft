@@ -491,7 +491,8 @@ mod tests {
 
     fn wait_for(rx: &mpsc::Receiver<String>, pred: impl Fn(&str) -> bool) -> Vec<String> {
         let mut got = Vec::new();
-        let end = std::time::Instant::now() + Duration::from_secs(5);
+        // generous deadline: slow runners must not fail (see lg_base::test_support::WAIT_TIMEOUT)
+        let end = std::time::Instant::now() + lg_base::test_support::WAIT_TIMEOUT;
         while std::time::Instant::now() < end {
             if let Ok(s) = rx.recv_timeout(Duration::from_millis(50)) {
                 let hit = pred(&s);
@@ -529,7 +530,7 @@ mod tests {
         let g = wait_for(&rx, |s| s == "$132=200.000\n");
         // NOTE(upstream): "ok" goes through the TX queue, the dump is immediate, so "ok" is not first
         assert_eq!(g.iter().filter(|s| s.starts_with('$')).count(), 34);
-        assert!(g.iter().any(|s| s == "ok\n") || rx.recv_timeout(Duration::from_secs(1)).unwrap() == "ok\n");
+        assert!(g.iter().any(|s| s == "ok\n") || rx.recv_timeout(lg_base::test_support::WAIT_TIMEOUT).unwrap() == "ok\n");
         e.manage_message(b"$100=300\n");
         wait_for(&rx, |s| s == "ok\n");
         e.manage_message(b"$999=1\n");

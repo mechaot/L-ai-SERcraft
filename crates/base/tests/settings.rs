@@ -23,6 +23,8 @@ enum Mode {
 fn settings_all() {
     let d = tmp("main");
     let f = d.join("LaserGRBL.Settings.json");
+    // debounce lower bound: t0 before any change, so a slow run between change and check cannot fake "too early"
+    let t0 = Instant::now();
     init_at(f.clone());
     assert!(is_new_file());
     assert_eq!(prev_version(), (0, 0, 0));
@@ -42,14 +44,9 @@ fn settings_all() {
     assert_eq!(get_and_delete("x.int", 0i32), 7);
     assert!(!exists("x.int"));
 
-    // debounce: nothing written immediately, written after ~2 s
-    let t0 = Instant::now();
-    assert!(!f.exists());
-    while !f.exists() && t0.elapsed() < Duration::from_secs(5) {
-        std::thread::sleep(Duration::from_millis(50));
-    }
+    // debounce: written after ~2 s, not before (no "not there yet" check: a slow runner may already be past 2 s)
+    lg_base::test_support::wait_until("debounced save", || f.exists());
     let el = t0.elapsed();
-    assert!(f.exists(), "no save");
     assert!(el >= Duration::from_millis(1500), "saved too early {el:?}");
     let txt = std::fs::read_to_string(&f).unwrap();
     assert!(txt.contains("\"x.mode\": \"B\""), "{txt}");

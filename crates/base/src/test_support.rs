@@ -113,6 +113,27 @@ pub fn test_dir(name: &str) -> PathBuf {
     dir
 }
 
+/// TEST HELPER: upper bound for any wait on threads, timers or I/O in tests.
+///
+/// Rule: tests never assume machine speed. CI runners (macOS/Windows VMs) can stall a thread for seconds,
+/// and the Windows timer tick is ~15.6 ms (a 1 ms sleep takes one tick). So:
+/// - wait for a condition ([`wait_until`]), never "sleep N ms, then it must have happened";
+/// - this deadline only matters when the test fails anyway, so it is generous;
+/// - "sleep, then nothing more happened" checks are fine (a slow machine only weakens them);
+/// - no wall-clock upper bounds on work (perf budgets): print the time, do not assert it.
+pub const WAIT_TIMEOUT: Duration = Duration::from_secs(60);
+
+/// TEST HELPER: poll until `cond` holds; panics after [`WAIT_TIMEOUT`].
+///
+/// `what`: label for the timeout panic. `cond`: condition to wait for.
+pub fn wait_until(what: &str, mut cond: impl FnMut() -> bool) {
+    let end = std::time::Instant::now() + WAIT_TIMEOUT;
+    while !cond() {
+        assert!(std::time::Instant::now() < end, "timeout waiting for: {what}");
+        std::thread::sleep(Duration::from_millis(5));
+    }
+}
+
 /// The process root; first call creates it, sweeps stale entries and registers the exit cleanup.
 ///
 /// `tag`: name part of the root dir. Returns the root path. Panics when the root cannot be created.

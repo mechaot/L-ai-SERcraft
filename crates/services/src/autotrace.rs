@@ -171,15 +171,7 @@ mod tests {
         // no leftover png
         // a detached preview thread of another test may still own a png for a moment: wait for the folder to drain
         let count = || std::fs::read_dir(temp_path()).map(|r| r.filter_map(|e| e.ok()).filter(|e| e.path().extension().is_some_and(|x| x == "png")).count()).unwrap_or(0);
-        let mut left = count();
-        for _ in 0..40 {
-            if left == 0 {
-                break;
-            }
-            std::thread::sleep(std::time::Duration::from_millis(50));
-            left = count();
-        }
-        assert_eq!(left, 0);
+        lg_base::test_support::wait_until("temp pngs drained", || count() == 0);
         // missing binary gives a clear error
         lg_base::settings::set(SETTING_PATH, "/nonexistent/autotrace".to_string());
         let e = bitmap_to_svg_string(&img, false, 0, false, 0).unwrap_err();
