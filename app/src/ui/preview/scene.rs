@@ -505,8 +505,8 @@ mod tests {
         let ms = t.elapsed().as_millis();
         let segs = shared.scene.lock().unwrap().on.segment_count();
         eprintln!("build 500k: {ms} ms, {segs} on-segments");
+        // time is printed above, not asserted: tests never depend on machine speed
         assert!(segs > 450_000);
-        assert!(ms < 15_000, "build too slow: {ms} ms");
         // per-frame work with no dirty chunk is a generation compare only
         let t = Instant::now();
         let s = shared.scene.lock().unwrap();

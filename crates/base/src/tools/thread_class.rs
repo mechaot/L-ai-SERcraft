@@ -256,6 +256,8 @@ fn run_loop(h: ThreadHandle, d: Arc<Mutex<Option<Callback>>>, f: Arc<Mutex<Optio
 #[cfg(test)]
 mod tests {
     use super::*;
+    // wait on counts, never "sleep N ms, then >= k runs": Windows sleeps in ~15.6 ms ticks (see WAIT_TIMEOUT)
+    use crate::test_support::wait_until;
     use std::sync::atomic::AtomicUsize;
 
     #[test]
@@ -275,12 +277,11 @@ mod tests {
         );
         assert!(!t.running());
         t.start();
-        std::thread::sleep(Duration::from_millis(50));
+        wait_until("4 loops", || n.load(Ordering::SeqCst) > 3);
         t.stop();
         assert!(!t.running());
         assert_eq!(first.load(Ordering::SeqCst), 1);
         let c = n.load(Ordering::SeqCst);
-        assert!(c > 3, "{c}");
         std::thread::sleep(Duration::from_millis(20));
         assert_eq!(n.load(Ordering::SeqCst), c);
     }
@@ -299,8 +300,7 @@ mod tests {
         std::thread::sleep(Duration::from_millis(30));
         assert_eq!(cnt.load(Ordering::SeqCst), 0); // still sleeping 10 s
         t.wake();
-        std::thread::sleep(Duration::from_millis(50));
-        assert!(cnt.load(Ordering::SeqCst) > 1);
+        wait_until("2 loops after wake", || cnt.load(Ordering::SeqCst) > 1);
         assert_eq!(t.sleep_time(), 0);
         t.stop();
     }
@@ -311,12 +311,11 @@ mod tests {
         let n2 = n.clone();
         let mut t = ThreadObject::with_callbacks("t3", 1, Box::new(move || { n2.fetch_add(1, Ordering::SeqCst); }), None);
         t.start();
-        std::thread::sleep(Duration::from_millis(10));
+        wait_until("first run", || n.load(Ordering::SeqCst) > 0);
         t.stop();
         let a = n.load(Ordering::SeqCst);
         t.start();
-        std::thread::sleep(Duration::from_millis(20));
+        wait_until("run after restart", || n.load(Ordering::SeqCst) > a);
         t.stop();
-        assert!(n.load(Ordering::SeqCst) > a);
     }
 }

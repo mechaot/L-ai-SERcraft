@@ -455,7 +455,8 @@ mod tests {
     fn perf_dense_circle() {
         let t = std::time::Instant::now();
         let s = hatch_segments(&[circle(10.0, 2000)], 0.01, 0.0, false);
-        assert!(t.elapsed().as_secs_f64() < 1.0);
+        // time is printed, not asserted: tests never depend on machine speed
+        eprintln!("dense circle hatch: {:?}", t.elapsed());
         assert!((1900..=2100).contains(&s.len()), "{}", s.len());
     }
 }

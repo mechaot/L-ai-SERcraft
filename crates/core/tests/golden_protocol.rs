@@ -731,9 +731,9 @@ impl Interp {
     }
 
     fn do_join(&mut self) {
-        let mut guard = 0;
-        while !self.async_t.as_ref().unwrap().is_finished() && guard < 20000 {
-            guard += 1;
+        // time cap like run_while, not a step count (step speed depends on the machine)
+        let end = std::time::Instant::now() + Duration::from_secs(90);
+        while !self.async_t.as_ref().unwrap().is_finished() && std::time::Instant::now() < end {
             self.core().step_tx();
             self.flush();
             if !self.pump_one() {

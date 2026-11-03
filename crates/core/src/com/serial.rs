@@ -326,19 +326,18 @@ mod tests {
         }
         assert!(c.is_open());
         master.write_all(b"Grbl 1.1f ['$' for help]\r\nok\n").unwrap();
+        // poll until both lines or the generous test deadline, not a fixed number of polls
         let mut got = Vec::new();
-        for _ in 0..30 {
+        let end = std::time::Instant::now() + lg_base::test_support::WAIT_TIMEOUT;
+        while got.len() < 2 && std::time::Instant::now() < end {
             if let Some(l) = c.read_line_blocking().unwrap() {
                 got.push(l);
-            }
-            if got.len() == 2 {
-                break;
             }
         }
         assert_eq!(got, vec!["Grbl 1.1f ['$' for help]\r".to_string(), "ok".to_string()]);
         c.write_str("$$\n").unwrap();
         let mut buf = [0u8; 16];
-        master.set_timeout(Duration::from_millis(500)).unwrap();
+        master.set_timeout(lg_base::test_support::WAIT_TIMEOUT).unwrap();
         let n = master.read(&mut buf).unwrap();
         assert_eq!(&buf[..n], b"$$\n");
         c.close(false);

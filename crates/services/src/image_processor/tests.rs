@@ -12,7 +12,8 @@ use lg_gcode::L2LConf;
 use lg_raster::{gray_scale, resize_image, threshold, whitenize};
 use std::time::Duration;
 
-const T: Duration = Duration::from_secs(20);
+/// Event wait limit: generous, slow runners must not fail (see `lg_base::test_support::WAIT_TIMEOUT`).
+const T: Duration = lg_base::test_support::WAIT_TIMEOUT;
 
 fn color_image(w: u32, h: u32) -> RgbaImage {
     RgbaImage::from_fn(w, h, |x, y| Rgba([(x * 255 / w) as u8, (y * 255 / h) as u8, ((x + y) * 3 % 256) as u8, 255]))
@@ -335,7 +336,9 @@ fn rapid_refresh_aborts_old_previews() {
         match rx.recv_timeout(Duration::from_millis(300)) {
             Ok(ImageProcessorEvent::PreviewReady(i)) => last = Some(i),
             Ok(_) => {}
-            Err(_) => break,
+            // 300 ms silence ends it only once a preview came: a slow runner may need longer for the first
+            Err(_) if last.is_some() => break,
+            Err(_) => {}
         }
     }
     assert!(last.is_some());

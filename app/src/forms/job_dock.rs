@@ -974,13 +974,13 @@ mod tests {
         p
     }
 
-    /// Run frames and polls until `cond` holds (10 s limit). `what`: text of the timeout panic.
+    /// Run frames and polls until `cond` holds (`WAIT_TIMEOUT` limit). `what`: text of the timeout panic.
     fn pump_until(h: &mut Harness, what: &str, cond: impl Fn(&Harness) -> bool) {
         let t = Instant::now();
         while !cond(h) {
             h.job.poll();
             h.frame(vec![]);
-            assert!(t.elapsed() < Duration::from_secs(10), "timeout: {what}");
+            assert!(t.elapsed() < lg_base::test_support::WAIT_TIMEOUT, "timeout: {what}");
             std::thread::sleep(Duration::from_millis(5));
         }
     }
@@ -1422,7 +1422,7 @@ mod tests {
                 assert!(!ok);
             }
             h.frame(vec![]);
-            assert!(t.elapsed() < Duration::from_secs(10));
+            assert!(t.elapsed() < lg_base::test_support::WAIT_TIMEOUT);
             std::thread::sleep(Duration::from_millis(5));
         }
         // the failed block is empty, the image behind it moved up and kept its text
