@@ -9,3 +9,4 @@ rust-version.workspace = true
 lg-dotnet.workspace = true
 roxmltree.workspace = true
 regex.workspace = true
+resvg.workspace = true

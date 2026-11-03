@@ -3,6 +3,12 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## 1.7.0 - 2026-11-03
+
+### Added
+
+- SVG import converts `<text>` to glyph outline paths using the installed system fonts (no more Inkscape "Object to Path" needed); per-`<tspan>` colours are not kept (whole text uses the `<text>` element's style).
+
 ## 1.6.0 - 2026-10-29
 
 ### Added

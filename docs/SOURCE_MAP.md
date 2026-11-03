@@ -119,7 +119,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/dialogs/resume_job_form.rs`](../app/src/forms/dialogs/resume_job_form.rs) | 281 | Ports `ResumeJobForm.cs` + `ResumeJobForm.Designer.cs`: "resume interrupted job" dialog. |
 | [`app/src/forms/dialogs/run_from_position_form.rs`](../app/src/forms/dialogs/run_from_position_form.rs) | 132 | Ports `RunFromPositionForm.cs` + `RunFromPositionForm.Designer.cs`: "run from line N" dialog. |
 | [`app/src/forms/dialogs/safety_countdown.rs`](../app/src/forms/dialogs/safety_countdown.rs) | 176 | Ports `SafetyCountdown.cs` + `SafetyCountdown.Designer.cs`: "Safety first!" 5 s countdown before a job. |
-| [`app/src/forms/dialogs/settings_form.rs`](../app/src/forms/dialogs/settings_form.rs) | 752 | Ports `SettingsForm.cs` + `SettingsForm.Designer.cs`: tabbed settings dialog. |
+| [`app/src/forms/dialogs/settings_form.rs`](../app/src/forms/dialogs/settings_form.rs) | 846 | Ports `SettingsForm.cs` + `SettingsForm.Designer.cs`: tabbed settings dialog. |
 | [`app/src/forms/form_util.rs`](../app/src/forms/form_util.rs) | 371 | Shared helpers of the WP-U4a forms. No C# counterpart: replaces WinForms boilerplate (ShowDialog, ComboboxItem, tooltips, `GrblCore.Configuration` limit lookups). |
 | [`app/src/forms/gallery_tab.rs`](../app/src/forms/gallery_tab.rs) | 278 | Gallery tab "Forms" (WP-U4a): opens each form with a throwaway `GrblFile` and logs the outcome. |
 | [`app/src/forms/generators/cutting_test.rs`](../app/src/forms/generators/cutting_test.rs) | 367 | Ports `Generator/CuttingTest.cs` (+ Designer): cutting test generator form. |
@@ -129,14 +129,14 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/image_dock.rs`](../app/src/forms/image_dock.rs) | 1394 | Raster-image dock editor for one image (right side of the main window). Replaces the modal `RasterToLaserForm` for plain line-to-line engraving: the image loads at once, a histogram with a brightness to power map, the target position and size, line settings and laser options are edited here, and every committed edit regenerates the G-code of this image's block in the background. The classic dialog stays reachable through a button. One instance edits one image. It owns no program and no worker: the job coordinator (`job_dock.rs`) takes its [`GenRequest`], runs it and hands the result back. Not part of the C# app (intentional deviation). |
 | [`app/src/forms/job_dock.rs`](../app/src/forms/job_dock.rs) | 1560 | Job dock (right side of the main window): the loaded program as a list of per-file blocks and the editor of the selected file. Several files can be loaded ("Append file"); each SVG or raster image keeps its own parameter editor ([`ParamsDock`], [`ImageDock`]) and owns one contiguous block of the shared program. An edit regenerates only that file's block ([`GrblFile::replace_block`]), the blocks before and after stay as they are. G-code files and classic-dialog results are `Static` items (no parameters). One job at a time runs on the shared program. Not part of the C# app (intentional deviation). |
 | [`app/src/forms/job_test_harness.rs`](../app/src/forms/job_test_harness.rs) | 262 | Test support (compiled for tests only): a headless egui driver around the job dock, shared by the tests of the job dock and of the two file editors. Clicks, typing and waiting go through real egui input events and the real job coordinator, so an edit reaches the G-code the same way as in the app. |
-| [`app/src/forms/legal_disclaimer.rs`](../app/src/forms/legal_disclaimer.rs) | 132 | Ports `LegalDisclaimer.cs` (+ Designer): legal disclaimer shown on first start. |
+| [`app/src/forms/legal_disclaimer.rs`](../app/src/forms/legal_disclaimer.rs) | 83 | Ports `LegalDisclaimer.cs` (+ Designer): legal disclaimer shown on first start. |
 | [`app/src/forms/license.rs`](../app/src/forms/license.rs) | 273 | Ports `LicenseForm.cs` (+ Designer), reworked: "License & Credits" dialog (LaserGRBL credit, edition notes, AI note, GPL text). No donation link. |
 | [`app/src/forms/main/command_log.rs`](../app/src/forms/main/command_log.rs) | 178 | Ports `UserControls/CommandLog.cs`: virtualised list of sent commands and board messages. |
 | [`app/src/forms/main/connect_log.rs`](../app/src/forms/main/connect_log.rs) | 378 | Ports `ConnectLogForm.cs` (+Designer): connection, file/progress and manual command / log group boxes. |
 | [`app/src/forms/main/dialogs.rs`](../app/src/forms/main/dialogs.rs) | 127 | Dialog host of the main window: one `Overlay` per modal form, shown one at a time (C# `ShowDialog`). |
 | [`app/src/forms/main/exception.rs`](../app/src/forms/main/exception.rs) | 172 | Ports `ExceptionManager.cs` (+Designer): panic hook that logs and queues a report, and the dialog. |
 | [`app/src/forms/main/jog.rs`](../app/src/forms/main/jog.rs) | 247 | Ports `JogForm.cs` (+Designer): direction pad, Z buttons, speed and step sliders, and the `StepBar`, `DirectionButton`, `DirectionStepButton` helper controls. |
-| [`app/src/forms/main/menus.rs`](../app/src/forms/main/menus.rs) | 415 | Ports the menu bar of `MainForm.Designer.cs` + `MainForm.AssignIcons/TimerUpdate/*_Click` (menu part). |
+| [`app/src/forms/main/menus.rs`](../app/src/forms/main/menus.rs) | 354 | Ports the menu bar of `MainForm.Designer.cs` + `MainForm.AssignIcons/TimerUpdate/*_Click` (menu part). |
 | [`app/src/forms/main/mod.rs`](../app/src/forms/main/mod.rs) | 15 | Main window pieces: `MainForm` menus and status bar, `ConnectLogForm`, `JogForm`, `CommandLog`, `ExceptionManager`, and the dialog host used by `main_form.rs`. |
 | [`app/src/forms/main/status_bar.rs`](../app/src/forms/main/status_bar.rs) | 223 | Ports the `StatusBar` of `MainForm` (labels, buffer bar, overrides) and the status part of `TimerUpdate`. |
 | [`app/src/forms/material/mod.rs`](../app/src/forms/material/mod.rs) | 31 | Named layer presets (replaces the C# material helper `PSHelper/*`, intentional deviation). |
@@ -157,8 +157,8 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`app/src/forms/splash.rs`](../app/src/forms/splash.rs) | 84 | Ports `SplashScreenForm.cs` (+ Designer): borderless, top-most splash with logo, version and 2 s timer. |
 | [`app/src/forms/svg_mode.rs`](../app/src/forms/svg_mode.rs) | 116 | Ports `SvgConverter/SvgModeForm.cs` (+ Designer): choose "Load as Vector" / "Load as Image" for an SVG. |
 | [`app/src/main.rs`](../app/src/main.rs) | 161 | L-ai-SERcraft egui application entry (ports `Program.cs` startup + `MainForm.RefreshFormTitle`). |
-| [`app/src/main_form.rs`](../app/src/main_form.rs) | 1345 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
-| [`app/src/ui/dialog.rs`](../app/src/ui/dialog.rs) | 419 | Modal-form framework: WinForms `ShowDialog`, `MessageBox.Show`, `OpenFileDialog/SaveFileDialog`. |
+| [`app/src/main_form.rs`](../app/src/main_form.rs) | 1323 | Ports `MainForm.cs`: menu bar, status bar, left column (connect/log + jog), preview, and the dialog flows (open/save/run/connect) that the C# `GrblCore` ran with blocking dialogs. |
+| [`app/src/ui/dialog.rs`](../app/src/ui/dialog.rs) | 401 | Modal-form framework: WinForms `ShowDialog`, `MessageBox.Show`, `OpenFileDialog/SaveFileDialog`. |
 | [`app/src/ui/fonts.rs`](../app/src/ui/fonts.rs) | 117 | Font setup: egui default fonts plus a system CJK fallback font when one exists. |
 | [`app/src/ui/gallery.rs`](../app/src/ui/gallery.rs) | 455 | Widget gallery: shows every theme color, icon, widget and dialog for visual checks. Start with `laisercraft --gallery`. |
 | [`app/src/ui/i18n.rs`](../app/src/ui/i18n.rs) | 283 | Localization (replaces .resx `ResourceManager` + WinForms `ApplyResources`). |
@@ -211,20 +211,20 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/base/src/paths.rs`](../crates/base/src/paths.rs) | 229 | Port of `GrblCore.DataPath`, `GrblCore.TempPath`, `GrblCore.ExePath` (Core/GrblCore.cs) + resource dir lookup. |
 | [`crates/base/src/settings.rs`](../crates/base/src/settings.rs) | 370 | Port of `Settings.cs`: global key/value store with debounced save. |
 | [`crates/base/src/sound.rs`](../crates/base/src/sound.rs) | 152 | Port of `Sound/SoundEvent.cs`: play event sounds without blocking the caller. |
-| [`crates/base/src/test_support.rs`](../crates/base/src/test_support.rs) | 396 | TEST SUPPORT (not for production code): one scratch root per test process, removed at process exit. |
-| [`crates/base/src/tools/cronometro.rs`](../crates/base/src/tools/cronometro.rs) | 268 | Port of `Tools/Cronometro.cs`: `TimingBase`, `ElapsedFromEvent`, `SimpleCrono`, `AdvancedCrono`, `PeriodicEventTimer`. |
+| [`crates/base/src/test_support.rs`](../crates/base/src/test_support.rs) | 417 | TEST SUPPORT (not for production code): one scratch root per test process, removed at process exit. |
+| [`crates/base/src/tools/cronometro.rs`](../crates/base/src/tools/cronometro.rs) | 275 | Port of `Tools/Cronometro.cs`: `TimingBase`, `ElapsedFromEvent`, `SimpleCrono`, `AdvancedCrono`, `PeriodicEventTimer`. |
 | [`crates/base/src/tools/hires_timer.rs`](../crates/base/src/tools/hires_timer.rs) | 70 | Port of `Tools/HiResTimer.cs` (class `HiResTimer`). |
 | [`crates/base/src/tools/math_helper.rs`](../crates/base/src/tools/math_helper.rs) | 117 | Port of `Tools/MathHelper.cs`: `MathHelper` and `RulerStepCalculator`. |
 | [`crates/base/src/tools/mobile_average.rs`](../crates/base/src/tools/mobile_average.rs) | 216 | Port of `Tools/MobileAverageCalculator.cs`: `MobileAverageCalculator` (long) and `MobileDAverageCalculator` (double). |
 | [`crates/base/src/tools/mod.rs`](../crates/base/src/tools/mod.rs) | 14 | Port of `Tools/*.cs` helpers (timers, threads, math, wordwrap, utils). |
 | [`crates/base/src/tools/retained_setting.rs`](../crates/base/src/tools/retained_setting.rs) | 54 | Port of `Tools/RetainedSetting.cs`. |
-| [`crates/base/src/tools/thread_class.rs`](../crates/base/src/tools/thread_class.rs) | 322 | Port of `Tools/ThreadClass.cs` (`ThreadClass` + `ThreadObject`). |
+| [`crates/base/src/tools/thread_class.rs`](../crates/base/src/tools/thread_class.rs) | 321 | Port of `Tools/ThreadClass.cs` (`ThreadClass` + `ThreadObject`). |
 | [`crates/base/src/tools/utils.rs`](../crates/base/src/tools/utils.rs) | 201 | Port of class `Utils` in `Tools/HiResTimer.cs` (TimeSpanToString, HumanReadableDateDiff, OpenLink). |
 | [`crates/base/src/tools/word_wrap.rs`](../crates/base/src/tools/word_wrap.rs) | 100 | Port of `Tools/WordWrap.cs`. Works on UTF-16 units like C# so lengths match. |
 | [`crates/base/tests/golden_timespan.rs`](../crates/base/tests/golden_timespan.rs) | 53 | Compare Utils.HumanReadableDateDiff / TimeSpanToString with Mono goldens. |
 | [`crates/base/tests/logger.rs`](../crates/base/tests/logger.rs) | 68 | Logger + ComLogger output tests. |
 | [`crates/base/tests/nrbf.rs`](../crates/base/tests/nrbf.rs) | 153 | NRBF reader / writer tests against StandardButtons.zbn and Mono-generated streams. |
-| [`crates/base/tests/settings.rs`](../crates/base/tests/settings.rs) | 124 | Settings store tests (one process, one test fn: the store is global). |
+| [`crates/base/tests/settings.rs`](../crates/base/tests/settings.rs) | 121 | Settings store tests (one process, one test fn: the store is global). |
 
 ### `crates/clipper`
 
@@ -247,10 +247,10 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/core/src/com/ip_helper.rs`](../crates/core/src/com/ip_helper.rs) | 101 | Port of `IPHelper` (in `ComWrapper/Telnet.cs`): parse `host[:port]`, `[v6]:port` and bare IPv6. |
 | [`crates/core/src/com/line_queue.rs`](../crates/core/src/com/line_queue.rs) | 179 | Shared line buffer between a reader thread and `read_line_blocking` (replaces the blocking C# reads). |
 | [`crates/core/src/com/mod.rs`](../crates/core/src/com/mod.rs) | 155 | Port of `ComWrapper/IComWrapper.cs` (interface + `WrapperType`) and the wrapper factory used by `GrblCore.Configure`. |
-| [`crates/core/src/com/serial.rs`](../crates/core/src/com/serial.rs) | 348 | Port of `ComWrapper/UsbSerial.cs`, `UsbSerial2.cs` and `RJCPSerial.cs`. |
+| [`crates/core/src/com/serial.rs`](../crates/core/src/com/serial.rs) | 347 | Port of `ComWrapper/UsbSerial.cs`, `UsbSerial2.cs` and `RJCPSerial.cs`. |
 | [`crates/core/src/com/telnet.rs`](../crates/core/src/com/telnet.rs) | 256 | Port of `ComWrapper/Telnet.cs` (plain TCP line stream, no telnet option negotiation, like C#). |
 | [`crates/core/src/com/websocket.rs`](../crates/core/src/com/websocket.rs) | 280 | Port of `ComWrapper/LaserWebESP8266.cs` on top of `tungstenite` (client). |
-| [`crates/core/src/emulator/grbl_v11.rs`](../crates/core/src/emulator/grbl_v11.rs) | 577 | Port of `GrblEmulator/Grblv11Emulator.cs`: an in-process Grbl 1.1 look-alike. |
+| [`crates/core/src/emulator/grbl_v11.rs`](../crates/core/src/emulator/grbl_v11.rs) | 578 | Port of `GrblEmulator/Grblv11Emulator.cs`: an in-process Grbl 1.1 look-alike. |
 | [`crates/core/src/emulator/mod.rs`](../crates/core/src/emulator/mod.rs) | 48 | Port of `GrblEmulator/*` (the `EmulatorUI` form is UI work, only its hook is here). |
 | [`crates/core/src/emulator/websocket_emulator.rs`](../crates/core/src/emulator/websocket_emulator.rs) | 170 | Port of `GrblEmulator/WebsocketEmulator.cs`: a websocket server that serves one [`Grblv11Emulator`] per connection (tungstenite server instead of websocket-sharp). |
 | [`crates/core/src/grbl_core/expr.rs`](../crates/core/src/grbl_core/expr.rs) | 202 | Custom code evaluation of `GrblCore` (`ExecuteCustomCode` helpers, `EvaluateExpression`, `EvaluateCB`, `IsImmediate`, `GetImmediate`, `FormatNumber`). |
@@ -265,8 +265,8 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/core/src/sincro_start.rs`](../crates/core/src/sincro_start.rs) | 194 | Port of `SincroStart.cs`: "start all instances" signal between LaserGRBL processes. |
 | [`crates/core/src/usage_stats.rs`](../crates/core/src/usage_stats.rs) | 191 | Port of `UsageStats.cs`, local part only (PLAN section 6: no upload to the upstream server). |
 | [`crates/core/src/util.rs`](../crates/core/src/util.rs) | 165 | Small helpers shared by the modules (GUID generation, TimeSpan setting codec, UTF-16 style substrings). |
-| [`crates/core/tests/engine.rs`](../crates/core/tests/engine.rs) | 587 | Engine tests against a recording fake link (deterministic replies) and against the in-process emulator. Expected command strings were derived by reading `Core/GrblCore.cs`. |
-| [`crates/core/tests/golden_protocol.rs`](../crates/core/tests/golden_protocol.rs) | 1128 | Protocol golden test: replays every `tests/golden/protocol/*.scn` scenario on the Rust core and compares the trace byte for byte with `*.txt`, which the ORIGINAL C# `GrblCore` (Mono) produced (`tools/golden/protocol/run.sh`). |
+| [`crates/core/tests/engine.rs`](../crates/core/tests/engine.rs) | 585 | Engine tests against a recording fake link (deterministic replies) and against the in-process emulator. Expected command strings were derived by reading `Core/GrblCore.cs`. Speed independent: wait for conditions (`wait_until`), never "sleep N ms, then it happened". Timer driven `?` polls can land between any two writes, compare realtime bytes without them (`realtime_bytes`). |
+| [`crates/core/tests/golden_protocol.rs`](../crates/core/tests/golden_protocol.rs) | 1178 | Protocol golden test: replays every `tests/golden/protocol/*.scn` scenario on the Rust core and compares the trace byte for byte with `*.txt`, which the ORIGINAL C# `GrblCore` (Mono) produced (`tools/golden/protocol/run.sh`). |
 
 ### `crates/dotnet`
 
@@ -281,7 +281,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/dotnet/src/timespan.rs`](../crates/dotnet/src/timespan.rs) | 201 | `System.TimeSpan` (.NET Fx 4.x semantics). |
 | [`crates/dotnet/src/unicode_tables.rs`](../crates/dotnet/src/unicode_tables.rs) | 515 | GENERATED by tools/golden/dotnet/run.sh from Mono Char.IsLetter/IsDigit/IsNumber/IsWhiteSpace. Do not edit. |
 | [`crates/dotnet/tests/golden.rs`](../crates/dotnet/tests/golden.rs) | 313 | Golden tests: compare against tables produced by Mono (tools/golden/dotnet/run.sh). |
-| [`crates/dotnet/tests/semantics.rs`](../crates/dotnet/tests/semantics.rs) | 255 | Hand-computed expectations from .NET Framework 4.x behaviour (not Mono-derived). |
+| [`crates/dotnet/tests/semantics.rs`](../crates/dotnet/tests/semantics.rs) | 256 | Hand-computed expectations from .NET Framework 4.x behaviour (not Mono-derived). |
 
 ### `crates/expr`
 
@@ -309,7 +309,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/gcode/src/program_range.rs`](../crates/gcode/src/program_range.rs) | 188 | Port of `ProgramRange` (bottom of `GrblFile.cs`). |
 | [`crates/gcode/src/state_builder.rs`](../crates/gcode/src/state_builder.rs) | 803 | Port of `StateBuilder.cs`: `StatePositionBuilder`, `StateBuilder`, `ModalElement`, `G2G3Helper`. |
 | [`crates/gcode/src/text.rs`](../crates/gcode/src/text.rs) | 106 | .NET string helpers (`Trim()`, `ToUpper()`, `ToLower()`) with Fx semantics. |
-| [`crates/gcode/src/vector.rs`](../crates/gcode/src/vector.rs) | 295 | Port of the vector loaders of `GrblFile.cs`: `LoadImagePotrace`, `LoadImportedSVG`, `LoadImageCenterline`. |
+| [`crates/gcode/src/vector.rs`](../crates/gcode/src/vector.rs) | 297 | Port of the vector loaders of `GrblFile.cs`: `LoadImagePotrace`, `LoadImportedSVG`, `LoadImageCenterline`. |
 | [`crates/gcode/tests/common/mod.rs`](../crates/gcode/tests/common/mod.rs) | 144 | Shared helpers for the golden tests: settings sandbox, conf parsing, escaping. |
 | [`crates/gcode/tests/golden_analyze.rs`](../crates/gcode/tests/golden_analyze.rs) | 210 | gcode_analyze + state_builder goldens. |
 | [`crates/gcode/tests/golden_config.rs`](../crates/gcode/tests/golden_config.rs) | 124 | config golden: `GrblConfST` parsing + derived properties, `GrblVersionInfo` comparisons. |
@@ -368,7 +368,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 
 | file | lines | purpose |
 |---|---:|---|
-| [`crates/services/src/autotrace.rs`](../crates/services/src/autotrace.rs) | 190 | Port of `Autotrace/Autotrace.cs`: run the external `autotrace` binary on a bitmap. |
+| [`crates/services/src/autotrace.rs`](../crates/services/src/autotrace.rs) | 182 | Port of `Autotrace/Autotrace.cs`: run the external `autotrace` binary on a bitmap. |
 | [`crates/services/src/custom_button.rs`](../crates/services/src/custom_button.rs) | 685 | Port of `CustomButton.cs`: `CustomButton` and the `CustomButtons` list. |
 | [`crates/services/src/flash_grbl.rs`](../crates/services/src/flash_grbl.rs) | 271 | Port of the logic of `Firmware/FlashGrbl.cs` (the form itself is UI). |
 | [`crates/services/src/hotkeys.rs`](../crates/services/src/hotkeys.rs) | 888 | Port of `HotKeysManager.cs`: hotkey model, default bindings, key event dispatch (pure). |
@@ -376,7 +376,7 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/services/src/image_processor/job.rs`](../crates/services/src/image_processor/job.rs) | 388 | Worker side of `ImageProcessor`: `CreatePreview`, `DoTrueWork` and the bitmap pipeline. A [`Job`] is the C# `Clone()` of the processor that a thread works on. |
 | [`crates/services/src/image_processor/mod.rs`](../crates/services/src/image_processor/mod.rs) | 727 | Port of `RasterConverter/ImageProcessor.cs`. |
 | [`crates/services/src/image_processor/overlay.rs`](../crates/services/src/image_processor/overlay.rs) | 259 | Pixel drawing helpers of the previews (GDI+ `Graphics` calls reproduced by direct pixel writes). |
-| [`crates/services/src/image_processor/tests.rs`](../crates/services/src/image_processor/tests.rs) | 343 | Unit tests of the image processor (preview + generator wiring). |
+| [`crates/services/src/image_processor/tests.rs`](../crates/services/src/image_processor/tests.rs) | 346 | Unit tests of the image processor (preview + generator wiring). |
 | [`crates/services/src/layer_presets.rs`](../crates/services/src/layer_presets.rs) | 420 | Named layer presets: all per-layer values of the "Parameters" dock (except `enabled`). |
 | [`crates/services/src/lib.rs`](../crates/services/src/lib.rs) | 76 | `lg-services`: non-UI services of LaserGRBL that do not need the `GrblCore` engine. |
 | [`crates/services/src/project.rs`](../crates/services/src/project.rs) | 595 | Port of `Tools/Project.cs`: LaserGRBL project files (`.lps`). |
@@ -390,14 +390,16 @@ Architecture and data flow: [`ARCHITECTURE.md`](ARCHITECTURE.md). C# member → 
 | [`crates/svg2gcode/src/bezier.rs`](../crates/svg2gcode/src/bezier.rs) | 77 | Port of `SvgConverter/BezierTools.cs` (adaptive cubic bezier flattening). |
 | [`crates/svg2gcode/src/color.rs`](../crates/svg2gcode/src/color.rs) | 101 | `System.Drawing.ColorTranslator.FromHtml` (+ `ColorConverter` string rules) as used by `parseRgb` in GCodeFromSVG.cs. |
 | [`crates/svg2gcode/src/color_table.rs`](../crates/svg2gcode/src/color_table.rs) | 215 | Colour name tables dumped from System.Drawing (Mono) KnownColor / HTML system colours: (lower-case name, r, g, b). |
-| [`crates/svg2gcode/src/convert.rs`](../crates/svg2gcode/src/convert.rs) | 1758 | Port of `SvgConverter/GCodeFromSVG.cs` (SVG -> G-code). Floats stay `f32`, doubles `f64`. |
+| [`crates/svg2gcode/src/convert.rs`](../crates/svg2gcode/src/convert.rs) | 1763 | Port of `SvgConverter/GCodeFromSVG.cs` (SVG -> G-code). Floats stay `f32`, doubles `f64`. |
 | [`crates/svg2gcode/src/gcode.rs`](../crates/svg2gcode/src/gcode.rs) | 685 | Port of `SvgConverter/gcodeRelated.cs` (static class `gcode`: G-code writer with modal compression). |
-| [`crates/svg2gcode/src/hatch.rs`](../crates/svg2gcode/src/hatch.rs) | 461 | Hatch fill geometry: parallel meander lines inside closed polygons (even-odd), arc flattening. |
-| [`crates/svg2gcode/src/lib.rs`](../crates/svg2gcode/src/lib.rs) | 59 | `lg-svg2gcode`: port of LaserGRBL `SvgConverter/{GCodeFromSVG,gcodeRelated,BezierTools}.cs` plus the WPF `Matrix`/`Point`/`Vector` and `ColorTranslator.FromHtml` pieces they rely on. |
+| [`crates/svg2gcode/src/hatch.rs`](../crates/svg2gcode/src/hatch.rs) | 462 | Hatch fill geometry: parallel meander lines inside closed polygons (even-odd), arc flattening. |
+| [`crates/svg2gcode/src/lib.rs`](../crates/svg2gcode/src/lib.rs) | 62 | `lg-svg2gcode`: port of LaserGRBL `SvgConverter/{GCodeFromSVG,gcodeRelated,BezierTools}.cs` plus the WPF `Matrix`/`Point`/`Vector` and `ColorTranslator.FromHtml` pieces they rely on. Extra: [`text_to_paths`] pre-pass turns `<text>` into glyph outline paths (usvg + system fonts). |
 | [`crates/svg2gcode/src/matrix.rs`](../crates/svg2gcode/src/matrix.rs) | 442 | Port of WPF `System.Windows.Media.Matrix`, `Point`, `Vector` (WindowsBase) used by GCodeFromSVG.cs / BezierTools.cs. |
+| [`crates/svg2gcode/src/text.rs`](../crates/svg2gcode/src/text.rs) | 182 | `<text>` to `<path>` pre-pass via usvg + system fonts. Not in C# (it skips text). |
 | [`crates/svg2gcode/tests/fill.rs`](../crates/svg2gcode/tests/fill.rs) | 166 | Hatch fill in layered conversion: rect, cross, open path, circle, transform, passes, colour filter. |
 | [`crates/svg2gcode/tests/golden_svg.rs`](../crates/svg2gcode/tests/golden_svg.rs) | 97 | Golden test: full SVG conversions vs the original (Mono) in tests/golden/svg/ (WP-H). |
 | [`crates/svg2gcode/tests/layers.rs`](../crates/svg2gcode/tests/layers.rs) | 126 | Layered conversion tests: layer listing, regression vs plain conversion, per-layer values. |
+| [`crates/svg2gcode/tests/text.rs`](../crates/svg2gcode/tests/text.rs) | 216 | `<text>` to `<path>` pre-pass. |
 | [`crates/svg2gcode/tests/unit_convert.rs`](../crates/svg2gcode/tests/unit_convert.rs) | 82 | Extra full conversions vs Mono (tools/golden/svg2gcode -> tests/golden/svg_unit/convert/). |
 | [`crates/svg2gcode/tests/unit_oracle.rs`](../crates/svg2gcode/tests/unit_oracle.rs) | 222 | Unit oracle tests vs Mono (tools/golden/svg2gcode -> tests/golden/svg_unit/). |
 

@@ -120,6 +120,7 @@ impl GrblFile {
         let mut converter = GCodeFromSvg::new();
         converter.gcode_xy_feed = get("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1000i32) as f32;
         converter.use_legacy_bezier = !get("Vector.UseSmartBezier", true);
+        converter.text_to_path = true;
         let gcode = converter
             .convert_from_file(std::path::Path::new(filename), &svg_conv_options(), filter)
             .map_err(|e| GcodeError::Other(e.to_string()))?;
@@ -148,6 +149,7 @@ impl GrblFile {
         let mut converter = GCodeFromSvg::new();
         converter.gcode_xy_feed = get("GrayScaleConversion.VectorizeOptions.BorderSpeed", 1000i32) as f32;
         converter.use_legacy_bezier = !get("Vector.UseSmartBezier", true);
+        converter.text_to_path = true;
         let (gcode, byte_ranges) = converter
             .convert_from_file_layered(std::path::Path::new(filename), &svg_conv_options(), layers)
             .map_err(|e| GcodeError::Other(e.to_string()))?;

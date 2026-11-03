@@ -28,7 +28,7 @@ pub enum SvgMode {
 /// `path`: SVG file. `max_px`: longest edge of the result. Returns the image or None on error.
 pub fn render_svg_preview(path: &Path, max_px: u32) -> Option<egui::ColorImage> {
     let data = std::fs::read(path).ok()?;
-    let tree = resvg::usvg::Tree::from_data(&data, &resvg::usvg::Options::default()).ok()?;
+    let tree = resvg::usvg::Tree::from_data(&data, &resvg::usvg::Options { fontdb: lg_svg2gcode::system_fontdb(), ..Default::default() }).ok()?;
     let sz = tree.size();
     let scale = max_px as f32 / sz.width().max(sz.height()).max(1.0);
     let (w, h) = (((sz.width() * scale).ceil() as u32).max(1), ((sz.height() * scale).ceil() as u32).max(1));

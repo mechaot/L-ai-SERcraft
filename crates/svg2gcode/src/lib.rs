@@ -4,6 +4,7 @@
 
 //! `lg-svg2gcode`: port of LaserGRBL `SvgConverter/{GCodeFromSVG,gcodeRelated,BezierTools}.cs`
 //! plus the WPF `Matrix`/`Point`/`Vector` and `ColorTranslator.FromHtml` pieces they rely on.
+//! Extra: [`text_to_paths`] pre-pass turns `<text>` into glyph outline paths (usvg + system fonts).
 
 mod bezier;
 mod color;
@@ -12,6 +13,7 @@ mod convert;
 mod gcode;
 mod hatch;
 mod matrix;
+mod text;
 
 pub use bezier::flatten_to;
 pub use color::{ParsedColor, from_html as color_from_html};
@@ -19,6 +21,7 @@ pub use convert::{ColorFilter, GCodeFromSvg, LayerInfo, LayerParams, LayerRanges
 pub use hatch::{HatchFill, fill_segments, flatten_arc, hatch_segments};
 pub use gcode::{Firmware, Gcode, SvgConvOptions};
 pub use matrix::{Matrix, NotInvertible, Point, Vector};
+pub use text::{system_fontdb, text_to_paths};
 
 /// Stand-in for a .NET exception thrown by the original converter.
 ///
