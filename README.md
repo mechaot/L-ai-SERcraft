@@ -14,7 +14,7 @@ to paths first and a raster-image dock with a brightness-to-power map.
 
 L-ai-SERcraft is an independent project. See [Authors & credits](#authors--credits) and [License](#license).
 Release notes: [`CHANGELOG.md`](CHANGELOG.md). User manual (multi-layer SVG from Inkscape: cut and fill
-layers): [`docs/MANUAL.md`](docs/MANUAL.md).
+layers; a ruler mat to engrave onto the base board): [`docs/MANUAL.md`](docs/MANUAL.md).
 
 ![L-ai-SERcraft main window: G-code preview of an SVG with a cut layer (circle) and a fill layer (box), per-layer settings in the Parameters dock](docs/img/screenshot.png)
 

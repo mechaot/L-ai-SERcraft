@@ -9,8 +9,9 @@ Example file: [`manual/layers-example.svg`](manual/layers-example.svg) (100 × 1
 
 Photos and other bitmaps (JPG, PNG, BMP, GIF) are described further down:
 [Raster images in the Parameters dock](#manual-raster-images-in-the-parameters-dock). Several files in one job
-(for example a photo and a cut outline) are described at the end:
-[Several files in one job](#manual-several-files-in-one-job).
+(for example a photo and a cut outline) are described further down:
+[Several files in one job](#manual-several-files-in-one-job). A ruler mat to engrave onto the base board is at
+the end: [Ruler mat for the base board](#manual-ruler-mat-for-the-base-board).
 
 ## How layers are read
 
@@ -245,3 +246,45 @@ several layers, otherwise the whole file. Disabled layers of all SVG files are h
   one *(program)* row without parameters.
 * An `.lps` project opens its SVG entries as editable rows, its raster entries through the classic dialog as
   *G-code* rows.
+
+# Manual: ruler mat for the base board
+
+A ruler grid engraved onto the base board of the laser makes it easy to place parts, like the cutting mat on a
+dressmaker's desk. The numbers are **machine coordinates**: origin bottom-left, X to the right, Y up. A part
+laid on the ringed crossing tagged *X150 Y250* sits where the G-code moves to `X150 Y250`.
+
+File: [`manual/ruler-mat-400.svg`](manual/ruler-mat-400.svg) (400 × 400 mm). Generator:
+[`manual/make_ruler_mat.py`](manual/make_ruler_mat.py).
+
+![Ruler mat, 400 × 400 mm: mm rulers on all edges, 10 mm grid, coordinate tags, 45°, 30° and 60° lines, Ø50 center circle](manual/ruler-mat-400.svg)
+
+## What is on it
+
+| Element | Look | Labels |
+| --- | --- | --- |
+| ruler band, 10 mm wide, all four edges | mm ticks: 2 mm, 3.5 mm at every 5, 5 mm at every 10 | every 10 mm; side numbers read along the edge |
+| grid, 10 mm, from 10 to 390 mm | solid | every 50 mm crossing is ringed; its *X… Y…* tag sits in the cell up-right of the ring |
+| 45° lines through the grid crossings, every 100 mm | long dash (8 on, 3 off) | *45°* along the line |
+| 30° and 60° lines through the center, both directions | dash-dot | *30°*, *60°* along the line, twice per side |
+| center circle, Ø 50 mm | short dash | *Ø50*, cross at the center |
+
+## Engrave it
+
+* Open the SVG with *File ▸ Open File*. It has one colour (black) and engraves as lines, no fill.
+* All lines and text lie inside 0 … 400 mm. Check with a frame run that the laser reaches the whole board; the
+  outer border at 0 and 400 mm needs the full travel.
+* The text is single-stroke (Hershey font from `crates/hershey`), so every letter is one thin
+  line and not an outline.
+* Dashes are real short lines, the importer ignores `stroke-dasharray`.
+* About 44 m of burned line: roughly 45 minutes at 1000 mm/min plus travel.
+
+## Other sizes
+
+`make_ruler_mat.py` writes the SVG (Python 3, stdlib only). The constants at the top set board size, band width,
+text heights, dash patterns, the 45° spacing (`DIAG_SPACING`, 0 for the two main diagonals only) and the circle.
+The script refuses to write when a line or text leaves the board or two labels overlap.
+
+```sh
+python3 -I docs/manual/make_ruler_mat.py            # writes docs/manual/ruler-mat-400.svg
+python3 -I docs/manual/make_ruler_mat.py mat.svg    # other output file
+```

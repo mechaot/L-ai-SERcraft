@@ -3,6 +3,12 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## 1.7.1 - 2026-11-03
+
+### Added
+
+- `docs/manual/ruler-mat-400.svg`: 400 × 400 mm ruler mat to engrave onto the base board for part placement (mm rulers, 10 mm grid, X/Y tags every 50 mm, 45°/30°/60° lines, Ø50 center circle), with its generator `docs/manual/make_ruler_mat.py`. See the manual section *Ruler mat for the base board*.
+
 ## 1.7.0 - 2026-11-03
 
 ### Added
