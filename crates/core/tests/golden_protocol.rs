@@ -10,6 +10,7 @@
 //! bodies are called by hand (`GrblCore::step_tx/step_rx`), so the order of everything is deterministic.
 //! Time dependent code (hang detection, buffer stuck) runs on a mocked clock here; the oracle really sleeps.
 //! Events are printed before the writes of the same step (the Rust events are not ordered against writes).
+//! Thread scenarios (`connectthreads`) race the per-command flush, so they are compared after `normalize_threads`.
 
 use crossbeam_channel::Receiver;
 use lasergrbl_core::com::{ComConfig, ComWrapper, WrapperType};
@@ -940,6 +941,42 @@ fn first_diff(a: &str, b: &str) -> String {
     "identical".into()
 }
 
+/// Thread scenarios: TX/RX threads race the per-command flush, output can land under the command before the
+/// `waitfor` that expects it. From `connectthreads` on, output of other commands joins the group of the next
+/// `waitfor`/`dump`/`dumpconf`; inside a group events go first (stable), like one flush prints them.
+/// `trace`: full trace text. Returns the normalized trace.
+fn normalize_threads(trace: &str) -> String {
+    let mut out = String::new();
+    let (mut ev, mut rest): (Vec<&str>, Vec<&str>) = (Vec::new(), Vec::new());
+    let (mut on, mut boundary) = (false, true);
+    // emit collected group: events first, then the rest
+    let emit = |out: &mut String, ev: &mut Vec<&str>, rest: &mut Vec<&str>| {
+        for x in ev.drain(..).chain(rest.drain(..)) {
+            out.push_str(x);
+            out.push('\n');
+        }
+    };
+    for l in trace.lines() {
+        if let Some(h) = l.strip_prefix("> ") {
+            // previous header closes its group: emit what it collected
+            if boundary {
+                emit(&mut out, &mut ev, &mut rest);
+            }
+            out.push_str(l);
+            out.push('\n');
+            let verb = h.split_whitespace().next().unwrap_or("");
+            on |= verb == "connectthreads";
+            boundary = !on || matches!(verb, "waitfor" | "dump" | "dumpconf");
+        } else if l.trim_start().starts_with("EV ") {
+            ev.push(l);
+        } else {
+            rest.push(l);
+        }
+    }
+    emit(&mut out, &mut ev, &mut rest);
+    out
+}
+
 #[test]
 fn protocol_scenarios_match_the_original() {
     // first: both tests share the global data dir + settings; init must finish before either uses them
@@ -962,12 +999,15 @@ fn protocol_scenarios_match_the_original() {
         }
         let scn = std::fs::read_to_string(dir.join(format!("{n}.scn"))).unwrap();
         let golden = std::fs::read_to_string(dir.join(format!("{n}.txt"))).unwrap();
+        // thread scenarios only: compare normalized traces
+        let threads = scn.lines().any(|l| l.trim() == "connectthreads");
+        let norm = |s: &str| if threads { normalize_threads(s) } else { s.to_string() };
         let got = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| ip.run(&scn)));
         match got {
-            Ok(got) if got == golden => {}
+            Ok(got) if norm(&got) == norm(&golden) => {}
             Ok(got) => {
                 let _ = std::fs::write(scratch.join(format!("{n}.rust.txt")), &got);
-                bad.push(format!("{n}: {}", first_diff(&golden, &got)));
+                bad.push(format!("{n}: {}", first_diff(&norm(&golden), &norm(&got))));
             }
             Err(_) => bad.push(format!("{n}: panic")),
         }
@@ -975,6 +1015,16 @@ fn protocol_scenarios_match_the_original() {
     if !bad.is_empty() {
         panic!("{} scenario(s) differ (full Rust traces in {}, kept when LG_KEEP_TEST_DIRS=1):\n{}", bad.len(), scratch.display(), bad.join("\n---\n"));
     }
+}
+
+#[test]
+fn thread_normalization_absorbs_flush_race() {
+    let golden = "> connectthreads\n  EV status Connecting\n> waitfor txlines 1\n  EV override\n  TXB 18\n> runprogram\n> waitfor idleprog\n  EV programended\n  TX G90\n  TX M5\n> dump\n  DUMP x\n";
+    let raced = "> connectthreads\n  EV status Connecting\n  TXB 18\n  EV override\n> waitfor txlines 1\n> runprogram\n  TX G90\n> waitfor idleprog\n  EV programended\n  TX M5\n> dump\n  DUMP x\n";
+    let swapped = golden.replace("  TX G90\n  TX M5\n", "  TX M5\n  TX G90\n");
+    assert_ne!(golden, raced);
+    assert_eq!(normalize_threads(golden), normalize_threads(raced));
+    assert_ne!(normalize_threads(golden), normalize_threads(&swapped));
 }
 
 // ---------------------------------------------------------------------------------------------- emulator
