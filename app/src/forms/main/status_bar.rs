@@ -7,7 +7,7 @@
 use eframe::egui::{self, Align, Color32, Layout, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, Ui, Vec2};
 use lasergrbl_core::{GrblCore, MacStatus};
 use lg_base::tools::utils::{time_span_to_string, TimePrecision};
-use lg_dotnet::fmt_double_custom;
+use lg_dotnet::{fmt_double_custom, TimeSpan};
 
 use crate::ui::icons::icons;
 use crate::ui::theme::{named, Theme};
@@ -105,6 +105,16 @@ impl StatusBar {
         let in_program = core.in_program();
         let estimated = if in_program { core.projected_time() } else { core.loaded_file().read().map(|f| f.estimated_time()).unwrap_or_default() };
         let est_text = time_span_to_string(estimated, TimePrecision::Second, TimePrecision::Second, " ,", true);
+        // time left = projected - elapsed, clamped at zero
+        let left_text = if in_program {
+            let mut left = core.projected_time() - core.program_time();
+            if left.ticks() < 0 {
+                left = TimeSpan::ZERO;
+            }
+            time_span_to_string(left, TimePrecision::Second, TimePrecision::Second, " ,", true)
+        } else {
+            String::new()
+        };
         ui.horizontal_centered(|ui| {
             ui.spacing_mut().item_spacing.x = 3.0;
             // ---- left part ----
@@ -125,6 +135,10 @@ impl StatusBar {
             let b = ui.add_enabled(stuck, egui::Button::image(icons().image(ui.ctx(), "mdi-lock-open", 16.0)).frame(false));
             if b.clicked() {
                 out.push(StatusAction::UnlockFromStuck);
+            }
+            if in_program {
+                label(ui, tr("Strings.MainFormTimeLeft"), None, fg, true);
+                label(ui, &left_text, None, fg, false);
             }
             label(ui, tr(if in_program { "Strings.MainFormProjectedTime" } else { "Strings.MainFormEstimatedTime" }), None, fg, true);
             label(ui, &est_text, None, fg, false);

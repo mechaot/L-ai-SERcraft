@@ -131,8 +131,7 @@ impl ColorProgressBar {
                 self.draw_tick(&p, rect);
             }
             if self.draw_progress_string {
-                let fore = Theme::current().form_fore_color;
-                p.text(rect.center(), Align2::CENTER_CENTER, self.progress_text(), FontId::proportional(12.0), fore);
+                paint_bar_text(&p, rect.center(), &self.progress_text());
             }
             self.draw_border(&p, rect);
         }
@@ -169,6 +168,26 @@ impl ColorProgressBar {
             cur += S + L;
         }
     }
+}
+
+/// Paint high-contrast bar text: black glyphs over a white halo.
+///
+/// `p`: painter. `pos`: text center. `text`: caption; empty = nothing drawn.
+fn paint_bar_text(p: &egui::Painter, pos: Pos2, text: &str) {
+    if text.is_empty() {
+        return;
+    }
+    let font = FontId::proportional(12.0);
+    // halo: white copies at 8 neighbours
+    for dx in [-1.0f32, 0.0, 1.0] {
+        for dy in [-1.0f32, 0.0, 1.0] {
+            if dx != 0.0 || dy != 0.0 {
+                p.text(pos + Vec2::new(dx, dy), Align2::CENTER_CENTER, text, font.clone(), Color32::WHITE);
+            }
+        }
+    }
+    // core: black on top
+    p.text(pos, Align2::CENTER_CENTER, text, font, Color32::BLACK);
 }
 
 /// One bar of a [`DoubleProgressBar`].
@@ -226,7 +245,7 @@ impl DoubleProgressBar {
                 self.draw_ref(&p, rect, r);
             }
             if b.draw_progress_string {
-                p.text(rect.center(), Align2::CENTER_CENTER, &self.perc_string, FontId::proportional(12.0), Theme::current().form_fore_color);
+                paint_bar_text(&p, rect.center(), &self.perc_string);
             }
             b.draw_border(&p, rect);
         }
