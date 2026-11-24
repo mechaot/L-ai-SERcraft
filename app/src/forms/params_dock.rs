@@ -450,14 +450,6 @@ impl ParamsDock {
         self.mark_dirty();
     }
 
-    /// Test access: move a layer as the row buttons do.
-    ///
-    /// `pos`: position in the emission order. `up`: true = earlier.
-    #[cfg(test)]
-    pub(crate) fn test_move_layer(&mut self, pos: usize, up: bool) {
-        self.move_layer(pos, up);
-    }
-
     /// Test access: S-MAX of the edited layer. Returns the value.
     #[cfg(test)]
     pub(crate) fn test_power_of_current(&self) -> i32 {

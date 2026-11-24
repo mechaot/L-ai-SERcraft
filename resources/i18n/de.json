@@ -79,6 +79,8 @@
  "IssueDetectorForm.TxtCause.Text": "Unbekannt",
  "JobDock.Files": "Dateien",
  "JobDock.Lines": "{0} Zeilen",
+ "JobDock.MoveDown": "Diese Datei später im Auftrag ausführen (nach der nächsten Datei)",
+ "JobDock.MoveUp": "Diese Datei früher im Auftrag ausführen (vor der vorherigen Datei)",
  "JobDock.Program": "(Programm)",
  "JobDock.Remove": "Diese Datei aus dem Auftrag entfernen",
  "JobDock.StaticNote": "G-Code-Datei: hier gibt es nichts zu bearbeiten. Entfernen nimmt sie aus dem Auftrag.",

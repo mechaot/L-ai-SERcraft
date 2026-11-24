@@ -336,3 +336,26 @@ fn load_serial_counts_loads_and_manual_events() {
     assert_eq!(f.load_serial(), s0 + 2);
     std::fs::remove_dir_all(&dir).ok();
 }
+
+#[test]
+fn move_block_swaps_neighbours_and_keeps_text() {
+    let _g = sandbox();
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X10", "G1 X11", "G1 X12", "G1 X20", "G1 X21"]);
+    // blocks 0..2, 2..3 (len 1), 3..6, 6..8: move the third one up over the second
+    let new = f.move_block(3..6, 2).unwrap();
+    assert_eq!(new, 2..5);
+    assert_eq!(text(&f), ["G0 X1", "G1 X2", "G1 X10", "G1 X11", "G1 X12", "G1 X3", "G1 X20", "G1 X21"]);
+    // and back down: the block moves later
+    let new = f.move_block(2..5, 3).unwrap();
+    assert_eq!(new, 3..6);
+    assert_eq!(text(&f), ["G0 X1", "G1 X2", "G1 X3", "G1 X10", "G1 X11", "G1 X12", "G1 X20", "G1 X21"]);
+    // the last block to the front, target clamped for a too far move
+    assert_eq!(f.move_block(6..8, 0).unwrap(), 0..2);
+    assert_eq!(text(&f)[..2], ["G1 X20", "G1 X21"]);
+    assert_eq!(f.move_block(0..2, 99).unwrap(), 6..8);
+    assert_eq!(text(&f)[6..], ["G1 X20", "G1 X21"]);
+    // no-op
+    assert_eq!(f.move_block(2..4, 2).unwrap(), 2..4);
+    // joined program was analyzed again
+    assert!(f.range().moving_range.x.max >= lg_dotnet::Decimal::from(21));
+}

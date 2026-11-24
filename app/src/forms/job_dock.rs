@@ -181,6 +181,8 @@ enum RunKind {
     Generate { item: u64, seq: u64 },
     /// Cut the block of item `item` out of the program.
     Remove { item: u64 },
+    /// Swap item `item` with the one behind it (its block moves behind the neighbour's).
+    Move { item: u64 },
 }
 
 /// The one worker on the shared program.
@@ -432,6 +434,78 @@ impl JobDock {
         }
     }
 
+    /// Returns true when item `idx` may move one step (the button is enabled).
+    ///
+    /// `idx`: list position. `up`: true = towards the program start. False at the list ends, while a worker or a
+    /// job runs, while the dock is paused or the program is busy.
+    pub fn can_move(&self, idx: usize, up: bool) -> bool {
+        let n = if up { idx.checked_sub(1) } else { Some(idx + 1) };
+        idx < self.items.len() && n.is_some_and(|n| n < self.items.len()) && self.can_edit_order()
+    }
+
+    /// Returns true when files may be reordered or reloaded now: no worker, not paused, program idle.
+    fn can_edit_order(&self) -> bool {
+        self.running.is_none() && !self.paused && !self.core.in_program()
+    }
+
+    /// Move a file one step up or down. The block of the file swaps with its neighbour's in the program.
+    ///
+    /// `id`: item id. `up`: true = towards the program start. Returns false when nothing was started (unknown id,
+    /// at the list end, a worker or job runs, the program is busy). Blocks of empty files swap at once, otherwise
+    /// the item moves when the worker is done.
+    pub fn move_item(&mut self, id: u64, up: bool) -> bool {
+        let Some(idx) = self.index_of(id) else { return false };
+        if !self.can_move(idx, up) {
+            return false;
+        }
+        // the earlier of the two items; its block goes behind the later one
+        let lo = if up { idx - 1 } else { idx };
+        let (a, b) = (self.items[lo].block.clone(), self.items[lo + 1].block.clone());
+        if a.is_empty() || b.is_empty() {
+            self.swap_items(lo);
+            return true;
+        }
+        if !self.core.can_load_new_file() {
+            return false;
+        }
+        let item = self.items[lo].id;
+        let to = a.start + b.len();
+        // the preview follows under the name of the selected file
+        let shown = self.selected_index().map(|i| &self.items[i]).map(|i| i.path.as_ref().map_or_else(|| i.name.clone(), |p| p.to_string_lossy().into_owned())).unwrap_or_default();
+        let slot: Arc<Mutex<Option<Done>>> = Arc::new(Mutex::new(None));
+        let slot_w = slot.clone();
+        let handle = GrblFile::spawn_load(&self.core.loaded_file(), move |f| {
+            let start = a.start.min(f.count());
+            let r = f.move_block(a, to);
+            f.raise_file_loaded(&shown);
+            let done = match &r {
+                Ok(_) => Done { result: Ok((Vec::new(), start..start)), serial: f.load_serial() },
+                Err(_) => Done { result: Err(start..start), serial: f.load_serial() },
+            };
+            *slot_w.lock().unwrap_or_else(|e| e.into_inner()) = Some(done);
+            r.map(|_| ())
+        });
+        match handle {
+            Some(handle) => {
+                self.running = Some(RunningJob { kind: RunKind::Move { item }, handle, slot });
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// Swap list positions `lo` and `lo + 1` and recompute both blocks (the two spans together keep their place).
+    ///
+    /// `lo`: list position of the earlier item.
+    fn swap_items(&mut self, lo: usize) {
+        let start = self.items[lo].block.start;
+        let (a_len, b_len) = (self.items[lo].block.len(), self.items[lo + 1].block.len());
+        self.items.swap(lo, lo + 1);
+        self.items[lo].block = start..start + b_len;
+        self.items[lo + 1].block = start + b_len..start + b_len + a_len;
+        self.revision += 1;
+    }
+
     /// Start taking an image out of the job for the classic import dialog.
     ///
     /// `id`: item id of an image. Returns `(image path, append)` when the block removal was started (or not needed):
@@ -542,7 +616,7 @@ impl JobDock {
         let done = job.slot.lock().unwrap_or_else(|e| e.into_inner()).take();
         // a worker that panicked left no result: its block is gone
         let (item, serial) = match job.kind {
-            RunKind::Generate { item, .. } | RunKind::Remove { item } => (item, done.as_ref().map(|d| d.serial)),
+            RunKind::Generate { item, .. } | RunKind::Remove { item } | RunKind::Move { item } => (item, done.as_ref().map(|d| d.serial)),
         };
         let Some(idx) = self.index_of(item) else {
             // the list was reset meanwhile: the result belongs to a forgotten file
@@ -564,6 +638,11 @@ impl JobDock {
             RunKind::Remove { .. } => {
                 if ok {
                     self.drop_item(idx);
+                }
+            }
+            RunKind::Move { .. } => {
+                if ok && idx + 1 < self.items.len() {
+                    self.swap_items(idx);
                 }
             }
         }
@@ -764,9 +843,9 @@ impl JobDock {
         let mut actions = Vec::new();
         ui.label(RichText::new(tr_plain("ParamsDock.Title")).strong());
         ui.add_space(2.0);
-        let (mut select, mut remove) = (None, None);
+        let (mut select, mut remove, mut mv) = (None, None, None);
         if !self.items.is_empty() {
-            (select, remove) = self.files_group(ui);
+            (select, remove, mv) = self.files_group(ui);
             ui.add_space(4.0);
         }
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| self.editor(ui, &mut actions));
@@ -777,6 +856,9 @@ impl JobDock {
         }
         if let Some(id) = remove {
             self.remove(id);
+        }
+        if let Some((id, up)) = mv {
+            self.move_item(id, up);
         }
         // edits of this frame start their generation now
         self.schedule(true);
@@ -822,9 +904,11 @@ impl JobDock {
 
     /// The "Files" group: one row per file.
     ///
-    /// `ui`: parent. Returns the id of a clicked row and the id of a row whose remove button was clicked.
-    fn files_group(&self, ui: &mut Ui) -> (Option<u64>, Option<u64>) {
-        let (mut select, mut remove) = (None, None);
+    /// `ui`: parent. Returns the id of a clicked row, the id of a row whose remove button was clicked and the
+    /// (id, up) of a clicked move button.
+    #[allow(clippy::type_complexity)]
+    fn files_group(&self, ui: &mut Ui) -> (Option<u64>, Option<u64>, Option<(u64, bool)>) {
+        let (mut select, mut remove, mut mv) = (None, None, None);
         let selected = self.selected;
         let can_remove = self.running.is_none();
         let items = &self.items;
@@ -834,11 +918,11 @@ impl JobDock {
             let row_h = ui.spacing().interact_size.y;
             let max_h = (row_h + ui.spacing().item_spacing.y) * MAX_ROWS as f32;
             egui::ScrollArea::vertical().id_salt("job-files").max_height(max_h).auto_shrink([false, true]).show(ui, |ui| {
-                for it in items {
+                for (idx, it) in items.iter().enumerate() {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
                         ui.add_sized([TAG_W, row_h], egui::Label::new(RichText::new(it.tag()).small().weak()));
-                        let w = (ui.available_width() - STATE_W - 17.0 - 2.0 * 4.0).max(40.0);
+                        let w = (ui.available_width() - STATE_W - 3.0 * 17.0 - 5.0 * 4.0).max(40.0);
                         let r = ui.add_sized([w, row_h], egui::Button::selectable(selected == Some(it.id), (RichText::new(&it.name), egui::Atom::grow())).truncate());
                         let tip = it.path.as_ref().map_or_else(|| it.name.clone(), |p| p.to_string_lossy().into_owned());
                         if r.on_hover_text(tip).clicked() {
@@ -852,6 +936,13 @@ impl JobDock {
                         } else {
                             ui.add_space(STATE_W);
                         }
+                        // reorder buttons
+                        for (up, icon, tip) in [(true, "mdi-arrow-up", "JobDock.MoveUp"), (false, "mdi-arrow-down", "JobDock.MoveDown")] {
+                            let m = ui.add_enabled(self.can_move(idx, up), ImageButton::new(icon).size(Vec2::splat(17.0)));
+                            if m.on_hover_text(tr_plain(tip)).clicked() {
+                                mv = Some((it.id, up));
+                            }
+                        }
                         let b = ui.add_enabled(can_remove, ImageButton::new("mdi-close").size(Vec2::splat(17.0)));
                         #[cfg(test)]
                         self.remove_rects.borrow_mut().push((it.id, b.rect));
@@ -862,7 +953,7 @@ impl JobDock {
                 }
             });
         });
-        (select, remove)
+        (select, remove, mv)
     }
 }
 
@@ -1121,6 +1212,86 @@ mod tests {
         assert!(h.job.remove(id_c));
         assert!(h.wait());
         assert_eq!(h.job.len(), 1);
+        assert_covers(&h);
+    }
+
+    #[test]
+    fn move_middle_file_up_reorders_blocks_and_program() {
+        let _g = settings_guard();
+        let a = write_svg("move_a", "a.svg", SVG_TWO);
+        let b = write_png("move_b", "b.png");
+        let c = write_svg("move_c", "c.svg", SVG_ONE);
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.job.add_image(&b, true).unwrap();
+        h.job.add_svg(&c, false, true);
+        h.wait_idle();
+        let (a0, b0, c0) = (blocks(&h)[0].clone(), blocks(&h)[1].clone(), blocks(&h)[2].clone());
+        let (ta, tb, tc) = (h.lines_of(a0.clone()), h.lines_of(b0.clone()), h.lines_of(c0.clone()));
+        let ids: Vec<u64> = h.job.items.iter().map(|i| i.id).collect();
+        // buttons: not up at the top, not down at the bottom
+        assert!(!h.job.can_move(0, true) && h.job.can_move(0, false));
+        assert!(h.job.can_move(1, true) && h.job.can_move(1, false));
+        assert!(h.job.can_move(2, true) && !h.job.can_move(2, false));
+        assert!(!h.job.move_item(ids[0], true) && !h.job.move_item(ids[2], false));
+        // middle one up: image first
+        assert!(h.job.move_item(ids[1], true));
+        assert!(h.job.job_running() && !h.job.can_move(1, true), "blocked while the worker runs");
+        assert!(h.wait());
+        assert_eq!(h.job.items.iter().map(|i| i.id).collect::<Vec<_>>(), [ids[1], ids[0], ids[2]]);
+        assert_covers(&h);
+        let want: Vec<String> = [tb.clone(), ta.clone(), tc.clone()].concat();
+        assert_eq!(h.all_lines(), want);
+        let bl = blocks(&h);
+        assert_eq!((bl[0].len(), bl[1].len(), bl[2].len()), (b0.len(), a0.len(), c0.len()));
+        // and down again: original order, original program
+        assert!(h.job.move_item(ids[1], false));
+        assert!(h.wait());
+        assert_eq!(blocks(&h), vec![a0, b0, c0]);
+        assert_eq!(h.all_lines(), [ta, tb, tc].concat());
+    }
+
+    #[test]
+    fn editing_a_moved_svg_regenerates_only_its_block() {
+        let _g = settings_guard();
+        let a = write_svg("move_edit_a", "a.svg", SVG_TWO);
+        let b = write_png("move_edit_b", "b.png");
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.job.add_image(&b, true).unwrap();
+        h.wait_idle();
+        let ids: Vec<u64> = h.job.items.iter().map(|i| i.id).collect();
+        assert!(h.job.move_item(ids[0], false));
+        assert!(h.wait());
+        let (b1, a1) = (blocks(&h)[0].clone(), blocks(&h)[1].clone());
+        let (tb, ta) = (h.lines_of(b1.clone()), h.lines_of(a1.clone()));
+        // power edit of the SVG, now second: same size, the image block is untouched
+        h.job.selected = Some(ids[0]);
+        h.job.selected_svg_mut().unwrap().test_set_power(0, 400);
+        h.settle();
+        assert_eq!((blocks(&h)[0].clone(), blocks(&h)[1].clone()), (b1.clone(), a1.clone()));
+        assert_eq!(h.lines_of(b1), tb);
+        assert_ne!(h.lines_of(a1), ta);
+        assert_covers(&h);
+        // layer ranges of the moved SVG are relative to its new block start
+        let v = h.job.layer_view().unwrap();
+        assert!(v.hidden.iter().all(|r| r.start as usize >= blocks(&h)[1].start || r.is_empty()));
+    }
+
+    #[test]
+    fn empty_blocks_swap_without_a_worker() {
+        let _g = settings_guard();
+        let a = write_svg("move_empty_a", "a.svg", SVG_ONE);
+        let b = write_svg("move_empty_b", "b.svg", SVG_ONE);
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.job.add_svg(&b, false, true);
+        // before any generation both blocks are empty
+        let ids: Vec<u64> = h.job.items.iter().map(|i| i.id).collect();
+        assert!(h.job.move_item(ids[0], false));
+        assert!(!h.job.job_running());
+        assert_eq!(h.job.items.iter().map(|i| i.id).collect::<Vec<_>>(), [ids[1], ids[0]]);
+        h.wait_idle();
         assert_covers(&h);
     }
 
