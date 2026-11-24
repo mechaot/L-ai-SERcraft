@@ -51,6 +51,22 @@ enum JobKind {
     Static,
 }
 
+/// How the source file of an item compares to what was loaded.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum FileState {
+    /// Unchanged since the load (or the last reload).
+    Same,
+    /// Modified on disk since the load.
+    Changed,
+    /// Cannot be read any more; the text is the error.
+    Missing(String),
+}
+
+/// Modification time of a file. `p`: path. Returns None when it cannot be read.
+fn mtime_of(p: &Path) -> Option<std::time::SystemTime> {
+    std::fs::metadata(p).ok()?.modified().ok()
+}
+
 /// One file of the job, owner of one block of the program.
 pub struct JobItem {
     /// Stable id (list positions change).
@@ -62,6 +78,12 @@ pub struct JobItem {
     kind: JobKind,
     /// Command range of this file in the shared program. Blocks of all items are contiguous and cover the program.
     block: Range<usize>,
+    /// Modification time of the source file at load / reload.
+    mtime: Option<std::time::SystemTime>,
+    /// Source file vs. load.
+    file_state: FileState,
+    /// Why the last reload failed (G-code items; the editors keep their own error).
+    error: Option<String>,
 }
 
 impl JobItem {
@@ -112,11 +134,15 @@ impl JobItem {
 
     /// Returns the problem text of this file, None when fine.
     fn problem(&self) -> Option<String> {
-        match &self.kind {
+        let own = match &self.kind {
             JobKind::Svg(d) => d.problem(),
             JobKind::Image(d) => d.problem(),
             JobKind::Static => None,
-        }
+        };
+        own.or_else(|| self.error.clone()).or_else(|| match &self.file_state {
+            FileState::Missing(e) => Some(tr_fmt("JobDock.FileMissing", &[e])),
+            _ => None,
+        })
     }
 
     /// Returns the editor's change counter for the preview overlay (0 without overlay data).
@@ -181,6 +207,8 @@ enum RunKind {
     Generate { item: u64, seq: u64 },
     /// Cut the block of item `item` out of the program.
     Remove { item: u64 },
+    /// Load the G-code file of item `item` again into its block.
+    Reload { item: u64 },
     /// Swap item `item` with the one behind it (its block moves behind the neighbour's).
     Move { item: u64 },
 }
@@ -205,13 +233,15 @@ pub struct JobDock {
     next_id: u64,
     running: Option<RunningJob>,
     /// Name of an appended G-code file the core loads on its own thread.
-    pending_static: Option<String>,
+    pending_static: Option<(String, Option<PathBuf>)>,
     /// `GrblFile::load_serial` the blocks match; a different value means somebody else rewrote the program.
     seen_serial: u64,
     /// A modal form is open: finish a running job but start nothing and leave the program alone.
     paused: bool,
     /// Bumped on every change the preview overlay depends on.
     revision: u64,
+    /// Last look at the modification times of the source files.
+    last_file_check: Option<std::time::Instant>,
     /// Sum of the editors' revisions at the last check (detects their changes).
     item_rev_sum: u64,
     /// Test only: remove-button rectangle of every list row of the last frame (item id, rect).
@@ -232,7 +262,7 @@ impl JobDock {
     /// `core`: engine. `defaults`: editor for the no-file state. Returns a dock without files.
     pub fn with_defaults(core: Arc<GrblCore>, defaults: ParamsDock) -> Self {
         let seen_serial = core.loaded_file().read().map(|f| f.load_serial()).unwrap_or(0);
-        JobDock { core, defaults, items: Vec::new(), selected: None, next_id: 1, running: None, pending_static: None, seen_serial, paused: false, revision: 1, item_rev_sum: 0, #[cfg(test)] remove_rects: Default::default() }
+        JobDock { core, defaults, items: Vec::new(), selected: None, next_id: 1, running: None, pending_static: None, seen_serial, paused: false, revision: 1, last_file_check: None, item_rev_sum: 0, #[cfg(test)] remove_rects: Default::default() }
     }
 
     // ------------------------------------------------------------------ items
@@ -305,7 +335,8 @@ impl JobDock {
     fn push_item(&mut self, name: String, path: Option<PathBuf>, kind: JobKind, block: Range<usize>) -> u64 {
         let id = self.next_id;
         self.next_id += 1;
-        self.items.push(JobItem { id, name, path, kind, block });
+        let mtime = path.as_deref().and_then(mtime_of);
+        self.items.push(JobItem { id, name, path, kind, block, mtime, file_state: FileState::Same, error: None });
         self.selected = Some(id);
         self.mark_synced();
         self.revision += 1;
@@ -365,8 +396,16 @@ impl JobDock {
     /// `name`: list text. `block`: its commands; the start is moved to the end of the last block, so blocks
     /// stay contiguous. Returns the item id (selected).
     pub fn add_static(&mut self, name: &str, block: Range<usize>) -> u64 {
+        self.add_static_from(name, None, block)
+    }
+
+    /// Like [`JobDock::add_static`], with the G-code file the commands came from (reloadable).
+    ///
+    /// `name`: list text. `path`: source file, None when there is none. `block`: its commands (start moved to the
+    /// end of the last block). Returns the item id (selected).
+    pub fn add_static_from(&mut self, name: &str, path: Option<PathBuf>, block: Range<usize>) -> u64 {
         let end = self.covered_len();
-        self.push_item(name.to_owned(), None, JobKind::Static, end..block.end.max(end))
+        self.push_item(name.to_owned(), path, JobKind::Static, end..block.end.max(end))
     }
 
     /// Add every command that no item covers yet as one static file (result of the classic dialog).
@@ -381,8 +420,16 @@ impl JobDock {
     /// the load is done, the new commands become a static item with this name.
     ///
     /// `name`: list text.
+    #[cfg(test)]
     pub fn expect_static(&mut self, name: &str) {
-        self.pending_static = Some(name.to_owned());
+        self.expect_static_from(name, None);
+    }
+
+    /// Like [`JobDock::expect_static`], with the file the core loads (the item can be reloaded then).
+    ///
+    /// `name`: list text. `path`: the G-code file, None when unknown.
+    pub fn expect_static_from(&mut self, name: &str, path: Option<PathBuf>) {
+        self.pending_static = Some((name.to_owned(), path));
     }
 
     /// Before an append: make sure the blocks describe the program (somebody else may have changed it).
@@ -506,6 +553,93 @@ impl JobDock {
         self.revision += 1;
     }
 
+    /// Returns true when item `idx` can be reloaded now (it has a source file; same rules as moving).
+    ///
+    /// `idx`: list position.
+    pub fn can_reload(&self, idx: usize) -> bool {
+        self.items.get(idx).is_some_and(|i| i.path.is_some()) && self.can_edit_order()
+    }
+
+    /// Read a file's source again. An SVG lists its layers anew (settings follow by id, then label; the order
+    /// stays, new layers go last), an image keeps its placement (top-left corner and width), G-code is loaded into
+    /// its block again. The item keeps its place in the list.
+    ///
+    /// `id`: item id. Returns false when nothing was started (unknown id, no source file, a worker or job runs,
+    /// the program is busy, the file cannot be read: the row shows why). An SVG or image regenerates through the
+    /// scheduler; G-code needs a worker, the block is replaced when it is done.
+    pub fn reload_item(&mut self, id: u64) -> bool {
+        let Some(idx) = self.index_of(id) else { return false };
+        if !self.can_reload(idx) || !self.core.can_load_new_file() {
+            return false;
+        }
+        let Some(path) = self.items[idx].path.clone() else { return false };
+        let it = &mut self.items[idx];
+        // unreadable source: nothing changes except the row's problem text
+        if let Err(e) = std::fs::metadata(&path) {
+            it.file_state = FileState::Missing(e.to_string());
+            return false;
+        }
+        it.error = None;
+        let started = match &mut it.kind {
+            JobKind::Svg(d) => d.reload_svg().is_ok(),
+            JobKind::Image(d) => d.reload_image().is_ok(),
+            JobKind::Static => {
+                let (block, p) = (it.block.clone(), path.to_string_lossy().into_owned());
+                let slot: Arc<Mutex<Option<Done>>> = Arc::new(Mutex::new(None));
+                let slot_w = slot.clone();
+                let handle = GrblFile::spawn_load(&self.core.loaded_file(), move |f| {
+                    let start = block.start.min(f.count());
+                    let r = f.replace_block(block, |f| f.load_file(&p, true));
+                    let serial = f.load_serial();
+                    let (done, out) = match r {
+                        Ok(((), new)) => (Done { result: Ok((Vec::new(), new)), serial }, Ok(())),
+                        Err(e) => (Done { result: Err(start..start), serial }, Err(e)),
+                    };
+                    *slot_w.lock().unwrap_or_else(|e| e.into_inner()) = Some(done);
+                    out
+                });
+                match handle {
+                    Some(handle) => {
+                        self.running = Some(RunningJob { kind: RunKind::Reload { item: id }, handle, slot });
+                        true
+                    }
+                    None => false,
+                }
+            }
+        };
+        // loaded state is "now": the changed mark goes
+        if started {
+            let it = &mut self.items[idx];
+            it.mtime = mtime_of(&path);
+            it.file_state = FileState::Same;
+            self.revision += 1;
+        }
+        started
+    }
+
+    /// Compare the modification times of all source files with the loaded ones; sets the "changed" and "missing"
+    /// marks of the rows. Throttled to about once a second; [`JobDock::poll`] calls it.
+    fn check_files(&mut self) {
+        if self.last_file_check.is_some_and(|t| t.elapsed() < std::time::Duration::from_secs(1)) {
+            return;
+        }
+        self.last_file_check = Some(std::time::Instant::now());
+        self.check_files_now();
+    }
+
+    /// The check of [`JobDock::check_files`] without the throttle.
+    fn check_files_now(&mut self) {
+        for it in &mut self.items {
+            let Some(p) = &it.path else { continue };
+            let state = match std::fs::metadata(p).and_then(|m| m.modified()) {
+                Ok(t) if Some(t) == it.mtime => FileState::Same,
+                Ok(_) => FileState::Changed,
+                Err(e) => FileState::Missing(e.to_string()),
+            };
+            it.file_state = state;
+        }
+    }
+
     /// Start taking an image out of the job for the classic import dialog.
     ///
     /// `id`: item id of an image. Returns `(image path, append)` when the block removal was started (or not needed):
@@ -598,6 +732,7 @@ impl JobDock {
     /// Returns `Some(success)` once when a worker finished (generation or removal).
     pub fn poll(&mut self) -> Option<bool> {
         let done = self.collect();
+        self.check_files();
         self.reconcile();
         self.schedule(true);
         self.sync_revision();
@@ -616,7 +751,7 @@ impl JobDock {
         let done = job.slot.lock().unwrap_or_else(|e| e.into_inner()).take();
         // a worker that panicked left no result: its block is gone
         let (item, serial) = match job.kind {
-            RunKind::Generate { item, .. } | RunKind::Remove { item } | RunKind::Move { item } => (item, done.as_ref().map(|d| d.serial)),
+            RunKind::Generate { item, .. } | RunKind::Remove { item } | RunKind::Move { item } | RunKind::Reload { item } => (item, done.as_ref().map(|d| d.serial)),
         };
         let Some(idx) = self.index_of(item) else {
             // the list was reset meanwhile: the result belongs to a forgotten file
@@ -638,6 +773,15 @@ impl JobDock {
             RunKind::Remove { .. } => {
                 if ok {
                     self.drop_item(idx);
+                }
+            }
+            RunKind::Reload { .. } => {
+                // like a generation without an editor: the block is the new one, or gone
+                let block = result.map_or_else(|empty| empty, |(_, new)| new);
+                self.shift_from(idx + 1, block.len() as isize - old.len() as isize);
+                self.items[idx].block = block;
+                if !ok {
+                    self.items[idx].error = Some(tr_plain("ParamsDock.ApplyFailed"));
                 }
             }
             RunKind::Move { .. } => {
@@ -664,11 +808,11 @@ impl JobDock {
         }
         let Some((len, serial)) = self.snapshot() else { return };
         let end = self.covered_len();
-        if let Some(name) = self.pending_static.take()
+        if let Some((name, path)) = self.pending_static.take()
             && len >= end
         {
             if len > end {
-                self.add_static(&name, end..len);
+                self.add_static_from(&name, path, end..len);
             }
             self.seen_serial = self.seen_serial.max(serial);
             return;
@@ -843,9 +987,9 @@ impl JobDock {
         let mut actions = Vec::new();
         ui.label(RichText::new(tr_plain("ParamsDock.Title")).strong());
         ui.add_space(2.0);
-        let (mut select, mut remove, mut mv) = (None, None, None);
+        let (mut select, mut remove, mut mv, mut reload) = (None, None, None, None);
         if !self.items.is_empty() {
-            (select, remove, mv) = self.files_group(ui);
+            (select, remove, mv, reload) = self.files_group(ui);
             ui.add_space(4.0);
         }
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| self.editor(ui, &mut actions));
@@ -859,6 +1003,9 @@ impl JobDock {
         }
         if let Some((id, up)) = mv {
             self.move_item(id, up);
+        }
+        if let Some(id) = reload {
+            self.reload_item(id);
         }
         // edits of this frame start their generation now
         self.schedule(true);
@@ -904,11 +1051,11 @@ impl JobDock {
 
     /// The "Files" group: one row per file.
     ///
-    /// `ui`: parent. Returns the id of a clicked row, the id of a row whose remove button was clicked and the
-    /// (id, up) of a clicked move button.
+    /// `ui`: parent. Returns what was clicked: a row (id), a remove button (id), a move button (id, up) and a
+    /// reload button (id).
     #[allow(clippy::type_complexity)]
-    fn files_group(&self, ui: &mut Ui) -> (Option<u64>, Option<u64>, Option<(u64, bool)>) {
-        let (mut select, mut remove, mut mv) = (None, None, None);
+    fn files_group(&self, ui: &mut Ui) -> (Option<u64>, Option<u64>, Option<(u64, bool)>, Option<u64>) {
+        let (mut select, mut remove, mut mv, mut reload) = (None, None, None, None);
         let selected = self.selected;
         let can_remove = self.running.is_none();
         let items = &self.items;
@@ -922,7 +1069,7 @@ impl JobDock {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 4.0;
                         ui.add_sized([TAG_W, row_h], egui::Label::new(RichText::new(it.tag()).small().weak()));
-                        let w = (ui.available_width() - STATE_W - 3.0 * 17.0 - 5.0 * 4.0).max(40.0);
+                        let w = (ui.available_width() - STATE_W - 4.0 * 17.0 - 6.0 * 4.0).max(40.0);
                         let r = ui.add_sized([w, row_h], egui::Button::selectable(selected == Some(it.id), (RichText::new(&it.name), egui::Atom::grow())).truncate());
                         let tip = it.path.as_ref().map_or_else(|| it.name.clone(), |p| p.to_string_lossy().into_owned());
                         if r.on_hover_text(tip).clicked() {
@@ -933,8 +1080,15 @@ impl JobDock {
                             ui.add_sized([STATE_W, row_h], egui::Label::new(RichText::new("!").strong().color(ui.visuals().error_fg_color))).on_hover_text(p);
                         } else if it.in_flight() {
                             ui.add_sized([STATE_W, row_h], egui::Label::new("…"));
+                        } else if it.file_state == FileState::Changed {
+                            ui.add_sized([STATE_W, row_h], egui::Label::new(RichText::new("*").strong().color(ui.visuals().warn_fg_color))).on_hover_text(tr_plain("JobDock.FileChanged"));
                         } else {
                             ui.add_space(STATE_W);
+                        }
+                        // reload: only for files with a source
+                        let rl = ui.add_enabled(self.can_reload(idx), ImageButton::new("mdi-refresh").size(Vec2::splat(17.0)));
+                        if rl.on_hover_text(tr_plain("JobDock.Reload")).clicked() {
+                            reload = Some(it.id);
                         }
                         // reorder buttons
                         for (up, icon, tip) in [(true, "mdi-arrow-up", "JobDock.MoveUp"), (false, "mdi-arrow-down", "JobDock.MoveDown")] {
@@ -953,7 +1107,7 @@ impl JobDock {
                 }
             });
         });
-        (select, remove, mv)
+        (select, remove, mv, reload)
     }
 }
 
@@ -1292,6 +1446,173 @@ mod tests {
         assert!(!h.job.job_running());
         assert_eq!(h.job.items.iter().map(|i| i.id).collect::<Vec<_>>(), [ids[1], ids[0]]);
         h.wait_idle();
+        assert_covers(&h);
+    }
+
+    /// Push a file's modification time into the future. `p`: file.
+    fn touch_future(p: &Path) {
+        let f = std::fs::OpenOptions::new().write(true).open(p).unwrap();
+        f.set_modified(std::time::SystemTime::now() + Duration::from_secs(3600)).unwrap();
+    }
+
+    /// Layer keys in emission order of the selected SVG. `h`: harness.
+    fn svg_keys(h: &Harness) -> Vec<String> {
+        h.svg().test_keys_in_order()
+    }
+
+    #[test]
+    fn reload_svg_keeps_settings_and_order_appends_new_layer_and_touches_only_its_block() {
+        let _g = settings_guard();
+        let a = write_svg("reload_svg", "a.svg", SVG_TWO);
+        let b = write_png("reload_svg", "b.png");
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.job.add_image(&b, true).unwrap();
+        h.wait_idle();
+        let ids: Vec<u64> = h.job.items.iter().map(|i| i.id).collect();
+        // user work: power of the first layer, layer order swapped
+        h.job.selected = Some(ids[0]);
+        h.job.selected_svg_mut().unwrap().test_set_power(0, 400);
+        h.job.selected_svg_mut().unwrap().test_move_layer(0, false);
+        h.settle();
+        assert_eq!(svg_keys(&h), ["id:b", "id:a"]);
+        let tb = h.lines_of(blocks(&h)[1].clone());
+        // the file gets a third layer
+        std::fs::write(&a, SVG_TWO.replace("</svg>", r#"<g id="c" inkscape:label="Extra"><circle cx="10" cy="30" r="3"/></g></svg>"#)).unwrap();
+        assert!(h.job.reload_item(ids[0]));
+        h.settle();
+        assert_eq!(svg_keys(&h), ["id:b", "id:a", "id:c"]);
+        assert_eq!(h.svg().layer_params()[0].power_max, 400);
+        assert_eq!(h.job.items[0].id, ids[0], "keeps its place in the list");
+        assert_eq!(h.lines_of(blocks(&h)[1].clone()), tb, "the image block is untouched");
+        assert_covers(&h);
+    }
+
+    #[test]
+    fn reload_svg_matches_layers_by_label_when_ids_change() {
+        let _g = settings_guard();
+        let a = write_svg("reload_label", "a.svg", SVG_TWO);
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.wait_idle();
+        let id = h.job.items[0].id;
+        h.job.selected_svg_mut().unwrap().test_set_power(1, 300);
+        h.settle();
+        // ids renamed, labels kept
+        std::fs::write(&a, SVG_TWO.replace("id=\"a\"", "id=\"a2\"").replace("id=\"b\"", "id=\"b2\"")).unwrap();
+        assert!(h.job.reload_item(id));
+        h.settle();
+        assert_eq!(h.svg().layer_params()[1].power_max, 300);
+        assert_eq!(svg_keys(&h), ["id:a2", "id:b2"]);
+    }
+
+    #[test]
+    fn reload_image_keeps_top_left_and_width() {
+        let _g = settings_guard();
+        let p = write_png("reload_img", "b.png");
+        let mut h = Harness::new();
+        h.job.add_image(&p, false).unwrap();
+        h.wait_idle();
+        let id = h.job.items[0].id;
+        // 40 x 20 px: 60 mm wide, 30 mm high, lower left at (10, 12)
+        h.job.selected_image_mut().unwrap().test_set_box(10.0, 12.0, 70.0, 42.0);
+        h.settle();
+        // new picture is square
+        image::RgbaImage::from_fn(40, 40, |_, _| image::Rgba([0, 0, 0, 255])).save(&p).unwrap();
+        assert!(h.job.reload_item(id));
+        h.settle();
+        // x0, width and the top edge (y1) stay; the box grows downwards to 60 mm
+        assert_eq!(h.image().test_box(), (10.0, -18.0, 70.0, 42.0));
+        assert_covers(&h);
+    }
+
+    #[test]
+    fn reload_gcode_in_the_middle_of_the_job() {
+        let _g = settings_guard();
+        let svg = write_svg("reload_nc", "a.svg", SVG_ONE);
+        let nc = write_nc("reload_nc", "b.nc", &["G0 X5 Y5", "G1 X6 Y6 F100"]);
+        let svg2 = write_svg("reload_nc2", "c.svg", SVG_TWO);
+        let mut h = Harness::new();
+        h.job.add_svg(&svg, false, false);
+        h.wait_idle();
+        assert_eq!(h.core.open_file(&nc, true), lasergrbl_core::OpenFileOutcome::GCodeLoading);
+        h.job.expect_static_from("b.nc", Some(nc.clone()));
+        pump_until(&mut h, "static item", |h| h.job.len() == 2);
+        h.job.add_svg(&svg2, false, true);
+        h.wait_idle();
+        let (ta, tc) = (h.lines_of(blocks(&h)[0].clone()), h.lines_of(blocks(&h)[2].clone()));
+        let id = h.job.items[1].id;
+        assert!(h.job.can_reload(1) && !h.job.can_reload(7));
+        // the G-code file grows to four lines
+        std::fs::write(&nc, "G0 X5 Y5\nG1 X6 Y6 F100\nG1 X7 Y7\nG1 X8 Y8").unwrap();
+        assert!(h.job.reload_item(id));
+        assert!(h.job.job_running() && !h.job.can_reload(1));
+        assert!(h.wait());
+        assert_eq!(h.job.len(), 3);
+        assert_eq!(blocks(&h)[1].len(), 4);
+        assert_eq!(h.lines_of(blocks(&h)[1].clone()), ["G0 X5 Y5", "G1 X6 Y6 F100", "G1 X7 Y7", "G1 X8 Y8"]);
+        assert_eq!((h.lines_of(blocks(&h)[0].clone()), h.lines_of(blocks(&h)[2].clone())), (ta, tc));
+        assert_covers(&h);
+    }
+
+    #[test]
+    fn changed_and_missing_marks_follow_the_file_and_reload_clears_them() {
+        let _g = settings_guard();
+        let a = write_svg("marks", "a.svg", SVG_ONE);
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.wait_idle();
+        let id = h.job.items[0].id;
+        h.job.check_files_now();
+        assert_eq!(h.job.items[0].file_state, FileState::Same);
+        assert!(h.job.items[0].problem().is_none());
+        // modification time moves: "changed"
+        touch_future(&a);
+        h.job.check_files_now();
+        assert_eq!(h.job.items[0].file_state, FileState::Changed);
+        // the reload takes the new time as the loaded state
+        assert!(h.job.reload_item(id));
+        h.settle();
+        h.job.check_files_now();
+        assert_eq!(h.job.items[0].file_state, FileState::Same);
+        // file gone: "missing" with a text; reload refuses and keeps the program
+        std::fs::remove_file(&a).unwrap();
+        h.job.check_files_now();
+        assert!(matches!(h.job.items[0].file_state, FileState::Missing(_)));
+        assert!(h.job.items[0].problem().is_some());
+        let before = h.all_lines();
+        assert!(!h.job.reload_item(id));
+        assert_eq!(h.all_lines(), before);
+    }
+
+    #[test]
+    fn reload_and_move_buttons_work_through_the_ui() {
+        let _g = settings_guard();
+        let a = write_svg("ui_btn", "a.svg", SVG_TWO);
+        let b = write_png("ui_btn", "b.png");
+        let mut h = Harness::new();
+        h.job.add_svg(&a, false, false);
+        h.job.add_image(&b, true).unwrap();
+        h.wait_idle();
+        h.stabilize();
+        let ids: Vec<u64> = h.job.items.iter().map(|i| i.id).collect();
+        // buttons sit left of the remove button, one 17 px button + 4 px gap apart: reload, up, down, remove
+        let remove = h.row_remove_rect(1).center();
+        let at = |n: f32| remove - egui::vec2(21.0 * n, 0.0);
+        // up on the second row
+        h.click_at(at(2.0));
+        assert!(h.wait());
+        assert_eq!(h.job.items.iter().map(|i| i.id).collect::<Vec<_>>(), [ids[1], ids[0]]);
+        assert_covers(&h);
+        // changed mark, then reload of the SVG (now row 1) by click
+        touch_future(&a);
+        h.job.check_files_now();
+        assert_eq!(h.job.items[1].file_state, FileState::Changed);
+        h.stabilize();
+        let remove = h.row_remove_rect(1).center();
+        h.click_at(remove - egui::vec2(21.0 * 3.0, 0.0));
+        h.wait_idle();
+        assert_eq!(h.job.items[1].file_state, FileState::Same);
         assert_covers(&h);
     }
 

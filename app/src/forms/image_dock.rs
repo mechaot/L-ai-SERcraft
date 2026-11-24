@@ -352,6 +352,33 @@ impl ImageDock {
         Ok(())
     }
 
+    /// Read the image file again and keep the placement: the top-left corner and the width stay, the height
+    /// follows the new aspect ratio (the box grows or shrinks downwards). All other values stay. The editor is
+    /// dirty afterwards, so the coordinator regenerates.
+    ///
+    /// Returns Err with the read / decode error text (values and the old image stay; the error shows in the row).
+    pub fn reload_image(&mut self) -> Result<(), String> {
+        let Some(path) = self.source.as_ref().map(|s| s.path.clone()) else { return Err("no image".to_owned()) };
+        let loaded = raster_dock::load_image(Path::new(&path));
+        let (img, _dpi) = loaded.inspect_err(|e| self.last_error = Some(e.clone()))?;
+        let gray = raster_dock::gray_image(&img);
+        let hist = raster_dock::histogram(&gray);
+        let (img_w, img_h) = (gray.width(), gray.height());
+        // box: y grows upwards, so the top edge is y1; keep it and x0, derive y0 from the width
+        let width = self.v.width();
+        self.v.y0 = round2(self.v.y1 - width * img_h as f32 / img_w as f32);
+        self.source = Some(ImageSource { path, gray: Arc::new(gray), hist: Box::new(hist), img_w, img_h });
+        self.last_error = None;
+        self.mark_dirty();
+        Ok(())
+    }
+
+    /// Test access: the box. Returns (x0, y0, x1, y1) in mm.
+    #[cfg(test)]
+    pub(crate) fn test_box(&self) -> (f32, f32, f32, f32) {
+        (self.v.x0, self.v.y0, self.v.x1, self.v.y1)
+    }
+
     /// Test access: set the box as an edit would.
     ///
     /// `x0`/`y0`: lower left in mm. `x1`/`y1`: upper right in mm.

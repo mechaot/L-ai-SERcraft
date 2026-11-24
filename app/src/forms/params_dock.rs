@@ -414,6 +414,38 @@ impl ParamsDock {
         self.last_error = None;
     }
 
+    /// Read the layer list from disk again: settings follow the layers by id, then by label; the order the user
+    /// made stays, new layers go to the end. The editor is dirty afterwards, so the coordinator regenerates.
+    ///
+    /// Returns Err with the text when the file cannot be read (nothing changed, the text shows in the row).
+    pub fn reload_svg(&mut self) -> Result<(), String> {
+        let Some(path) = self.source.as_ref().map(|s| s.path.clone()) else { return Err("no SVG".to_owned()) };
+        // unreadable file: keep everything
+        if let Err(e) = std::fs::metadata(&path) {
+            let e = e.to_string();
+            self.last_error = Some(e.clone());
+            return Err(e);
+        }
+        let listed = lg_svg2gcode::list_layers_from_file(std::path::Path::new(&path)).ok().filter(|l| !l.is_empty());
+        let layered = listed.is_some();
+        let infos = listed.unwrap_or_else(|| vec![LayerInfo { key: KEY_ALL.into(), label: "(all)".into(), shapes: 0 }]);
+        // earlier layers, their order and the picked one
+        let old: Vec<OldLayer> = self.layers.iter().map(|(i, l)| (i.key.clone(), i.label.clone(), l.clone())).collect();
+        let old_order: Vec<String> = self.order.iter().filter_map(|&n| self.layers.get(n)).map(|(i, _)| i.key.clone()).collect();
+        let sel_key = self.layers.get(self.selected).map(|(i, _)| i.key.clone());
+        let seed = LayerUi { enabled: true, passes: 1, ..self.cur().clone() };
+        (self.layers, self.order) = rematch(infos, &old, &old_order, &seed, false);
+        self.selected = sel_key.and_then(|k| self.layers.iter().position(|(i, _)| i.key == k)).unwrap_or(0);
+        self.generated.clear();
+        self.revision += 1;
+        if let Some(src) = &mut self.source {
+            src.layered = layered;
+        }
+        self.last_error = None;
+        self.mark_dirty();
+        Ok(())
+    }
+
     /// Take over the edited layer values of a dropped SVG editor as the plain defaults (the next SVG starts there).
     ///
     /// `from`: editor that goes away. Only meant for the defaults editor (no source).
@@ -423,6 +455,20 @@ impl ParamsDock {
         self.selected = 0;
         self.preset_name = from.preset_name.clone();
         self.revision += 1;
+    }
+
+    /// Test access: move a layer as the row buttons do.
+    ///
+    /// `pos`: position in the emission order. `up`: true = earlier.
+    #[cfg(test)]
+    pub(crate) fn test_move_layer(&mut self, pos: usize, up: bool) {
+        self.move_layer(pos, up);
+    }
+
+    /// Test access: layer keys in emission order. Returns the keys.
+    #[cfg(test)]
+    pub(crate) fn test_keys_in_order(&self) -> Vec<String> {
+        self.order.iter().map(|&n| self.layers[n].0.key.clone()).collect()
     }
 
     /// Test access: command ranges of the layers in this file's block (relative to the block start).

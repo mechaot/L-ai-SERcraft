@@ -15,13 +15,21 @@ the end: [Ruler mat for the base board](#manual-ruler-mat-for-the-base-board).
 
 ## How layers are read
 
-* Every **top-level layer** of the SVG becomes one entry in the *Layer* picker of the *Parameters* dock. The
-  entry shows the Inkscape layer name and the number of shapes, e.g. `Cut (1)`.
+* Every **top-level layer** of the SVG becomes one row in the *Layer* list of the *Parameters* dock. The
+  row shows the Inkscape layer name and the number of shapes, e.g. `Cut (1)`. Click a row to edit its settings,
+  tick its box to enable it.
 * Sublayers belong to their top-level layer and share its settings.
-* Objects outside any layer are collected in the pseudo-layer `(ungrouped)`, which is converted first.
-* Layers are converted **in file order**. In the Inkscape *Layers and Objects* panel the file order runs from
-  the **bottom** row to the **top** row. Put the cut layer at the top so that it is cut last, after
-  the engraving. Otherwise the part may shift or fall out before it is engraved.
+* Objects outside any layer are collected in the pseudo-layer `(ungrouped)`, which starts at the top of the list.
+* The list order is the **G-code order**: the first row is converted first. Move a row with its up and down
+  buttons; the order is remembered per file. A new SVG starts in **file order**. In the Inkscape *Layers and
+  Objects* panel the file order runs from the **bottom** row to the **top** row, so the panel shows it
+  reversed. The setting *SVG layers in Inkscape order* (Settings, Vector import) makes a new SVG start in the
+  panel order instead.
+* Put the cut layer last so that it is cut after the engraving. Otherwise the part may shift or fall out before
+  it is engraved.
+* The file list has up and down buttons too: they change the order of the loaded files in the program. The
+  reload button reads a file again (layer settings follow by id, then by name; the layer order stays). A `*`
+  in the row says the file changed on disk. Reordering and reloading are off while a job runs.
 * Hidden or locked Inkscape layers **are still converted**. To skip a layer, untick *Enabled* in L-ai-SERcraft.
 * Text is burned as the outline of its letters, set in the fonts installed on this computer. A missing font is
   replaced by a similar one (generic `sans-serif`, `serif` and `monospace` map to e.g. DejaVu or Liberation).
