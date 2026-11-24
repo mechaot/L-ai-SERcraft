@@ -87,6 +87,8 @@ pub struct SettingsData {
     pub footer: String,
     pub sounds: [SoundSetting; 5],
     pub smart_bezier: bool,
+    /// New SVGs start in Inkscape panel order (last layer first).
+    pub svg_inkscape_order: bool,
     pub disable_safety_cd: bool,
     pub quiet_safety_cd: bool,
     pub legacy_icons: bool,
@@ -170,6 +172,7 @@ impl SettingsData {
             footer: to_editor_text(&settings::get("GCode.CustomFooter", GCODE_STD_FOOTER.to_string())),
             sounds,
             smart_bezier: settings::get("Vector.UseSmartBezier", true),
+            svg_inkscape_order: settings::get("Vector.SvgLayersInkscapeOrder", false),
             disable_safety_cd: settings::get("DisableSafetyCountdown", false),
             quiet_safety_cd: settings::get("QuietSafetyCountdown", false),
             legacy_icons: settings::get("LegacyIcons", false),
@@ -223,6 +226,7 @@ impl SettingsData {
 
         settings::set("Raster Hi-Res", self.hi_res);
         settings::set("Vector.UseSmartBezier", self.smart_bezier);
+        settings::set("Vector.SvgLayersInkscapeOrder", self.svg_inkscape_order);
         settings::set("DisableSafetyCountdown", self.disable_safety_cd);
         settings::set("QuietSafetyCountdown", self.quiet_safety_cd);
         settings::set("LegacyIcons", self.legacy_icons);
@@ -539,6 +543,7 @@ impl SettingsForm {
         let d = &mut self.data;
         // imageButton1 is Visible=false in the designer: no info button
         setting_row(ui, None, CTL_W, |ui| { ui.checkbox(&mut d.smart_bezier, t("CbSmartBezier")); }, &t("label43"));
+        setting_row(ui, None, CTL_W, |ui| { ui.checkbox(&mut d.svg_inkscape_order, t("CbSvgInkscapeOrder")); }, &t("labelSvgOrder"));
     }
 
     /// Jog control tab (`TpJogControl`).
