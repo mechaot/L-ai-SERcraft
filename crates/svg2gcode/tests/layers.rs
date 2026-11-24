@@ -24,7 +24,7 @@ fn defaults(o: &SvgConvOptions, n: usize) -> Vec<LayerParams> {
 
 /// Layered conversion. `text`: svg. `o`: options. `l`: layers. Returns (G-code, ranges).
 fn layered(text: &str, o: &SvgConvOptions, l: &[LayerParams]) -> (String, Vec<Option<std::ops::Range<usize>>>) {
-    GCodeFromSvg::new().convert_from_text_layered(text, o, true, l).expect("layered")
+    GCodeFromSvg::new().convert_from_text_layered(text, o, true, l, &[]).expect("layered")
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn layered_equals_plain_on_golden_svgs() {
         let mut c = GCodeFromSvg::new();
         let Ok(_) = c.convert_from_text(&text, &o, true, ColorFilter::All) else { continue };
         let a = GCodeFromSvg::new().convert_from_text(&text, &o, true, ColorFilter::All);
-        let b = GCodeFromSvg::new().convert_from_text_layered(&text, &o, true, &defaults(&o, layers.len()));
+        let b = GCodeFromSvg::new().convert_from_text_layered(&text, &o, true, &defaults(&o, layers.len()), &[]);
         n += 1;
         match (a, b) {
             (Ok(a), Ok((b, _))) if a == b => {}
@@ -123,4 +123,60 @@ fn non_pwm_uses_mode_at_pen_down() {
     let sec = &g[r[2].clone().unwrap()];
     assert!(sec.contains("M4") && !sec.contains("M4 S0"));
     assert!(!g[r[1].clone().unwrap()].contains("M4"));
+}
+
+/// Layered conversion with an emission order. `text`: svg. `o`: options. `l`: layers. `order`: emission order.
+fn layered_ordered(text: &str, o: &SvgConvOptions, l: &[LayerParams], order: &[usize]) -> (String, Vec<Option<std::ops::Range<usize>>>) {
+    GCodeFromSvg::new().convert_from_text_layered(text, o, true, l, order).expect("layered")
+}
+
+#[test]
+fn reversed_order_emits_bodies_reversed_ranges_by_file_order() {
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let o = SvgConvOptions::default();
+    let base = defaults(&o, 4);
+    let (g_fwd, r_fwd) = layered_ordered(TWO_LAYERS, &o, &base, &[]);
+    let (g_rev, r_rev) = layered_ordered(TWO_LAYERS, &o, &base, &[3, 2, 1, 0]);
+    // same body text per layer, whatever the position
+    for i in 0..4 {
+        let f = &g_fwd[r_fwd[i].clone().unwrap()];
+        let r = &g_rev[r_rev[i].clone().unwrap()];
+        assert_eq!(f.lines().filter(|l| l.contains('X')).count(), r.lines().filter(|l| l.contains('X')).count());
+    }
+    // ranges ascend in reverse file index
+    let st: Vec<usize> = r_rev.iter().map(|r| r.clone().unwrap().start).collect();
+    assert!(st[3] < st[2] && st[2] < st[1] && st[1] < st[0]);
+    // layer 2 (circle) still holds the arcs
+    assert!(g_rev[r_rev[2].clone().unwrap()].contains("G3"));
+    assert!(!g_rev[r_rev[1].clone().unwrap()].contains("G3"));
+}
+
+#[test]
+fn first_command_feed_comes_from_first_emitted_layer() {
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let o = SvgConvOptions::default();
+    let mut l = defaults(&o, 4);
+    l[0].border_speed = 111;
+    l[3].border_speed = 999;
+    let (a, _) = layered_ordered(TWO_LAYERS, &o, &l, &[]);
+    let (b, _) = layered_ordered(TWO_LAYERS, &o, &l, &[3, 0, 1, 2]);
+    let head = |g: &str| g.lines().take(6).collect::<Vec<_>>().join("\n");
+    assert!(head(&a).contains("F111"), "{}", head(&a));
+    assert!(head(&b).contains("F999"), "{}", head(&b));
+}
+
+#[test]
+fn partial_or_invalid_order_falls_back() {
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let o = SvgConvOptions::default();
+    let base = defaults(&o, 4);
+    let (_, r_file) = layered_ordered(TWO_LAYERS, &o, &base, &[]);
+    let (g, r_bad) = layered_ordered(TWO_LAYERS, &o, &base, &[9, 2, 2, 7]);
+    // 2 first, then 0, 1, 3
+    let st: Vec<usize> = r_bad.iter().map(|r| r.clone().unwrap().start).collect();
+    assert!(st[2] < st[0] && st[0] < st[1] && st[1] < st[3]);
+    assert!(r_bad.iter().all(Option::is_some) && r_file.iter().all(Option::is_some));
+    assert!(!g.is_empty());
+    assert_eq!(lg_svg2gcode::normalize_order(&[9, 2, 2, 7], 4), vec![2, 0, 1, 3]);
+    assert_eq!(lg_svg2gcode::normalize_order(&[], 3), vec![0, 1, 2]);
 }

@@ -18,7 +18,7 @@ fn conv(svg: &str, fill: Option<HatchFill>, edit: impl Fn(&mut LayerParams)) -> 
     let mut lp = LayerParams::from_options(&o, ColorFilter::All);
     lp.fill = fill;
     edit(&mut lp);
-    let (g, r) = GCodeFromSvg::new().convert_from_text_layered(svg, &o, true, &[lp]).expect("conv");
+    let (g, r) = GCodeFromSvg::new().convert_from_text_layered(svg, &o, true, &[lp], &[]).expect("conv");
     g[r[0].clone().unwrap()].to_string()
 }
 

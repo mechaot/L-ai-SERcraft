@@ -485,7 +485,7 @@ impl ParamsDock {
         // always appends: the coordinator cuts the old block out first
         let produce: ProduceFn = Box::new(move |f| {
             if layered {
-                f.load_imported_svg_layered(&path, true, &params)
+                f.load_imported_svg_layered(&path, true, &params, &[])
             } else {
                 f.load_imported_svg(&path, true, filter).map(|()| Vec::new())
             }

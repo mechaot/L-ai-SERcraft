@@ -166,7 +166,7 @@ fn conv_layer(svg: &str, fill: Option<HatchFill>) -> String {
     lp.fill = fill;
     let mut c = GCodeFromSvg::new();
     c.text_to_path = true;
-    let (g, r) = c.convert_from_text_layered(svg, &o, true, &[lp]).expect("conv");
+    let (g, r) = c.convert_from_text_layered(svg, &o, true, &[lp], &[]).expect("conv");
     g[r[0].clone().unwrap()].to_string()
 }
 

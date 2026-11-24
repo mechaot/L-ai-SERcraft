@@ -1017,7 +1017,7 @@ mod tests {
         assert_covers(&h);
         // reference: load the SVG, then append the image, the way the single-file docks did it
         let mut f = GrblFile::new();
-        f.load_imported_svg_layered(svg.to_str().unwrap(), false, &h.svg().layer_params()).unwrap();
+        f.load_imported_svg_layered(svg.to_str().unwrap(), false, &h.svg().layer_params(), &[]).unwrap();
         let (img, _) = raster_dock::load_image(&png).unwrap();
         let gray = raster_dock::gray_image(&img);
         raster_dock::generate(&mut f, &gray, png.to_str().unwrap(), &h.image().params(), true).unwrap();
