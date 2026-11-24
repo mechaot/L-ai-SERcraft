@@ -121,6 +121,65 @@ struct StoredSet {
     saved_unix_secs: u64,
     /// Layer key to values.
     layers: BTreeMap<String, LayerUi>,
+    /// Layer key to label (fallback match when keys change).
+    #[serde(default)]
+    labels: BTreeMap<String, String>,
+    /// Layer keys in emission order (empty = never saved).
+    #[serde(default)]
+    order: Vec<String>,
+}
+
+/// Settings key: default layer order of a fresh SVG is the Inkscape panel order (last in file first).
+pub const SETTING_INKSCAPE_ORDER: &str = "Vector.SvgLayersInkscapeOrder";
+
+/// A layer of an earlier listing: key, label, values.
+type OldLayer = (String, String, LayerUi);
+
+/// Match a fresh layer listing against earlier layers and settle the emission order.
+///
+/// `infos`: new listing, file order. `old`: earlier layers (match by key, then by unused label).
+/// `old_order`: keys of the earlier emission order (empty = none known). `seed`: values for unmatched layers.
+/// `inkscape`: with no known order, reverse the file order.
+/// Returns the layers in file order and the emission order (indices into them; permutation).
+fn rematch(infos: Vec<LayerInfo>, old: &[OldLayer], old_order: &[String], seed: &LayerUi, inkscape: bool) -> (Vec<(LayerInfo, LayerUi)>, Vec<usize>) {
+    let mut used = vec![false; old.len()];
+    // old layer matched to each new one: key first, then label
+    let mut hit: Vec<Option<usize>> = infos.iter().map(|i| old.iter().position(|(k, _, _)| *k == i.key)).collect();
+    for h in hit.iter().flatten() {
+        used[*h] = true;
+    }
+    for (n, info) in infos.iter().enumerate() {
+        if hit[n].is_none()
+            && let Some(o) = (0..old.len()).find(|&o| !used[o] && old[o].1 == info.label)
+        {
+            used[o] = true;
+            hit[n] = Some(o);
+        }
+    }
+    // emission order: known keys first (by old position), then the rest in file order
+    let mut order = Vec::with_capacity(infos.len());
+    for k in old_order {
+        if let Some(n) = hit.iter().position(|h| h.is_some_and(|o| old[o].0 == *k))
+            && !order.contains(&n)
+        {
+            order.push(n);
+        }
+    }
+    let rest = (0..infos.len()).filter(|n| !order.contains(n)).collect::<Vec<_>>();
+    if old_order.is_empty() && inkscape {
+        order.extend(rest.into_iter().rev());
+    } else {
+        order.extend(rest);
+    }
+    let layers = infos
+        .into_iter()
+        .zip(hit)
+        .map(|(info, h)| {
+            let ui = h.map_or_else(|| seed.clone(), |o| old[o].2.clone());
+            (info, ui)
+        })
+        .collect();
+    (layers, order)
 }
 
 /// Read the per-file store. Returns the saved sets (empty when none/unreadable).
@@ -172,6 +231,8 @@ pub struct ParamsDock {
     support_pwm: bool,
     /// Layers and their values; one pseudo-layer without SVG.
     layers: Vec<(LayerInfo, LayerUi)>,
+    /// Emission (G-code) order: indices into `layers`, a permutation.
+    order: Vec<usize>,
     /// Index of the edited layer.
     selected: usize,
     /// Upper limit of the speed input.
@@ -217,6 +278,7 @@ impl ParamsDock {
             limits: Limits::from_config(),
             support_pwm: true,
             layers: Vec::new(),
+            order: vec![0],
             selected: 0,
             border_max: 0,
             power_max_limit: 0,
@@ -274,6 +336,7 @@ impl ParamsDock {
     fn load_values(&mut self) {
         let l = self.settings_layer();
         self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, l)];
+        self.order = vec![0];
         self.selected = 0;
     }
 
@@ -300,6 +363,7 @@ impl ParamsDock {
             limits: seed_from.limits,
             support_pwm: seed_from.support_pwm,
             layers: vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, seed_from.cur().clone())],
+            order: vec![0],
             selected: 0,
             border_max: seed_from.border_max,
             power_max_limit: seed_from.power_max_limit,
@@ -334,13 +398,14 @@ impl ParamsDock {
         let layered = listed.is_some();
         let infos = listed.unwrap_or_else(|| vec![LayerInfo { key: KEY_ALL.into(), label: "(all)".into(), shapes: 0 }]);
         let stored = if from_settings { None } else { load_sets().into_iter().find(|s| s.path == path) };
-        self.layers = infos
-            .into_iter()
-            .map(|info| {
-                let ui = stored.as_ref().and_then(|s| s.layers.get(&info.key)).cloned().unwrap_or_else(|| seed.clone());
-                (info, ui)
-            })
-            .collect();
+        // stored layers as old layers; label may be unknown for old stores
+        let old: Vec<OldLayer> = stored
+            .as_ref()
+            .map(|s| s.layers.iter().map(|(k, ui)| (k.clone(), s.labels.get(k).cloned().unwrap_or_default(), ui.clone())).collect())
+            .unwrap_or_default();
+        let old_order = stored.as_ref().map(|s| s.order.clone()).unwrap_or_default();
+        let inkscape = lg_base::settings::get(SETTING_INKSCAPE_ORDER, false);
+        (self.layers, self.order) = rematch(infos, &old, &old_order, &seed, inkscape);
         self.selected = 0;
         self.generated.clear();
         self.revision += 1;
@@ -349,14 +414,61 @@ impl ParamsDock {
         self.last_error = None;
     }
 
+    /// Read the layer list from disk again: settings follow the layers by id, then by label; the order the user
+    /// made stays, new layers go to the end. The editor is dirty afterwards, so the coordinator regenerates.
+    ///
+    /// Returns Err with the text when the file cannot be read (nothing changed, the text shows in the row).
+    pub fn reload_svg(&mut self) -> Result<(), String> {
+        let Some(path) = self.source.as_ref().map(|s| s.path.clone()) else { return Err("no SVG".to_owned()) };
+        // unreadable file: keep everything
+        if let Err(e) = std::fs::metadata(&path) {
+            let e = e.to_string();
+            self.last_error = Some(e.clone());
+            return Err(e);
+        }
+        let listed = lg_svg2gcode::list_layers_from_file(std::path::Path::new(&path)).ok().filter(|l| !l.is_empty());
+        let layered = listed.is_some();
+        let infos = listed.unwrap_or_else(|| vec![LayerInfo { key: KEY_ALL.into(), label: "(all)".into(), shapes: 0 }]);
+        // earlier layers, their order and the picked one
+        let old: Vec<OldLayer> = self.layers.iter().map(|(i, l)| (i.key.clone(), i.label.clone(), l.clone())).collect();
+        let old_order: Vec<String> = self.order.iter().filter_map(|&n| self.layers.get(n)).map(|(i, _)| i.key.clone()).collect();
+        let sel_key = self.layers.get(self.selected).map(|(i, _)| i.key.clone());
+        let seed = LayerUi { enabled: true, passes: 1, ..self.cur().clone() };
+        (self.layers, self.order) = rematch(infos, &old, &old_order, &seed, false);
+        self.selected = sel_key.and_then(|k| self.layers.iter().position(|(i, _)| i.key == k)).unwrap_or(0);
+        self.generated.clear();
+        self.revision += 1;
+        if let Some(src) = &mut self.source {
+            src.layered = layered;
+        }
+        self.last_error = None;
+        self.mark_dirty();
+        Ok(())
+    }
+
     /// Take over the edited layer values of a dropped SVG editor as the plain defaults (the next SVG starts there).
     ///
     /// `from`: editor that goes away. Only meant for the defaults editor (no source).
     pub fn adopt_defaults(&mut self, from: &ParamsDock) {
         self.layers = vec![(LayerInfo { key: KEY_DEFAULTS.into(), label: "(defaults)".into(), shapes: 0 }, from.cur().clone())];
+        self.order = vec![0];
         self.selected = 0;
         self.preset_name = from.preset_name.clone();
         self.revision += 1;
+    }
+
+    /// Test access: move a layer as the row buttons do.
+    ///
+    /// `pos`: position in the emission order. `up`: true = earlier.
+    #[cfg(test)]
+    pub(crate) fn test_move_layer(&mut self, pos: usize, up: bool) {
+        self.move_layer(pos, up);
+    }
+
+    /// Test access: layer keys in emission order. Returns the keys.
+    #[cfg(test)]
+    pub(crate) fn test_keys_in_order(&self) -> Vec<String> {
+        self.order.iter().map(|&n| self.layers[n].0.key.clone()).collect()
     }
 
     /// Test access: command ranges of the layers in this file's block (relative to the block start).
@@ -371,6 +483,16 @@ impl ParamsDock {
     #[cfg(test)]
     pub(crate) fn test_set_power(&mut self, layer: usize, power: i32) {
         self.layers[layer].1.max_power = power;
+        self.mark_dirty();
+    }
+
+    /// Test access: flip the enabled flag of layer `layer` as the row checkbox does.
+    ///
+    /// `layer`: layer index (file order).
+    #[cfg(test)]
+    pub(crate) fn test_toggle_enabled(&mut self, layer: usize) {
+        self.layers[layer].1.enabled = !self.layers[layer].1.enabled;
+        self.revision += 1;
         self.mark_dirty();
     }
 
@@ -446,6 +568,22 @@ impl ParamsDock {
             .collect()
     }
 
+    /// Emission order of the layers for the converter. Returns indices into the file-ordered layers.
+    pub(crate) fn layer_order(&self) -> Vec<usize> {
+        self.order.clone()
+    }
+
+    /// Move a layer one step in the emission order and mark the dock dirty.
+    ///
+    /// `pos`: position in the emission order. `up`: true = earlier, false = later. No-op at the ends.
+    fn move_layer(&mut self, pos: usize, up: bool) {
+        let to = if up { pos.checked_sub(1) } else { Some(pos + 1).filter(|t| *t < self.order.len()) };
+        let Some(to) = to.filter(|t| pos < self.order.len() && *t < self.order.len()) else { return };
+        self.order.swap(pos, to);
+        self.revision += 1;
+        self.mark_dirty();
+    }
+
     /// Mark the dock dirty and bump the edit counter (an edit needs a regen).
     fn mark_dirty(&mut self) {
         self.dirty = true;
@@ -474,6 +612,7 @@ impl ParamsDock {
         self.save_set();
 
         let params = self.layer_params();
+        let order = self.layer_order();
         let filter = FILTER_OPTIONS[c.filter];
         let src = self.source.as_ref()?;
         let (path, layered) = (src.path.clone(), src.layered);
@@ -485,7 +624,7 @@ impl ParamsDock {
         // always appends: the coordinator cuts the old block out first
         let produce: ProduceFn = Box::new(move |f| {
             if layered {
-                f.load_imported_svg_layered(&path, true, &params)
+                f.load_imported_svg_layered(&path, true, &params, &order)
             } else {
                 f.load_imported_svg(&path, true, filter).map(|()| Vec::new())
             }
@@ -529,8 +668,10 @@ impl ParamsDock {
     fn save_set(&self) {
         let Some(src) = &self.source else { return };
         let layers = self.layers.iter().map(|(i, l)| (i.key.clone(), l.clone())).collect();
+        let labels = self.layers.iter().map(|(i, _)| (i.key.clone(), i.label.clone())).collect();
+        let order = self.order.iter().filter_map(|&n| self.layers.get(n)).map(|(i, _)| i.key.clone()).collect();
         let mut sets = load_sets();
-        merge_set(&mut sets, StoredSet { path: src.path.clone(), saved_unix_secs: now_secs(), layers });
+        merge_set(&mut sets, StoredSet { path: src.path.clone(), saved_unix_secs: now_secs(), layers, labels, order });
         lg_base::settings::set(SETS_KEY, sets);
     }
 
@@ -762,12 +903,11 @@ impl ParamsDock {
 
     /// Display text of a layer.
     ///
-    /// `i`: layer index. Returns "label (shapes)", prefixed with "(off)" when the layer is disabled.
+    /// `i`: layer index. Returns "label (shapes)".
     fn layer_text(&self, i: usize) -> String {
-        let (info, l) = &self.layers[i];
+        let info = &self.layers[i].0;
         let label = if info.key == "#root" { tr_plain("ParamsDock.Ungrouped") } else { info.label.clone() };
-        let off = if l.enabled { "" } else { "(off) " };
-        format!("{off}{label} ({})", info.shapes)
+        format!("{label} ({})", info.shapes)
     }
 
     /// Layer picker, enable checkbox and the sync button.
@@ -775,25 +915,44 @@ impl ParamsDock {
     /// `ui`: parent. `edited`: set on any change that needs a re-apply.
     fn layer_group(&mut self, ui: &mut Ui, edited: &mut bool) {
         grbl_group_box_wide(ui, &tr_plain("ParamsDock.Layer"), |ui| {
-            let items: Vec<String> = (0..self.layers.len()).map(|i| self.layer_text(i)).collect();
-            let mut sel = Some(self.selected);
-            let w = ui.available_width().max(60.0);
-            if flat_combo(ui, "params-layer", &mut sel, &items, w).changed() {
-                self.selected = sel.unwrap_or(self.selected);
-                self.revision += 1;
-                // name field follows the layer's preset
-                if let Some(n) = self.cur().preset.clone() {
-                    self.preset_name = n;
-                }
+            // one row per layer in emission order: enabled, name (select), up, down
+            let n = self.order.len();
+            let row_h = ui.spacing().interact_size.y;
+            let mut mv: Option<(usize, bool)> = None;
+            for pos in 0..n {
+                let i = self.order[pos];
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 4.0;
+                    let mut en = self.layers[i].1.enabled;
+                    if ui.checkbox(&mut en, "").on_hover_text(tr_plain("ParamsDock.Enabled")).changed() {
+                        self.layers[i].1.enabled = en;
+                        self.revision += 1;
+                        *edited = true;
+                    }
+                    let w = (ui.available_width() - 2.0 * 17.0 - 2.0 * 4.0).max(40.0);
+                    let text = self.layer_text(i);
+                    let r = ui.add_sized([w, row_h], egui::Button::selectable(self.selected == i, (RichText::new(text), egui::Atom::grow())).truncate());
+                    if r.clicked() && self.selected != i {
+                        self.selected = i;
+                        self.revision += 1;
+                        // name field follows the layer's preset
+                        if let Some(n) = self.cur().preset.clone() {
+                            self.preset_name = n;
+                        }
+                    }
+                    let up = ui.add_enabled(pos > 0, ImageButton::new("mdi-arrow-up").size(egui::Vec2::splat(17.0)));
+                    if up.on_hover_text(tr_plain("ParamsDock.LayerUp")).clicked() {
+                        mv = Some((pos, true));
+                    }
+                    let down = ui.add_enabled(pos + 1 < n, ImageButton::new("mdi-arrow-down").size(egui::Vec2::splat(17.0)));
+                    if down.on_hover_text(tr_plain("ParamsDock.LayerDown")).clicked() {
+                        mv = Some((pos, false));
+                    }
+                });
             }
-            ui.horizontal(|ui| {
-                let mut en = self.cur().enabled;
-                if ui.checkbox(&mut en, tr_plain("ParamsDock.Enabled")).changed() {
-                    self.cur_mut().enabled = en;
-                    self.revision += 1;
-                    *edited = true;
-                }
-            });
+            if let Some((pos, up)) = mv {
+                self.move_layer(pos, up);
+            }
             let btn = ui.add_enabled(self.layers.len() > 1, egui::Button::new(tr_plain("ParamsDock.SyncLayers")).min_size(egui::vec2(ui.available_width(), 22.0)));
             if btn.on_hover_text(tr_plain("ParamsDock.SyncLayersTip")).clicked() {
                 self.sync_layers();
@@ -1062,6 +1221,110 @@ mod tests {
         let p = lg_base::paths::test_dir(&format!("params_{tag}")).join("in.svg");
         std::fs::write(&p, r#"<svg xmlns="http://www.w3.org/2000/svg" width="20mm" height="20mm" viewBox="0 0 20 20"><path d="M1 1 L19 1 L19 19 Z" stroke="black" fill="none"/></svg>"#).unwrap();
         p
+    }
+
+    /// Three-layer SVG in a fresh test dir. `tag`: dir name. `ids`: group ids in file order. Returns the path.
+    fn write_layers(tag: &str, ids: &[&str]) -> std::path::PathBuf {
+        let p = lg_base::paths::test_dir(&format!("params_{tag}")).join("in.svg");
+        write_layers_to(&p, ids);
+        p
+    }
+
+    /// Write groups `ids` to `p` (each id also its label).
+    fn write_layers_to(p: &std::path::Path, ids: &[&str]) {
+        let mut body = String::new();
+        for (n, id) in ids.iter().enumerate() {
+            let x = 2 + n * 5;
+            body.push_str(&format!(r#"<g id="{id}" inkscape:label="{id}"><path d="M{x} 1 L{x} 9" stroke="black" fill="none"/></g>"#));
+        }
+        let svg = format!(r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="20mm" height="20mm" viewBox="0 0 20 20">{body}</svg>"#);
+        std::fs::write(p, svg).unwrap();
+    }
+
+    /// Layer keys of an editor in emission order. `d`: editor.
+    fn keys_in_order(d: &ParamsDock) -> Vec<String> {
+        d.order.iter().map(|&n| d.layers[n].0.key.clone()).collect()
+    }
+
+    #[test]
+    fn stored_order_round_trips() {
+        let _g = settings_guard();
+        let p = write_layers("order_rt", &["a", "b", "c"]);
+        let mut d = svg_dock(&p);
+        assert_eq!(keys_in_order(&d), ["id:a", "id:b", "id:c"]);
+        d.move_layer(2, true);
+        d.move_layer(1, true);
+        assert_eq!(keys_in_order(&d), ["id:c", "id:a", "id:b"]);
+        // the request saves the set
+        assert!(d.take_request().is_some());
+        let d2 = svg_dock(&p);
+        assert_eq!(keys_in_order(&d2), ["id:c", "id:a", "id:b"]);
+        // file order of the layer list itself is untouched
+        assert_eq!(d2.layers[0].0.key, "id:a");
+    }
+
+    #[test]
+    fn inkscape_setting_reverses_a_fresh_load() {
+        let _g = settings_guard();
+        let p = write_layers("order_ink", &["a", "b", "c"]);
+        assert_eq!(keys_in_order(&svg_dock(&p)), ["id:a", "id:b", "id:c"]);
+        lg_base::settings::set(SETTING_INKSCAPE_ORDER, true);
+        let d = svg_dock(&p);
+        assert_eq!(keys_in_order(&d), ["id:c", "id:b", "id:a"]);
+        assert_eq!(d.layer_order(), [2, 1, 0]);
+    }
+
+    #[test]
+    fn new_layer_is_appended_to_the_stored_order() {
+        let _g = settings_guard();
+        let p = write_layers("order_new", &["a", "b"]);
+        let mut d = svg_dock(&p);
+        d.move_layer(1, true);
+        assert!(d.take_request().is_some());
+        // a layer appears in the file
+        write_layers_to(&p, &["a", "b", "c"]);
+        let d2 = svg_dock(&p);
+        assert_eq!(keys_in_order(&d2), ["id:b", "id:a", "id:c"]);
+    }
+
+    #[test]
+    fn rematch_falls_back_to_the_label() {
+        let info = |k: &str, l: &str| LayerInfo { key: k.into(), label: l.into(), shapes: 1 };
+        let ui = |p: i32| LayerUi { passes: p, ..LayerUi { enabled: true, passes: 1, border_speed: 1000, max_power: 1000, laser_on: 0, filter: 0, preset: None, fill: false, fill_distance: 0.2, fill_angle: 0, fill_cross: false, fill_per_shape: true } };
+        let old: Vec<OldLayer> = vec![("id:x".into(), "Cut".into(), ui(3)), ("id:y".into(), "Engrave".into(), ui(5))];
+        let order = vec!["id:y".to_owned(), "id:x".to_owned()];
+        // ids changed, labels stay; the new layer gets the seed
+        let (layers, ord) = rematch(vec![info("id:x2", "Cut"), info("id:y2", "Engrave"), info("id:z", "New")], &old, &order, &ui(9), false);
+        assert_eq!(layers.iter().map(|(_, l)| l.passes).collect::<Vec<_>>(), [3, 5, 9]);
+        assert_eq!(ord, [1, 0, 2]);
+        // a key match beats a label match
+        let (layers, _) = rematch(vec![info("id:y", "Cut")], &old, &[], &ui(9), false);
+        assert_eq!(layers[0].1.passes, 5);
+    }
+
+    #[test]
+    fn moving_a_layer_marks_dirty_and_changes_the_converter_order() {
+        let _g = settings_guard();
+        let p = write_layers("order_move", &["a", "b", "c"]);
+        let mut d = svg_dock(&p);
+        let mut rig = Rig::new(&[]);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        assert!(!d.dirty);
+        let before: Vec<_> = d.generated.iter().map(|r| r.clone().unwrap().start).collect();
+        assert!(before.windows(2).all(|w| w[0] < w[1]));
+        // top row down: a goes after b
+        d.move_layer(0, false);
+        assert!(d.dirty && d.wants_auto());
+        assert_eq!(d.layer_order(), [1, 0, 2]);
+        // ends do nothing
+        let seq = d.edit_seq;
+        d.move_layer(2, false);
+        d.move_layer(0, true);
+        assert_eq!(d.edit_seq, seq);
+        assert_eq!(pump(&mut rig, &mut d), Some(true));
+        // ranges stay indexed by file order, but a now starts after b
+        let after: Vec<_> = d.generated.iter().map(|r| r.clone().unwrap().start).collect();
+        assert!(after[1] < after[0] && after[0] < after[2], "{after:?}");
     }
 
     #[test]
@@ -1397,7 +1660,7 @@ mod tests {
 
     #[test]
     fn store_dedups_by_path_newest_wins_and_caps() {
-        let set = |path: &str, t: u64| StoredSet { path: path.into(), saved_unix_secs: t, layers: BTreeMap::new() };
+        let set = |path: &str, t: u64| StoredSet { path: path.into(), saved_unix_secs: t, layers: BTreeMap::new(), labels: BTreeMap::new(), order: Vec::new() };
         let mut v = Vec::new();
         merge_set(&mut v, set("a", 10));
         merge_set(&mut v, set("a", 20));
@@ -1564,14 +1827,14 @@ mod e2e {
         // --- Engrave disabled: gone from the program
         h.pick(&h.svg().layer_text(1), &h.svg().layer_text(2));
         assert_eq!(h.svg().selected, 2);
-        h.click_text(&tr_plain("ParamsDock.Enabled"));
+        h.job.selected_svg_mut().unwrap().test_toggle_enabled(2);
         assert!(!h.svg().layers[2].1.enabled);
         h.settle();
         assert!(h.layer_lines(2).is_none());
         assert!(xs(&h.all_lines()).iter().all(|x| *x < 60), "engrave still in program");
 
         // --- re-enable, Cut filter back to All, sync Cut to every layer
-        h.click_text(&tr_plain("ParamsDock.Enabled"));
+        h.job.selected_svg_mut().unwrap().test_toggle_enabled(2);
         h.pick(&h.svg().layer_text(2), &h.svg().layer_text(1));
         h.pick("Red", "All");
         h.click_text(&tr_plain("ParamsDock.SyncLayers"));

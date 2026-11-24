@@ -7,6 +7,9 @@ newest first.
 
 ### Added
 
+- SVG layers are rows with up/down buttons; the order is the G-code order and is remembered per file. New setting "SVG layers in Inkscape order" (Settings, Vector import) makes a fresh SVG start with the last layer of the file first, like Inkscape's Layers panel.
+- File list rows have up/down buttons: reorder the loaded files, the program follows (blocked while a job runs).
+- File list rows have a reload button (SVG, image, G-code): SVG layer settings follow by id, then by name, and the layer order stays; an image keeps its top-left corner and width. A `*` marks a file that changed on disk.
 - Status bar shows "Time Left" (projected minus elapsed) while a job runs.
 
 ### Fixed

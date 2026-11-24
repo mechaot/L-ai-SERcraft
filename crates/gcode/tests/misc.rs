@@ -163,7 +163,7 @@ fn svg_layered_ranges_cover_layers() {
     let path = svg.to_str().unwrap();
     let mut f = GrblFile::new();
     f.commands_mut().push(GrblCommand::new("G0 X1"));
-    let r = f.load_imported_svg_layered(path, true, &[base.clone(), base.clone()]).unwrap();
+    let r = f.load_imported_svg_layered(path, true, &[base.clone(), base.clone()], &[]).unwrap();
     let (a, b) = (r[0].clone().unwrap(), r[1].clone().unwrap());
     // append offset: first layer starts after head + initial command
     assert!(a.start >= 2 && a.end == b.start && b.end as usize <= f.count());
@@ -172,8 +172,32 @@ fn svg_layered_ranges_cover_layers() {
     // disabled layer -> None
     let mut off = base.clone();
     off.enabled = false;
-    let r = f.load_imported_svg_layered(path, false, &[off, base]).unwrap();
+    let r = f.load_imported_svg_layered(path, false, &[off, base], &[]).unwrap();
     assert!(r[0].is_none() && r[1].is_some());
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn layered_svg_ranges_correct_for_reversed_order() {
+    use lg_svg2gcode::{ColorFilter, LayerParams};
+    let _g = sandbox();
+    let dir = lg_base::paths::test_dir("layers_order");
+    let svg = dir.join("two.svg");
+    std::fs::write(
+        &svg,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" width="50mm" height="50mm" viewBox="0 0 50 50">
+<g id="a"><rect x="1" y="1" width="10" height="10"/></g>
+<g id="b"><circle cx="30" cy="30" r="5"/></g></svg>"#,
+    )
+    .unwrap();
+    let base = LayerParams::from_options(&lg_gcode::svg_conv_options(), ColorFilter::All);
+    let mut f = GrblFile::new();
+    let r = f.load_imported_svg_layered(svg.to_str().unwrap(), false, &[base.clone(), base], &[1, 0]).unwrap();
+    let (a, b) = (r[0].clone().unwrap(), r[1].clone().unwrap());
+    // circle (file index 1) comes first, ranges are adjacent and in the list
+    assert!(b.start < b.end && b.end == a.start && a.end as usize <= f.count());
+    assert!(f.commands_mut()[b.start as usize..b.end as usize].iter().any(|c| c.command().contains("G3")));
+    assert!(!f.commands_mut()[a.start as usize..a.end as usize].iter().any(|c| c.command().contains("G3")));
     std::fs::remove_dir_all(&dir).ok();
 }
 
@@ -244,13 +268,13 @@ fn replace_block_with_layered_svg_returns_absolute_ranges() {
     let layers = [base.clone(), base];
     // reference: head, svg appended, tail
     let mut want = file_of(&["G0 X1", "G1 X2", "G1 X3"]);
-    let r_want = want.load_imported_svg_layered(path, true, &layers).unwrap();
+    let r_want = want.load_imported_svg_layered(path, true, &layers, &[]).unwrap();
     for l in ["G1 X90", "G1 X91"] {
         want.commands_mut().push(GrblCommand::new(l));
     }
     // same through replace_block: an old block of 4 lines sits between head and tail
     let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X70", "G1 X71", "G1 X72", "G1 X73", "G1 X90", "G1 X91"]);
-    let (r, new) = f.replace_block(3..7, |f| f.load_imported_svg_layered(path, true, &layers)).unwrap();
+    let (r, new) = f.replace_block(3..7, |f| f.load_imported_svg_layered(path, true, &layers, &[])).unwrap();
     assert_eq!(r, r_want);
     assert_eq!(new.start, 3);
     let (a, b) = (r[0].clone().unwrap(), r[1].clone().unwrap());
@@ -311,4 +335,27 @@ fn load_serial_counts_loads_and_manual_events() {
     f.remove_block(0..1).unwrap();
     assert_eq!(f.load_serial(), s0 + 2);
     std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn move_block_swaps_neighbours_and_keeps_text() {
+    let _g = sandbox();
+    let mut f = file_of(&["G0 X1", "G1 X2", "G1 X3", "G1 X10", "G1 X11", "G1 X12", "G1 X20", "G1 X21"]);
+    // blocks 0..2, 2..3 (len 1), 3..6, 6..8: move the third one up over the second
+    let new = f.move_block(3..6, 2).unwrap();
+    assert_eq!(new, 2..5);
+    assert_eq!(text(&f), ["G0 X1", "G1 X2", "G1 X10", "G1 X11", "G1 X12", "G1 X3", "G1 X20", "G1 X21"]);
+    // and back down: the block moves later
+    let new = f.move_block(2..5, 3).unwrap();
+    assert_eq!(new, 3..6);
+    assert_eq!(text(&f), ["G0 X1", "G1 X2", "G1 X3", "G1 X10", "G1 X11", "G1 X12", "G1 X20", "G1 X21"]);
+    // the last block to the front, target clamped for a too far move
+    assert_eq!(f.move_block(6..8, 0).unwrap(), 0..2);
+    assert_eq!(text(&f)[..2], ["G1 X20", "G1 X21"]);
+    assert_eq!(f.move_block(0..2, 99).unwrap(), 6..8);
+    assert_eq!(text(&f)[6..], ["G1 X20", "G1 X21"]);
+    // no-op
+    assert_eq!(f.move_block(2..4, 2).unwrap(), 2..4);
+    // joined program was analyzed again
+    assert!(f.range().moving_range.x.max >= lg_dotnet::Decimal::from(21));
 }

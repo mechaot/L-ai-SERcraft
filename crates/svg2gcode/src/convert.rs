@@ -103,6 +103,23 @@ fn root_has_shapes(svg: Node, ns: &str) -> bool {
     svg.children().any(|c| is_shape(c, ns))
 }
 
+/// Sanitise an emission order. `order`: wanted indices (file order). `n`: layer count.
+/// Returns a permutation of `0..n`: valid first occurrences in `order`, then the missing ones in file order.
+pub fn normalize_order(order: &[usize], n: usize) -> Vec<usize> {
+    let mut seen = vec![false; n];
+    let mut out = Vec::with_capacity(n);
+    // keep valid, first-seen indices
+    for &i in order {
+        if i < n && !seen[i] {
+            seen[i] = true;
+            out.push(i);
+        }
+    }
+    // append the rest in file order
+    out.extend((0..n).filter(|&i| !seen[i]));
+    out
+}
+
 /// List layers of a parsed document. `svg`: root element. Returns layers in conversion order.
 fn list_layers_node(svg: Node) -> Vec<LayerInfo> {
     let ns = root_namespace(svg);
@@ -415,6 +432,8 @@ pub struct GCodeFromSvg {
     fill_rec: Option<Vec<Vec<Point>>>,
     layers: Vec<LayerParams>,
     layer_ranges: Vec<Option<std::ops::Range<usize>>>,
+    /// emission order as indices in file order (empty = file order)
+    layer_order: Vec<usize>,
 }
 
 impl Default for GCodeFromSvg {
@@ -481,6 +500,7 @@ impl GCodeFromSvg {
             fill_rec: None,
             layers: Vec::new(),
             layer_ranges: Vec::new(),
+            layer_order: Vec::new(),
         }
     }
 
@@ -517,6 +537,8 @@ impl GCodeFromSvg {
     ///
     /// `text`: SVG XML. `opts`: global options. `import_mm`: stored only. `layers`: params aligned with
     /// [`list_layers_from_text`] order (empty = plain conversion; missing entries use the globals).
+    /// `order`: emission order as indices into that same order (empty = file order; invalid or duplicate
+    /// indices are dropped, missing ones appended). Ranges stay indexed by file order.
     /// Returns the G-code and, per layer, its byte range in it (`None` = disabled), or the exception.
     pub fn convert_from_text_layered(
         &mut self,
@@ -524,20 +546,24 @@ impl GCodeFromSvg {
         opts: &SvgConvOptions,
         import_mm: bool,
         layers: &[LayerParams],
+        order: &[usize],
     ) -> Result<(String, LayerRanges), SvgError> {
         self.layers = layers.to_vec();
         self.layer_ranges.clear();
+        self.layer_order = order.to_vec();
         // plain path for empty layer list
         let filter = layers.first().map_or(ColorFilter::All, |l| l.filter);
         // initial command uses the first converted layer's values, no instant mode switch
         let mut o = opts.clone();
-        if let Some(first) = layers.iter().find(|l| l.enabled) {
+        let emit = normalize_order(order, layers.len());
+        if let Some(first) = emit.iter().filter_map(|&i| layers.get(i)).find(|l| l.enabled) {
             o.border_speed = first.border_speed;
             o.power_max = first.power_max;
             o.laser_on = first.laser_on.clone();
         }
         let r = self.convert_from_text(text, &o, import_mm, filter);
         self.layers.clear();
+        self.layer_order.clear();
         let ranges = std::mem::take(&mut self.layer_ranges);
         r.map(|g| (g, ranges))
     }
@@ -548,24 +574,30 @@ impl GCodeFromSvg {
         path: &std::path::Path,
         opts: &SvgConvOptions,
         layers: &[LayerParams],
+        order: &[usize],
     ) -> Result<(String, LayerRanges), SvgError> {
         let bytes = std::fs::read(path).map_err(|e| SvgError::new("System.IO.IOException", e.to_string()))?;
         let xml = decode_read_all_text(&bytes);
-        self.convert_from_text_layered(&xml, opts, true, layers)
+        self.convert_from_text_layered(&xml, opts, true, layers, order)
     }
 
-    /// Layered body of `startConvert`: each layer in turn with its own values.
+    /// Layered body of `startConvert`: each layer in turn with its own values, in `layer_order`.
     ///
-    /// `svg`: root. `opts`: global options. Records `layer_ranges`.
+    /// `svg`: root. `opts`: global options. Records `layer_ranges` indexed by file order.
     fn convert_layers(&mut self, svg: Node, opts: &SvgConvOptions) -> Result<(), SvgError> {
         let ns = self.nspace.clone();
-        let mut idx = 0usize;
+        // units in file order: root shapes first, then top groups
+        let mut units: Vec<Option<Node>> = Vec::new();
+        if root_has_shapes(svg, &ns) {
+            units.push(None);
+        }
+        units.extend(top_groups(svg, &ns).into_iter().map(Some));
+        self.layer_ranges = vec![None; units.len()];
+        let order = normalize_order(&self.layer_order, units.len());
         // one layer: params lookup, skip, set values, repeat body
-        let mut run = |this: &mut Self, body: &dyn Fn(&mut Self) -> Result<(), SvgError>| -> Result<(), SvgError> {
+        let run = |this: &mut Self, idx: usize, body: &dyn Fn(&mut Self) -> Result<(), SvgError>| -> Result<(), SvgError> {
             let lp = this.layers.get(idx).cloned().unwrap_or_else(|| LayerParams::from_options(opts, ColorFilter::All));
-            idx += 1;
             if !lp.enabled {
-                this.layer_ranges.push(None);
                 return Ok(());
             }
             let start = this.gcode_string.len();
@@ -588,19 +620,20 @@ impl GCodeFromSvg {
                 r?;
                 this.emit_fill(&segs);
             }
-            this.layer_ranges.push(Some(start..this.gcode_string.len()));
+            this.layer_ranges[idx] = Some(start..this.gcode_string.len());
             Ok(())
         };
-        if root_has_shapes(svg, &ns) {
-            run(self, &|t: &mut Self| {
-                if !t.svg_nodes_only {
-                    t.parse_basic_elements(svg, 1)?;
-                }
-                t.parse_path(svg, 1)
-            })?;
-        }
-        for group in top_groups(svg, &ns) {
-            run(self, &|t: &mut Self| t.parse_one_group(group, 1))?;
+        // emit in the requested order
+        for idx in order {
+            match units[idx] {
+                None => run(self, idx, &|t: &mut Self| {
+                    if !t.svg_nodes_only {
+                        t.parse_basic_elements(svg, 1)?;
+                    }
+                    t.parse_path(svg, 1)
+                })?,
+                Some(group) => run(self, idx, &|t: &mut Self| t.parse_one_group(group, 1))?,
+            }
         }
         Ok(())
     }

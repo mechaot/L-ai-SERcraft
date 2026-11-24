@@ -865,8 +865,8 @@ impl MainForm {
                     self.job.reset();
                 }
                 let last: Option<String> = settings::get("Core.LastOpenFile", None);
-                let name = last.map(|l| file_name_of(Path::new(&l))).unwrap_or_default();
-                self.job.expect_static(&name);
+                let name = last.as_ref().map(|l| file_name_of(Path::new(l))).unwrap_or_default();
+                self.job.expect_static_from(&name, last.map(std::path::PathBuf::from));
             }
             OpenFileOutcome::Busy => {}
         }

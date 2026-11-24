@@ -244,6 +244,30 @@ impl GrblFile {
         self.replace_block(range, |_| Ok(())).map(|_| ())
     }
 
+    /// Move one block of commands to another place in the program, the commands in between shift.
+    ///
+    /// `range`: command indices of the block (clamped to the list). `to_start`: index where the block starts
+    /// afterwards (clamped so it fits). Returns the new range of the block. The joined program is analyzed again
+    /// (a failure is only logged, like in [`GrblFile::replace_block`]). Raises no `OnFileLoaded` event.
+    pub fn move_block(&mut self, range: Range<usize>, to_start: usize) -> GResult<Range<usize>> {
+        // clamp block and target to the list
+        let end = range.end.min(self.list.len());
+        let start = range.start.min(end);
+        let len = end - start;
+        let to = to_start.min(self.list.len() - len);
+        // rotate the span from the earlier to the later end, so the block lands on `to`
+        if to < start {
+            self.list[to..end].rotate_left(start - to);
+        } else if to > start {
+            self.list[start..to + len].rotate_left(len);
+        }
+        // ranges and times of the new order
+        if let Err(e) = self.analyze() {
+            lg_base::logger::log_exception("move_block", &e);
+        }
+        Ok(to..to + len)
+    }
+
     /// C# `CheckInUse(showMessageBox)`. The message box is the caller's job (`Strings.AlreadyLoading`).
     ///
     /// Returns true when a load runs or the file is in use.

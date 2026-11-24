@@ -135,9 +135,16 @@ impl GrblFile {
     /// Layered variant of [`Self::load_imported_svg`]: per-layer feed, power, passes, enable and filter.
     ///
     /// `filename`: SVG file. `append`: keep old commands. `layers`: params aligned with
-    /// `list_layers_from_file` order (empty = plain conversion). Returns, per layer, the command index
+    /// `list_layers_from_file` order (empty = plain conversion). `order`: emission order as indices in that
+    /// same order (empty = file order). Returns, per layer in file order, the command index
     /// range it produced in the list (absolute, `None` = disabled layer).
-    pub fn load_imported_svg_layered(&mut self, filename: &str, append: bool, layers: &[LayerParams]) -> GResult<Vec<Option<Range<u32>>>> {
+    pub fn load_imported_svg_layered(
+        &mut self,
+        filename: &str,
+        append: bool,
+        layers: &[LayerParams],
+        order: &[usize],
+    ) -> GResult<Vec<Option<Range<u32>>>> {
         self.rise_on_file_loading(filename);
         let start = lg_base::tools::hires_timer::total_milliseconds();
         if !append {
@@ -151,22 +158,24 @@ impl GrblFile {
         converter.use_legacy_bezier = !get("Vector.UseSmartBezier", true);
         converter.text_to_path = true;
         let (gcode, byte_ranges) = converter
-            .convert_from_file_layered(std::path::Path::new(filename), &svg_conv_options(), layers)
+            .convert_from_file_layered(std::path::Path::new(filename), &svg_conv_options(), layers, order)
             .map_err(|e| GcodeError::Other(e.to_string()))?;
 
-        // feed text slice by slice, so each layer gets an exact command range
-        let mut out = Vec::with_capacity(byte_ranges.len());
+        // feed text slice by slice in byte order, so each layer gets an exact command range
+        let mut out: Vec<Option<Range<u32>>> = vec![None; byte_ranges.len()];
+        let mut by_start: Vec<usize> = (0..byte_ranges.len()).collect();
+        by_start.sort_by_key(|&i| byte_ranges[i].as_ref().map_or(usize::MAX, |r| r.start));
         let mut cursor = 0usize;
-        for br in &byte_ranges {
-            match br {
-                Some(r) if r.start >= cursor && r.end <= gcode.len() => {
-                    self.add_text_lines(&gcode[cursor..r.start]);
-                    let a = self.list.len() as u32;
-                    self.add_text_lines(&gcode[r.clone()]);
-                    out.push(Some(a..self.list.len() as u32));
-                    cursor = r.end;
-                }
-                _ => out.push(None),
+        for i in by_start {
+            if let Some(r) = &byte_ranges[i]
+                && r.start >= cursor
+                && r.end <= gcode.len()
+            {
+                self.add_text_lines(&gcode[cursor..r.start]);
+                let a = self.list.len() as u32;
+                self.add_text_lines(&gcode[r.clone()]);
+                out[i] = Some(a..self.list.len() as u32);
+                cursor = r.end;
             }
         }
         self.add_text_lines(&gcode[cursor..]);
