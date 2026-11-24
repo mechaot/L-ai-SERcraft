@@ -526,6 +526,7 @@
  "Strings.MacStatusUnknown": "Unbekannt",
  "Strings.MainFormEstimatedTime": "Geschätzte Zeit:",
  "Strings.MainFormProjectedTime": "Prognostizierte Zeit:",
+ "Strings.MainFormTimeLeft": "Restzeit:",
  "Strings.MsgboxCannotOpenFileNow": "Jetzt kann gerade keine neue Datei geöffnet werden.",
  "Strings.ResumeJobHomingRequired": "Es scheint, dass Grbl die aktuelle Position nicht mehr bekannt ist.\nOhne das Homing-Verfahren ($H) ist das Ergebnis möglicherweise nicht zuverlässig.\nTrotzdem weitermachen?",
  "Strings.ResumeJobHomingRequiredTitle": "Unbekannte Position",

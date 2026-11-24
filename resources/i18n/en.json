@@ -709,6 +709,7 @@
  "Strings.MacStatusUnknown": "Unknown",
  "Strings.MainFormEstimatedTime": "Estimated Time:",
  "Strings.MainFormProjectedTime": "Projected Time:",
+ "Strings.MainFormTimeLeft": "Time Left:",
  "Strings.MdiIconCaption": "MDI Icon code",
  "Strings.MsgboxCannotOpenFileNow": "Cannot open a new file now.",
  "Strings.PrepareDrawing": "Prepare drawing...",

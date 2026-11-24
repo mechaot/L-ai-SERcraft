@@ -3,6 +3,16 @@
 All notable changes to L-ai-SERcraft. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 newest first.
 
+## Unreleased
+
+### Added
+
+- Status bar shows "Time Left" (projected minus elapsed) while a job runs.
+
+### Fixed
+
+- Job progress bar text is now black with a white halo, readable on the green bar.
+
 ## 1.7.1 - 2026-11-03
 
 ### Added
